@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# SQLite local e ferramentas de desenvolvimento
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+.local/
