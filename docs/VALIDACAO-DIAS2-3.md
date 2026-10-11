@@ -25,6 +25,48 @@ Essas execuções não foram contadas como validação aprovada.
 As branches são publicadas no repositório de Henrique. HTTPS sem credencial
 falhou; push passou usando a chave SSH já existente, sem exibir credenciais.
 
+Regressão final na main do Dia 2: backend 23/23, frontend 12/12, build aprovado.
+
 ## Dia 3
 
-Em implementação. Resultados finais serão registrados após execução da suíte.
+| Verificação | Comando | Resultado |
+|---|---|---|
+| Backend | cd backend; npm test | 51 testes, 51 aprovados, 0 falhas, 0 skips |
+| Interface | cd frontend; npm test | 25 testes, 25 aprovados, 0 falhas, 0 skips |
+| Build | cd frontend; npm run build | Vite aprovado, 62 módulos |
+| Bootstrap production | cd backend; node scripts/smoke-producao.mjs | HTML/assets, fallback SPA, health com ERP mock, autenticação e 404 aprovados |
+| Revisão | git diff --check; node backend/scripts/verificar-segredos.mjs | Sem erros de whitespace ou segredos/banco nos arquivos versionados |
+
+Total da suíte final: **76 testes, 76 aprovados, 0 falhas**. Saídas completas:
+[backend](evidencias/dia3-backend.txt), [frontend](evidencias/dia3-frontend.txt),
+[build](evidencias/dia3-build.txt). Comandos podem ser repetidos conforme README.
+
+Backend inclui migrações v0→v2 e v1→v2, preservação de contas/endereços/vínculos/
+itens, rollback, repetição, cascade, carrinhos/limites/ativação, dois usuários com
+IDs alheios na API, preço novo do ERP e erros. Concorrência: duas conexões SQLite,
+dois POSTs HTTP, mutação iniciada antes da reserva, bloqueio durante envio,
+troca de ativo, replay de UUID, recusa, timeout após aceite e falha local por
+trigger. O índice e as transações protegem processos que usam o mesmo arquivo.
+
+Frontend inclui seleção, criação/renomeação/exclusão/limpeza, itens e contador,
+estoque parcial, checkout com endereço escolhido e preservação dos demais,
+resultado incerto, erros/loading, sessão/refresh e respostas fora de ordem. Busca,
+filtros, paginação e histórico permanecem na URL. Consulta inicial de autenticação
+atrasada também não pode desfazer um login mais recente. Navegador realmente executa
+o frontend modificado, usando Vite/proxy para backend e SIAC temporários.
+
+360, 390, 768 e 1440 px: sem overflow horizontal, painel dentro da viewport,
+Tab mantém foco no dialog, Escape/fechamento devolve foco ao acionador. Capturas
+fictícias: [360](evidencias/dia3-carrinho-360.png),
+[390](evidencias/dia3-carrinho-390.png), [tablet](evidencias/dia3-carrinho-768.png),
+[desktop](evidencias/dia3-carrinho-1440.png). Imagens inspecionadas visualmente.
+
+Falhas encontradas e resolvidas durante implementação: ciclo de foco do drawer;
+seletores de testes que encontravam o produto no painel e catálogo ou procuravam
+texto isolado dentro do alerta com botão. Uma execução foi interrompida após
+formatação disparar HMR no meio do login; não foi tratada como aprovação.
+
+Não verificado: implantação pública/HTTPS real, carga, Safari/Firefox, banco real
+com dados de clientes, rotação externa, atomicidade interna do estoque ou chave
+idempotente do SIAC. Nenhum pedido real enviado. O smoke de production usa
+bootstrap real, mas ambiente temporário com ERP mock e não equivale a hospedagem.

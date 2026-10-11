@@ -27,10 +27,15 @@ rotasPedidos.post('/', async (req, res) => {
 
   const enderecoId = inteiroPositivo(corpo.endereco_id, 'endereco_id', erros, { max: 1e9 });
   const observacao = textoOpcional(corpo.observacao, 'observacao', erros, { max: 300 });
+  const carrinhoId = corpo.carrinho_id === undefined ? undefined : inteiroPositivo(corpo.carrinho_id, 'carrinho_id', erros, { max: Number.MAX_SAFE_INTEGER });
+  const tentativaId = corpo.tentativa_id === undefined ? undefined : textoOpcional(corpo.tentativa_id, 'tentativa_id', erros, { max: 36 });
+  if (corpo.tentativa_id !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tentativaId ?? '')) {
+    erros.adicionar('tentativa_id', 'Deve ser um UUID valido.');
+  }
 
   erros.lancarSeInvalido('Nao foi possivel fechar o pedido.');
 
-  const pedido = await finalizarPedido(req.usuario, enderecoId, observacao);
+  const pedido = await finalizarPedido(req.usuario, enderecoId, observacao, undefined, { carrinhoId, tentativaId });
 
   res.status(201).location(`/api/pedidos/${pedido.numero}`).json({ dados: pedido });
 });

@@ -263,6 +263,8 @@ node scripts/verificar-segredos.mjs
 cd ../frontend
 npm test
 npm run build
+cd ../backend
+node scripts/smoke-producao.mjs
 ```
 
 Os testes de backend usam SQLite temporário e ERP HTTP em loopback. Não enviam
@@ -273,3 +275,17 @@ Os testes de frontend abrem a aplicação modificada com Vite, backend temporár
 e ERP mock. Usam `playwright-core` com Chromium já instalado (não baixam outro
 navegador). Informe `CHROMIUM_PATH` se o executável não estiver em
 `/usr/bin/chromium`, por exemplo o caminho do Chrome no Windows.
+
+`npm run db:init` e o início do backend aplicam migrações versionadas em
+transação, preservando usuários, endereços, pedidos vinculados e itens antigos.
+Não use `db:reset` para atualizar um banco existente. Faça backup do SQLite antes
+da implantação; o banco atualizado não é compatível com o código anterior.
+
+O usuário pode manter até 10 carrinhos. Carrinho ativo e itens ficam no servidor.
+Na vitrine, “Ver carrinho” abre um painel no desktop ou drawer no celular, sem
+alterar busca, filtros ou página. Criar pela interface também ativa o novo carrinho.
+
+Tentativas de checkout com resultado incerto preservam o carrinho e bloqueiam
+nova compra até conferência pela loja. Não remova o bloqueio sem reconciliar o
+pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes em
+[VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md).

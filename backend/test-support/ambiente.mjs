@@ -100,9 +100,9 @@ export async function prepararAmbiente() {
   const servidor = criarApp().listen(0, '127.0.0.1');
   await once(servidor, 'listening');
   const base = `http://127.0.0.1:${servidor.address().port}`;
-  async function chamada(rota, { metodo = 'GET', corpo, cookie } = {}) {
+  async function chamada(rota, { metodo = 'GET', corpo, cookie, headers = {} } = {}) {
     const res = await fetch(`${base}/api${rota}`, { method: metodo,
-      headers: { ...(corpo !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}) },
+      headers: { ...(corpo !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}), ...headers },
       body: corpo === undefined ? undefined : JSON.stringify(corpo) });
     return { status: res.status, headers: res.headers, json: await res.json().catch(() => null) };
   }

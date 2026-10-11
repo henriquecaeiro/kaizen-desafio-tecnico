@@ -19,7 +19,7 @@ const ESTILOS_BOTAO = {
   secundario: 'bg-tinta-800 text-white hover:bg-tinta-900 disabled:bg-tinta-200 disabled:text-tinta-600',
   contorno: 'border border-tinta-300 bg-white text-tinta-700 hover:bg-tinta-50 disabled:text-tinta-500',
   discreto: 'text-tinta-600 hover:bg-tinta-100 disabled:text-tinta-500',
-  perigo: 'border border-red-200 bg-white text-red-700 hover:bg-red-50 disabled:text-red-300',
+  perigo: 'border border-red-200 bg-white text-red-700 hover:bg-red-50 disabled:border-tinta-200 disabled:text-tinta-600',
 };
 
 const TAMANHOS_BOTAO = {

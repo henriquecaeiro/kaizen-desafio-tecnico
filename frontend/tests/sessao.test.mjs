@@ -61,6 +61,7 @@ test('leitura antiga nao sobrescreve uma inclusao mais recente', async () => {
   await esperar(async () => assert.equal(await e.page.getByLabel('1 itens no carrinho').count(), 1));
   liberar(); await terminada;
   await e.page.getByRole('link', { name: /Carrinho/ }).click();
+  await e.page.getByRole('heading', { name: 'Carrinho', exact: true }).waitFor();
   await e.page.getByText('Filtro', { exact: true }).waitFor();
   assert.equal(await e.page.getByLabel('1 itens no carrinho').count(), 1);
   await e.page.unroute('**/api/carrinho', handler);
@@ -75,5 +76,31 @@ test('erro de leitura aparece como erro e permite tentar novamente', async () =>
   await e.page.unroute('**/api/carrinho');
   await e.page.getByRole('button', { name: 'Tentar novamente' }).click();
   await e.page.getByText('Seu carrinho está vazio', { exact: true }).waitFor();
+  assert.deepEqual(e.erros, []);
+});
+
+test('resposta de sessao do boot nao desfaz login posterior', async () => {
+  await e.context.clearCookies(); e.semear([['FIL', 3], ['SUS', 4]]);
+  let liberar, recebeu, terminou;
+  const barreira = new Promise(r => { liberar = r; });
+  const recebida = new Promise(r => { recebeu = r; });
+  const terminada = new Promise(r => { terminou = r; });
+  const handler = async route => {
+    const resposta = await route.fetch(); recebeu(); await barreira;
+    await route.fulfill({ response: resposta }); terminou();
+  };
+  await e.page.route('**/api/auth/eu', handler);
+  await e.page.goto(`${e.base}/entrar`); await recebida;
+  await e.page.getByLabel('E-mail').fill('a@example.test');
+  await e.page.getByLabel('Senha', { exact: true }).fill('TesteLocal123');
+  await e.page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await e.page.waitForURL(e.base + '/');
+  await esperar(async () => assert.equal(await e.page.getByLabel('7 itens no carrinho').count(), 1));
+  liberar(); await terminada;
+  await e.page.getByRole('link', { name: /Carrinho/ }).click();
+  await e.page.getByRole('heading', { name: 'Carrinho', exact: true }).waitFor();
+  assert.equal(await e.page.getByRole('button', { name: 'Sair' }).count(), 1);
+  assert.equal(await e.page.getByLabel('7 itens no carrinho').count(), 1);
+  await e.page.unroute('**/api/auth/eu', handler);
   assert.deepEqual(e.erros, []);
 });

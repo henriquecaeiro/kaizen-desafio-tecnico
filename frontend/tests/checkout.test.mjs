@@ -47,3 +47,30 @@ test('endereco criado no checkout fica selecionado e e enviado ao ERP', async ()
   await e.page.waitForURL(/\/pedidos\/MOCK-/);
   assert.match(e.pedidos.at(-1).observacao, /Rua Nova/);
 });
+
+test('checkout do ativo preserva itens de outro carrinho na interface', async () => {
+  const s = await import('../../backend/src/services/carrinhosService.js');
+  const primeiro = s.obterCarrinhoAtivo(e.a.id);
+  e.semear([['FIL', 3]]);
+  const novo = s.criarCarrinho(e.a.id, 'Pedido separado'); s.ativarCarrinho(e.a.id, novo.id);
+  e.semear([['SUS', 2]]);
+  await e.page.goto(`${e.base}/checkout`);
+  await e.page.getByRole('button', { name: 'Confirmar pedido' }).click();
+  await e.page.waitForURL(/\/pedidos\/MOCK-/);
+  assert.deepEqual(e.pedidos.at(-1).itens.map(i => i.codigo_produto), ['SUS']);
+  await e.page.getByRole('link', { name: 'Carrinho', exact: true }).click();
+  await e.page.getByText('Seu carrinho está vazio', { exact: true }).waitFor();
+  await e.page.getByLabel('Carrinho ativo', { exact: true }).selectOption(String(primeiro.id));
+  await e.page.getByText('Filtro', { exact: true }).waitFor();
+  assert.equal(await e.page.getByLabel('3 itens no carrinho').count(), 1);
+});
+test('checkout incerto informa conferência e desabilita nova compra', async () => {
+  let liberar; e.controle.barreira = new Promise(r => { liberar = r; });
+  await e.page.goto(`${e.base}/checkout`);
+  await e.page.getByRole('button', { name: 'Confirmar pedido' }).click();
+  await e.page.getByRole('alert').filter({ hasText: 'O resultado do pedido precisa ser conferido pela loja' }).waitFor();
+  assert.equal(await e.page.getByRole('button', { name: 'Confirmar pedido' }).isDisabled(), true);
+  assert.equal((await e.carrinho.lerCarrinho(e.a.id)).quantidade_pecas, 3);
+  liberar(); e.controle.barreira = null;
+  assert.deepEqual(e.erros, []);
+});

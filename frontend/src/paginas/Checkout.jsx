@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, dinheiro } from '../api/cliente.js';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
@@ -6,7 +6,12 @@ import { FormularioEndereco } from '../componentes/FormularioEndereco.jsx';
 import { Alerta, Botao, Carregando, ErroGeral, EstadoVazio } from '../componentes/ui.jsx';
 
 export function Checkout() {
-  const { carrinho, carregando: carregandoCarrinho, erro: erroCarrinho, recarregar } = useCarrinho();
+  const {
+    carrinho,
+    carregando: carregandoCarrinho,
+    erro: erroCarrinho,
+    recarregar,
+  } = useCarrinho();
   const navegar = useNavigate();
 
   const [enderecos, setEnderecos] = useState([]);
@@ -16,6 +21,7 @@ export function Checkout() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [erro, setErro] = useState(null);
   const [enviando, setEnviando] = useState(false);
+  const tentativa = useRef(null);
 
   useEffect(() => {
     api.enderecos
@@ -50,10 +56,24 @@ export function Checkout() {
     setEnviando(true);
 
     try {
-      const resposta = await api.pedidos.criar({ endereco_id: enderecoId, observacao });
+      // Se a resposta se perder, repetir a mesma tentativa permite ao backend
+      // devolver o pedido ja concluido, sem enviar outro POST ao SIAC.
+      tentativa.current ??= crypto.randomUUID();
+      const resposta = await api.pedidos.criar({
+        endereco_id: enderecoId,
+        observacao,
+        carrinho_id: carrinho.id,
+        tentativa_id: tentativa.current,
+      });
       await recarregar();
       navegar(`/pedidos/${resposta.dados.numero}`, { replace: true, state: { novo: true } });
     } catch (falha) {
+      if (
+        falha.status >= 400 &&
+        falha.status < 500 &&
+        !['CHECKOUT_INCERTO', 'CHECKOUT_EM_ANDAMENTO'].includes(falha.codigo)
+      )
+        tentativa.current = null;
       setErro(falha);
       // O estoque pode ter mudado entre abrir o checkout e confirmar: recarrega
       // para o carrinho ja mostrar o item que ficou com pendencia.
@@ -65,14 +85,23 @@ export function Checkout() {
 
   if (carregando || carregandoCarrinho) return <Carregando texto="Preparando o checkout..." />;
 
-  if (erroCarrinho) return <Alerta titulo="Não foi possível carregar o carrinho">{erroCarrinho.message} <Botao onClick={recarregar}>Tentar novamente</Botao></Alerta>;
+  if (erroCarrinho)
+    return (
+      <Alerta titulo="Não foi possível carregar o carrinho">
+        {erroCarrinho.message} <Botao onClick={recarregar}>Tentar novamente</Botao>
+      </Alerta>
+    );
 
   if (carrinho.itens.length === 0) {
     return (
       <EstadoVazio
         titulo="Nada para fechar"
         descricao="Seu carrinho está vazio."
-        acao={<Link to="/"><Botao>Ver catálogo</Botao></Link>}
+        acao={
+          <Link to="/">
+            <Botao>Ver catálogo</Botao>
+          </Link>
+        }
       />
     );
   }
@@ -80,6 +109,7 @@ export function Checkout() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-tinta-900">Fechar pedido</h1>
+      <p className="text-sm text-tinta-600">Carrinho: {carrinho.nome}</p>
 
       <ErroGeral erro={erro} camposConhecidos={[]} />
 
@@ -93,6 +123,7 @@ export function Checkout() {
                 <button
                   type="button"
                   onClick={() => setMostrarFormulario(true)}
+                  disabled={enviando}
                   className="text-sm text-marca-700 underline hover:text-marca-800"
                 >
                   Adicionar outro
@@ -113,6 +144,7 @@ export function Checkout() {
                     >
                       <input
                         type="radio"
+                        disabled={enviando}
                         name="endereco"
                         value={endereco.id}
                         checked={enderecoId === endereco.id}
@@ -153,6 +185,7 @@ export function Checkout() {
             <h2 className="font-semibold text-tinta-900">Observação (opcional)</h2>
             <textarea
               value={observacao}
+              disabled={enviando}
               onChange={(evento) => setObservacao(evento.target.value)}
               rows={3}
               maxLength={300}
@@ -192,12 +225,21 @@ export function Checkout() {
               Há itens com pendência no carrinho.
             </Alerta>
           )}
+          {carrinho.checkout_estado && (
+            <Alerta tipo="aviso" className="mt-4">
+              {carrinho.checkout_estado === 'INCERTO'
+                ? 'O resultado do pedido precisa ser conferido pela loja. Não repita a compra.'
+                : 'Há um pedido em processamento neste carrinho.'}
+            </Alerta>
+          )}
 
           <Botao
             tamanho="grande"
             className="mt-5 w-full"
             carregando={enviando}
-            disabled={!enderecoId || !carrinho.pronto_para_checkout}
+            disabled={
+              !enderecoId || !carrinho.pronto_para_checkout || Boolean(carrinho.checkout_estado)
+            }
             onClick={finalizar}
           >
             Confirmar pedido

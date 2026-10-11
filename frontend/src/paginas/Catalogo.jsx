@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/cliente.js';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
 import { CardProduto } from '../componentes/CardProduto.jsx';
+import { PainelCarrinho } from '../componentes/PainelCarrinho.jsx';
 import { Alerta, Botao, Carregando, EstadoVazio, Paginacao } from '../componentes/ui.jsx';
 
 /**
@@ -14,7 +15,7 @@ import { Alerta, Botao, Carregando, EstadoVazio, Paginacao } from '../componente
 export function Catalogo() {
   const [parametros, setParametros] = useSearchParams();
   const { autenticado } = useAuth();
-  const { adicionar } = useCarrinho();
+  const { adicionar, carrinho } = useCarrinho();
   const navegar = useNavigate();
 
   const [produtos, setProdutos] = useState([]);
@@ -24,6 +25,8 @@ export function Catalogo() {
   const [erro, setErro] = useState(null);
   const [adicionandoCodigo, setAdicionandoCodigo] = useState(null);
   const [recado, setRecado] = useState(null);
+  const [painelAberto, setPainelAberto] = useState(false);
+  const botaoPainel = useRef(null);
 
   const busca = parametros.get('busca') ?? '';
   const categoria = parametros.get('categoria') ?? '';
@@ -91,6 +94,7 @@ export function Catalogo() {
 
     try {
       await adicionar(produto.codigo, 1);
+      setPainelAberto(true);
       setRecado({ tipo: 'sucesso', texto: `${produto.descricao} foi para o carrinho.` });
     } catch (falha) {
       setRecado({ tipo: 'erro', texto: falha.message });
@@ -100,100 +104,144 @@ export function Catalogo() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Gradiente comeca no marca-700, nao no #00a5ac puro: o subtitulo tem
+    <div
+      className={
+        painelAberto && autenticado
+          ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]'
+          : ''
+      }
+    >
+      <div className="space-y-6">
+        {autenticado && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="min-w-0 break-words text-sm text-tinta-600">
+              Carrinho ativo:{' '}
+              <span className="font-semibold text-tinta-900">
+                {carrinho.nome ?? 'Carregando...'}
+              </span>
+            </p>
+            <Botao
+              ref={botaoPainel}
+              variante="contorno"
+              tamanho="pequeno"
+              aria-expanded={painelAberto}
+              onClick={() => setPainelAberto(true)}
+            >
+              Ver carrinho ({carrinho.quantidade_pecas})
+            </Botao>
+          </div>
+        )}
+        {/* Gradiente comeca no marca-700, nao no #00a5ac puro: o subtitulo tem
           14px e precisa de 4.5:1, e a cor da marca so entrega 3.01:1 com
           branco. O #00a5ac vive no logo, nos icones e nos estados de foco. */}
-      <div className="rounded-xl bg-linear-to-br from-marca-700 to-marca-900 px-6 py-8
-        text-white sm:px-10 sm:py-12">
-        <h1 className="text-2xl font-bold sm:text-3xl">Peças para o seu carro</h1>
-        <p className="mt-2 max-w-xl text-sm text-marca-100">
-          Catálogo direto do nosso estoque. Freios, suspensão, motor, filtros, elétrica e mais.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => trocarParametro('categoria', '')}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            categoria === ''
-              ? 'bg-tinta-900 text-white'
-              : 'border border-tinta-300 bg-white text-tinta-600 hover:bg-tinta-100'
-          }`}
+        <div
+          className="rounded-xl bg-linear-to-br from-marca-700 to-marca-900 px-6 py-8
+        text-white sm:px-10 sm:py-12"
         >
-          Todas
-        </button>
+          <h1 className="text-2xl font-bold sm:text-3xl">Peças para o seu carro</h1>
+          <p className="mt-2 max-w-xl text-sm text-marca-100">
+            Catálogo direto do nosso estoque. Freios, suspensão, motor, filtros, elétrica e mais.
+          </p>
+        </div>
 
-        {categorias.map((nome) => (
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            key={nome}
             type="button"
-            onClick={() => trocarParametro('categoria', nome)}
-            className={`rounded-full px-4 py-2 text-sm font-medium capitalize transition-colors ${
-              categoria === nome
+            onClick={() => trocarParametro('categoria', '')}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              categoria === ''
                 ? 'bg-tinta-900 text-white'
                 : 'border border-tinta-300 bg-white text-tinta-600 hover:bg-tinta-100'
             }`}
           >
-            {nome.toLowerCase()}
+            Todas
           </button>
-        ))}
 
-        <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm text-tinta-600">
-          <input
-            type="checkbox"
-            checked={somenteDisponiveis}
-            onChange={(evento) => trocarParametro('somente_disponiveis', evento.target.checked)}
-            className="size-4 rounded border-tinta-300 text-marca-700 focus:ring-marca-500"
+          {categorias.map((nome) => (
+            <button
+              key={nome}
+              type="button"
+              onClick={() => trocarParametro('categoria', nome)}
+              className={`rounded-full px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                categoria === nome
+                  ? 'bg-tinta-900 text-white'
+                  : 'border border-tinta-300 bg-white text-tinta-600 hover:bg-tinta-100'
+              }`}
+            >
+              {nome.toLowerCase()}
+            </button>
+          ))}
+
+          <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm text-tinta-600">
+            <input
+              type="checkbox"
+              checked={somenteDisponiveis}
+              onChange={(evento) => trocarParametro('somente_disponiveis', evento.target.checked)}
+              className="size-4 rounded border-tinta-300 text-marca-700 focus:ring-marca-500"
+            />
+            Só com estoque
+          </label>
+        </div>
+
+        {busca && (
+          <p className="text-sm text-tinta-600">
+            Resultados para <strong className="text-tinta-900">"{busca}"</strong>
+            <button
+              type="button"
+              onClick={() => trocarParametro('busca', '')}
+              className="ml-2 text-marca-700 underline hover:text-marca-800"
+            >
+              limpar
+            </button>
+          </p>
+        )}
+
+        {recado && <Alerta tipo={recado.tipo}>{recado.texto}</Alerta>}
+        {erro && (
+          <Alerta tipo="erro" titulo="Não foi possível carregar o catálogo">
+            {erro.message}
+          </Alerta>
+        )}
+
+        {carregando ? (
+          <Carregando texto="Buscando peças..." />
+        ) : produtos.length === 0 ? (
+          <EstadoVazio
+            titulo="Nenhuma peça encontrada"
+            descricao="Tente outro termo de busca ou remova os filtros."
+            acao={
+              <Botao variante="contorno" onClick={() => setParametros(new URLSearchParams())}>
+                Limpar filtros
+              </Botao>
+            }
           />
-          Só com estoque
-        </label>
+        ) : (
+          <>
+            <div
+              className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${painelAberto && autenticado ? 'xl:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'}`}
+            >
+              {produtos.map((produto) => (
+                <CardProduto
+                  key={produto.codigo}
+                  produto={produto}
+                  aoAdicionar={adicionarAoCarrinho}
+                  adicionando={adicionandoCodigo === produto.codigo}
+                />
+              ))}
+            </div>
+
+            <Paginacao paginacao={paginacao} aoMudar={(nova) => trocarParametro('pagina', nova)} />
+          </>
+        )}
       </div>
-
-      {busca && (
-        <p className="text-sm text-tinta-600">
-          Resultados para <strong className="text-tinta-900">"{busca}"</strong>
-          <button
-            type="button"
-            onClick={() => trocarParametro('busca', '')}
-            className="ml-2 text-marca-700 underline hover:text-marca-800"
-          >
-            limpar
-          </button>
-        </p>
-      )}
-
-      {recado && <Alerta tipo={recado.tipo}>{recado.texto}</Alerta>}
-      {erro && <Alerta tipo="erro" titulo="Não foi possível carregar o catálogo">{erro.message}</Alerta>}
-
-      {carregando ? (
-        <Carregando texto="Buscando peças..." />
-      ) : produtos.length === 0 ? (
-        <EstadoVazio
-          titulo="Nenhuma peça encontrada"
-          descricao="Tente outro termo de busca ou remova os filtros."
-          acao={
-            <Botao variante="contorno" onClick={() => setParametros(new URLSearchParams())}>
-              Limpar filtros
-            </Botao>
-          }
+      {autenticado && (
+        <PainelCarrinho
+          aberto={painelAberto}
+          aoFechar={() => {
+            setPainelAberto(false);
+            botaoPainel.current?.focus();
+          }}
         />
-      ) : (
-        <>
-          <div className="grid grid-cols-4 gap-4">
-            {produtos.map((produto) => (
-              <CardProduto
-                key={produto.codigo}
-                produto={produto}
-                aoAdicionar={adicionarAoCarrinho}
-                adicionando={adicionandoCodigo === produto.codigo}
-              />
-            ))}
-          </div>
-
-          <Paginacao paginacao={paginacao} aoMudar={(nova) => trocarParametro('pagina', nova)} />
-        </>
       )}
     </div>
   );
