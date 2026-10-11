@@ -33,7 +33,7 @@ export function tratarErros(err, req, res, next) {
     });
   }
 
-  console.error(`[${req.id}] erro nao tratado:`, err);
+  console.error(`[${req.id}] erro nao tratado; tipo=${err?.name ?? 'Error'}; codigo=${err?.code ?? 'interno'}`);
 
   res.status(500).json({
     erro: {

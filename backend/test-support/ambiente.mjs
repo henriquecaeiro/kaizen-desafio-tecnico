@@ -26,13 +26,23 @@ export async function prepararAmbiente() {
     codigo, ativo: true, marca: 'TESTE', categoria: 'TESTE', imagem_url: '/imagens/peca.svg', ...p,
   }]));
   const pedidos = [];
-  const controle = { recusar: false, barreira: null, produtoBarreira: null, pedidoInvalido: false };
+  const controle = { recusar: false, barreira: null, produtoBarreira: null, pedidoInvalido: false, respostas: new Map() };
   const responder = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
   };
   const mock = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
+    const alternativa = controle.respostas.get(`${req.method} ${url.pathname}`);
+    if (alternativa) {
+      if (alternativa.atraso) await new Promise(r => setTimeout(r, alternativa.atraso));
+      res.writeHead(alternativa.status ?? 200, { 'Content-Type': alternativa.tipo ?? 'application/json' });
+      if (alternativa.interromper) {
+        res.write('<svg>');
+        return setTimeout(() => res.destroy(), 30);
+      }
+      return res.end(alternativa.raw ?? JSON.stringify(alternativa.json));
+    }
     if (url.pathname === '/health') return responder(res, 200, { status: 'ok' });
     if (url.pathname.startsWith('/imagens/')) {
       res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
@@ -61,14 +71,19 @@ export async function prepararAmbiente() {
       for await (const chunk of req) raw += chunk;
       if (controle.recusar) return responder(res, 409, { erro: { codigo: 'ESTOQUE_INSUFICIENTE', mensagem: 'Estoque mudou' } });
       const payload = JSON.parse(raw);
-      const pedido = { ...payload, numero: `MOCK-${pedidos.length + 1}`,
+      const itens = payload.itens.map(i => ({ ...i, descricao: produtos.get(i.codigo_produto).descricao,
+        preco_unitario: produtos.get(i.codigo_produto).preco_unitario, valor_total: produtos.get(i.codigo_produto).preco_unitario * i.quantidade }));
+      const pedido = { ...payload, itens, numero: `MOCK-${pedidos.length + 1}`,
         valor_total: payload.itens.reduce((s, i) => s + produtos.get(i.codigo_produto).preco_unitario * i.quantidade, 0),
         criado_em: new Date().toISOString(), situacao: 'ABERTO', quantidade_itens: payload.itens.length };
       pedidos.push(pedido);
       if (controle.barreira) await controle.barreira;
       return responder(res, 201, controle.pedidoInvalido ? {} : { dados: pedido });
     }
-    if (url.pathname.startsWith('/pedidos/')) return responder(res, 200, { dados: pedidos.find(p => p.numero === url.pathname.split('/').pop()) });
+    if (url.pathname.startsWith('/pedidos/')) {
+      const pedido = pedidos.find(p => p.numero === url.pathname.split('/').pop());
+      return responder(res, pedido ? 200 : 404, pedido ? { dados: pedido } : { erro: { codigo: 'NAO_ENCONTRADO', mensagem: 'Ausente' } });
+    }
     responder(res, 404, {});
   });
   mock.listen(0, '127.0.0.1');

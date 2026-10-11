@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as erp from '../erp/cliente.js';
 import { ApiError } from '../lib/ApiError.js';
+import { pipeline } from 'node:stream/promises';
 
 export const rotasImagens = Router();
 
@@ -22,6 +23,14 @@ rotasImagens.get('/:arquivo', async (req, res) => {
 
   res.setHeader('Content-Type', tipo);
   res.setHeader('Cache-Control', 'public, max-age=604800');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
 
-  fluxo.pipe(res);
+  try {
+    await pipeline(fluxo, res);
+  } catch {
+    // Depois do primeiro byte nao existe resposta JSON de erro possivel.
+    // pipeline encerra ambas as pontas, inclusive quando o cliente desconecta.
+    console.error(`[${req.id}] imagem interrompida`);
+    if (!res.destroyed) res.destroy();
+  }
 });

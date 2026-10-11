@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { config } from '../config.js';
 import { ApiError } from '../lib/ApiError.js';
+import { exigirResposta, objeto, produtoValido, paginacaoValida, pedidoCriadoValido, pedidoValido } from './contratos.js';
 
 /**
  * Cliente HTTP do Kaizen ERP.
@@ -45,8 +46,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
       signal: AbortSignal.timeout(config.erp.timeoutMs),
     });
   } catch (erro) {
-    const motivo = erro?.name === 'TimeoutError' ? 'tempo limite excedido' : erro?.message;
-    console.error(`[erp] falha de rede em ${metodo} ${url.pathname}: ${motivo}`);
+    console.error(`[erp] falha de rede em ${metodo}; tipo=${erro?.name === 'TimeoutError' ? 'timeout' : 'rede'}`);
 
     throw new ApiError(
       502,
@@ -58,11 +58,17 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
   let json = null;
   try {
     json = await resposta.json();
-  } catch {
-    json = null;
+  } catch (erro) {
+    if (resposta.ok) {
+      if (erro?.name !== 'SyntaxError') throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel ler a resposta do sistema de estoque.');
+      exigirResposta(false);
+    }
   }
 
-  if (resposta.ok) return json;
+  if (resposta.ok) {
+    exigirResposta(objeto(json));
+    return json;
+  }
 
   const erroErp = json?.erro ?? {};
 
@@ -85,7 +91,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
     );
   }
 
-  console.error(`[erp] status ${resposta.status} em ${metodo} ${url.pathname}`, erroErp);
+  console.error(`[erp] status ${resposta.status} em ${metodo}`);
 
   throw new ApiError(
     502,
@@ -97,22 +103,27 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
 // ------------------------------------------------------------------ leitura --
 
 export async function listarProdutos(filtros) {
-  return requisitar('/produtos', { parametros: filtros });
+  const json = await requisitar('/produtos', { parametros: filtros });
+  exigirResposta(Array.isArray(json.dados) && json.dados.every(produtoValido) && paginacaoValida(json.paginacao));
+  return json;
 }
 
 export async function buscarProduto(codigo) {
   const json = await requisitar(`/produtos/${encodeURIComponent(codigo)}`);
-  return json?.dados ?? null;
+  exigirResposta(produtoValido(json.dados) && json.dados.codigo.toUpperCase() === String(codigo).toUpperCase());
+  return json.dados;
 }
 
 export async function listarCategorias() {
   const json = await requisitar('/produtos/categorias');
-  return json?.dados ?? [];
+  exigirResposta(Array.isArray(json.dados) && json.dados.every(categoria => typeof categoria === 'string' && categoria.trim()));
+  return json.dados;
 }
 
 export async function buscarPedido(numero) {
   const json = await requisitar(`/pedidos/${encodeURIComponent(numero)}`);
-  return json?.dados ?? null;
+  exigirResposta(pedidoValido(json.dados) && json.dados.numero.toUpperCase() === String(numero).toUpperCase());
+  return json.dados;
 }
 
 // ------------------------------------------------------------------ escrita --
@@ -120,10 +131,7 @@ export async function buscarPedido(numero) {
 export async function criarPedido(payload) {
   const json = await requisitar('/pedidos', { metodo: 'POST', corpo: payload });
   const pedido = json?.dados;
-  if (!pedido || typeof pedido.numero !== 'string' || !pedido.numero.trim() ||
-    typeof pedido.valor_total !== 'number' || !Number.isFinite(pedido.valor_total) || pedido.valor_total < 0) {
-    throw new ApiError(502, 'ERP_RESPOSTA_INVALIDA', 'O sistema de estoque retornou um pedido invalido.');
-  }
+  exigirResposta(pedidoCriadoValido(pedido));
   return pedido;
 }
 
@@ -143,12 +151,14 @@ export async function obterImagem(arquivo) {
     throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel carregar a imagem.');
   }
 
-  if (!resposta.ok) {
-    throw ApiError.naoEncontrado(`Imagem nao encontrada: ${arquivo}`);
-  }
+  if (resposta.status === 404) throw ApiError.naoEncontrado('Imagem nao encontrada.');
+  if (resposta.status === 401) throw new ApiError(502, 'ERP_NAO_AUTORIZADO', 'Nao foi possivel carregar a imagem.');
+  if (!resposta.ok) throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel carregar a imagem.');
+  const tipo = resposta.headers.get('content-type');
+  exigirResposta(tipo?.split(';')[0].trim().toLowerCase() === 'image/svg+xml' && resposta.body);
 
   return {
-    tipo: resposta.headers.get('content-type') ?? 'application/octet-stream',
+    tipo,
     fluxo: Readable.fromWeb(resposta.body),
   };
 }
@@ -158,10 +168,13 @@ export async function obterImagem(arquivo) {
 export async function verificarErp() {
   try {
     const resposta = await fetch(`${config.erp.url}/health`, {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(Math.min(config.erp.timeoutMs, 3000)),
     });
-    return resposta.ok ? 'ok' : `http ${resposta.status}`;
+    if (!resposta.ok) return `http ${resposta.status}`;
+    const json = await resposta.json();
+    if (!objeto(json) || typeof json.status !== 'string') return 'resposta invalida';
+    return json.status === 'ok' ? 'ok' : 'indisponivel';
   } catch (erro) {
-    return erro?.name === 'TimeoutError' ? 'timeout' : 'inacessivel';
+    return erro?.name === 'SyntaxError' ? 'resposta invalida' : erro?.name === 'TimeoutError' ? 'timeout' : 'inacessivel';
   }
 }
