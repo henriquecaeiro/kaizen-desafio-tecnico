@@ -62,9 +62,13 @@ export function validarConfig() {
     problemas.push('SIAC_TOKEN nao definido. Configure a credencial no ambiente local.');
   }
 
-  if (!/^https?:\/\//.test(config.erp.url)) {
-    problemas.push('SIAC_URL/ERP_URL invalida.');
-  }
+  try {
+    const url = new URL(config.erp.url);
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash ||
+      (emProducao && url.protocol !== 'https:' && !['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname))) throw new Error();
+  } catch { problemas.push('SIAC_URL/ERP_URL deve ser base HTTP(S) sem credenciais, query ou fragmento; HTTPS em producao.'); }
+  if (!Number.isSafeInteger(config.erp.timeoutMs) || config.erp.timeoutMs < 1 || config.erp.timeoutMs > 60_000)
+    problemas.push('ERP_TIMEOUT_MS deve ser um inteiro entre 1 e 60000.');
 
   for (const origem of config.corsOrigens) {
     try {

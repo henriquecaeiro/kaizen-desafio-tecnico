@@ -156,10 +156,20 @@ export async function obterImagem(arquivo) {
   if (!resposta.ok) throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel carregar a imagem.');
   const tipo = resposta.headers.get('content-type');
   exigirResposta(tipo?.split(';')[0].trim().toLowerCase() === 'image/svg+xml' && resposta.body);
+  const origem = Readable.fromWeb(resposta.body);
+  const leitor = origem[Symbol.asyncIterator]();
+  let primeiro;
+  try { primeiro = await leitor.next(); }
+  catch { throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel ler a imagem.'); }
+  exigirResposta(!primeiro.done);
 
   return {
     tipo,
-    fluxo: Readable.fromWeb(resposta.body),
+    // Verifica corpo vazio antes de enviar headers, sem carregar toda a imagem.
+    fluxo: Readable.from((async function* () {
+      yield primeiro.value;
+      yield* leitor;
+    })()),
   };
 }
 

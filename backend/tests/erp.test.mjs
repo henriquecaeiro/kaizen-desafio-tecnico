@@ -84,6 +84,7 @@ test('imagem valida preserva tipo; tipo inesperado e falhas upstream sao erros',
   assert.match(valida.headers.get('content-security-policy'), /sandbox/);
   for (const [resposta, status, codigo] of [
     [{ json: {} }, 502, 'ERP_RESPOSTA_INVALIDA'],
+    [{ tipo: 'image/svg+xml', raw: '' }, 502, 'ERP_RESPOSTA_INVALIDA'],
     [{ status: 503, raw: '' }, 502, 'ERP_INDISPONIVEL'],
     [{ status: 401, raw: '' }, 502, 'ERP_NAO_AUTORIZADO'],
     [{ status: 404, raw: '' }, 404, 'NAO_ENCONTRADO'],
