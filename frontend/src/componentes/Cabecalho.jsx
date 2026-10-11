@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
@@ -30,6 +30,8 @@ export function Cabecalho() {
   const navegar = useNavigate();
   const [parametros] = useSearchParams();
   const [busca, setBusca] = useState(parametros.get('busca') ?? '');
+  const buscaUrl = parametros.get('busca') ?? '';
+  useEffect(() => { setBusca(buscaUrl); }, [buscaUrl]);
 
   function pesquisar(evento) {
     evento.preventDefault();
@@ -39,6 +41,7 @@ export function Cabecalho() {
     const atuais = new URLSearchParams(window.location.search);
     if (termo) atuais.set('busca', termo);
     else atuais.delete('busca');
+    atuais.delete('pagina');
 
     navegar(`/?${atuais.toString()}`);
   }

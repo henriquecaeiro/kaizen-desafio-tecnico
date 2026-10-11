@@ -73,6 +73,7 @@ export function Catalogo() {
 
       if (valor === null || valor === '' || valor === false) proximos.delete(chave);
       else proximos.set(chave, String(valor));
+      if (chave !== 'pagina') proximos.delete('pagina');
 
       setParametros(proximos);
     },

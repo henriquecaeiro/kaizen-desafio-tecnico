@@ -75,10 +75,10 @@ A soma de unidades é feita no serviço, inclusive para linhas pendentes; `quant
 |---|---|
 | **Causa** | Confirmada: Cabecalho.pesquisar mantém pagina da query anterior. Catalogo.trocarParametro também não reinicia pagina ao mudar filtros. |
 | **Como reproduzi** | Navegador com SIAC real: Próxima → página 2 → pesquisar amortecedor. URL ficou /?pagina=2&busca=amortecedor, lista vazia. HTTP confirmou total=3/total_paginas=1, e três resultados na página 1. |
-| **Arquivos alterados** | Nenhum funcional. Responsáveis: frontend/src/componentes/Cabecalho.jsx e frontend/src/paginas/Catalogo.jsx; rota catalogo.js repassa pagina. |
-| **Como validei a correção** | Não corrigido; reprodução visual e HTTP, sem escrita no ERP. |
+| **Arquivos alterados** | Cabecalho.jsx, Catalogo.jsx, ui.jsx; frontend/tests/catalogo.test.mjs. |
+| **Como validei a correção** | Chromium com aplicação modificada e ERP mock: busca após página 2, filtros combinados, limpeza, histórico, refresh, 1/2/3 páginas e resposta atrasada. |
 
-Recomendo reiniciar página ao mudar critérios, preservar filtros ao paginar e sincronizar campo com URL. Testar busca/limpeza/categoria/disponibilidade após paginação, F5 e histórico. Corrigir em commit relacionado o off-by-one da paginação compartilhada e testar também Pedidos.
+Busca, categoria e disponibilidade removem `pagina`, preservando demais critérios. Navegação de página mantém os filtros. O campo acompanha o termo da URL por efeito dependente somente desse termo. Próxima desabilita na última página; o componente compartilhado continua usado em Pedidos. O catálogo já descartava respostas de efeitos encerrados; teste controlado confirma essa proteção.
 
 ### KZN-331 — Pedido saiu com o endereço errado
 
