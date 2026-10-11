@@ -13,7 +13,7 @@ const porta = reserva.address().port;
 await new Promise(r => reserva.close(r));
 const processo = spawn(process.execPath, ['src/server.js'], {
   cwd: fileURLToPath(new URL('../', import.meta.url)),
-  env: { ...process.env, NODE_ENV: 'production', HOST: '127.0.0.1', PORT: String(porta) },
+  env: { ...process.env, NODE_ENV: 'production', HOST: '127.0.0.1', PORT: String(porta), CORS_ORIGEM: 'https://loja.example.test' },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 let log = '';

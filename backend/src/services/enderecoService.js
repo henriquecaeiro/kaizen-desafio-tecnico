@@ -56,6 +56,8 @@ export function criarEndereco(usuarioId, dados, db = obterBanco()) {
     // O primeiro endereco cadastrado vira principal automaticamente.
     const principal = total === 0 ? 1 : (dados.principal ? 1 : 0);
 
+    if (principal === 1) desmarcarOutrosPrincipais(usuarioId, null, db);
+
     const resultado = db
       .prepare(`
         INSERT INTO enderecos (
@@ -69,21 +71,26 @@ export function criarEndereco(usuarioId, dados, db = obterBanco()) {
       );
 
     const id = Number(resultado.lastInsertRowid);
-    if (principal === 1) desmarcarOutrosPrincipais(usuarioId, id, db);
-
     return id;
   });
 
-  return serializarEndereco(buscarEndereco(usuarioId, transacao(), db));
+  return serializarEndereco(buscarEndereco(usuarioId, transacao.immediate(), db));
 }
 
 export function atualizarEndereco(usuarioId, id, dados, db = obterBanco()) {
-  const atual = exigirEndereco(usuarioId, id, db);
-
   const transacao = db.transaction(() => {
-    const principal = dados.principal === undefined
+    const atual = exigirEndereco(usuarioId, id, db);
+    let principal = dados.principal === undefined
       ? atual.principal
       : (dados.principal ? 1 : 0);
+
+    const substituto = atual.principal === 1 && principal === 0
+      ? db.prepare('SELECT id FROM enderecos WHERE usuario_id=? AND id != ? ORDER BY id LIMIT 1').get(usuarioId, id)
+      : null;
+    // Desmarcar o unico endereco nao pode deixar a conta sem padrao.
+    // Havendo outro, ele assume a selecao dentro da mesma transacao.
+    if (atual.principal === 1 && principal === 0 && !substituto) principal = 1;
+    if (principal === 1) desmarcarOutrosPrincipais(usuarioId, id, db);
 
     db.prepare(`
       UPDATE enderecos
@@ -105,17 +112,16 @@ export function atualizarEndereco(usuarioId, id, dados, db = obterBanco()) {
       usuarioId,
     );
 
-    if (principal === 1) desmarcarOutrosPrincipais(usuarioId, id, db);
+    if (substituto) db.prepare('UPDATE enderecos SET principal=1 WHERE id=? AND usuario_id=?').run(substituto.id, usuarioId);
   });
 
-  transacao();
+  transacao.immediate();
   return serializarEndereco(buscarEndereco(usuarioId, id, db));
 }
 
 export function removerEndereco(usuarioId, id, db = obterBanco()) {
-  const alvo = exigirEndereco(usuarioId, id, db);
-
   const transacao = db.transaction(() => {
+    const alvo = exigirEndereco(usuarioId, id, db);
     db.prepare('DELETE FROM enderecos WHERE id = ? AND usuario_id = ?').run(id, usuarioId);
 
     // Apagou o principal: promove o mais antigo que sobrou, para o checkout
@@ -131,5 +137,5 @@ export function removerEndereco(usuarioId, id, db = obterBanco()) {
     }
   });
 
-  transacao();
+  transacao.immediate();
 }

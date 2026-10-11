@@ -142,7 +142,7 @@ export function Produto() {
 
           {recado && <Alerta tipo={recado.tipo} className="mt-4">{recado.texto}</Alerta>}
 
-          <div className="mt-6 flex items-end gap-3">
+          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-end">
             <div>
               <label htmlFor="quantidade" className="mb-1.5 block text-sm font-medium text-tinta-700">
                 Quantidade

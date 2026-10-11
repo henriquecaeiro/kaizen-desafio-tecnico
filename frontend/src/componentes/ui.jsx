@@ -39,6 +39,7 @@ export function Botao({
   return (
     <button
       {...props}
+      aria-busy={carregando || undefined}
       disabled={props.disabled || carregando}
       className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold
         transition-colors disabled:cursor-not-allowed
@@ -58,6 +59,7 @@ export function Botao({
 export function Campo({ rotulo, erro, dica, id, className = '', children, ...props }) {
   const idCampo = id ?? props.name;
   const idErro = erro ? `${idCampo}-erro` : undefined;
+  const idDica = !erro && dica ? `${idCampo}-dica` : undefined;
 
   return (
     <div className={className}>
@@ -70,7 +72,7 @@ export function Campo({ rotulo, erro, dica, id, className = '', children, ...pro
           {...props}
           id={idCampo}
           aria-invalid={erro ? 'true' : undefined}
-          aria-describedby={idErro}
+          aria-describedby={idErro ?? idDica}
           className={`w-full rounded-lg border px-3 py-2.5 text-sm text-tinta-900
             placeholder:text-tinta-400 focus:outline-none focus:ring-2
             ${erro
@@ -84,7 +86,7 @@ export function Campo({ rotulo, erro, dica, id, className = '', children, ...pro
           {erro}
         </p>
       )}
-      {!erro && dica && <p className="mt-1.5 text-xs text-tinta-500">{dica}</p>}
+      {!erro && dica && <p id={idDica} className="mt-1.5 text-xs text-tinta-500">{dica}</p>}
     </div>
   );
 }
@@ -142,7 +144,7 @@ export function ErroGeral({ erro, camposConhecidos = [] }) {
 
 export function Carregando({ texto = 'Carregando...', className = '' }) {
   return (
-    <div className={`flex items-center justify-center gap-3 py-16 text-tinta-500 ${className}`}>
+    <div role="status" className={`flex items-center justify-center gap-3 py-16 text-tinta-500 ${className}`}>
       <span
         aria-hidden="true"
         className="size-5 animate-spin rounded-full border-2 border-tinta-300 border-t-marca-600"
@@ -175,7 +177,7 @@ export function SeloSituacao({ situacao }) {
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold
         ${ESTILOS_SELO[situacao] ?? ESTILOS_SELO.INDISPONIVEL}`}
     >
-      {situacao === 'INDISPONIVEL' ? 'consultando...' : situacao.toLowerCase()}
+      {situacao === 'INDISPONIVEL' ? 'status indisponível' : situacao.toLowerCase()}
     </span>
   );
 }

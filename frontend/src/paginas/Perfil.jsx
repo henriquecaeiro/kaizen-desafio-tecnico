@@ -59,7 +59,6 @@ function DadosPessoais() {
           disabled
           readOnly
           dica="O e-mail de acesso não pode ser alterado por aqui."
-          className="opacity-70"
         />
 
         <Campo
@@ -171,6 +170,7 @@ function Enderecos() {
 
   async function recarregar() {
     setCarregando(true);
+    setErro(null);
     try {
       const resposta = await api.enderecos.listar();
       setEnderecos(resposta.dados);
@@ -213,7 +213,10 @@ function Enderecos() {
         )}
       </div>
 
-      {erro && <Alerta tipo="erro" className="mt-4">{erro.message}</Alerta>}
+      {erro && <Alerta tipo="erro" className="mt-4">
+        <p>{erro.message}</p>
+        <Botao variante="contorno" className="mt-3" onClick={recarregar} disabled={carregando}>Tentar novamente</Botao>
+      </Alerta>}
 
       {criando && (
         <div className="mt-4 rounded-lg border border-tinta-200 bg-tinta-50 p-4">
@@ -223,7 +226,7 @@ function Enderecos() {
 
       {carregando ? (
         <Carregando texto="Carregando endereços..." />
-      ) : enderecos.length === 0 && !criando ? (
+      ) : enderecos.length === 0 && !criando && !erro ? (
         <p className="mt-4 text-sm text-tinta-500">Nenhum endereço cadastrado ainda.</p>
       ) : (
         <ul className="mt-4 space-y-3">

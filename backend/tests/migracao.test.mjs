@@ -12,13 +12,13 @@ function usuario(db, id = 1) {
 
 test('banco novo e inicializacao repetida', () => {
   const db = novoBanco(); aplicarSchema(db); aplicarSchema(db);
-  assert.equal(db.pragma('user_version', { simple: true }), 2);
+  assert.equal(db.pragma('user_version', { simple: true }), 5);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM carrinhos').get().n, 0);
   assert.equal(db.pragma('integrity_check', { simple: true }), 'ok'); db.close();
 });
 for (const comItens of [true, false]) test(`banco antigo ${comItens ? 'com' : 'sem'} itens preserva contas e enderecos`, () => {
   const db = novoBanco(); db.exec(base); usuario(db); usuario(db, 2);
-  db.prepare('INSERT INTO enderecos(usuario_id,apelido,cep,logradouro,numero,bairro,cidade,uf,criado_em,atualizado_em) VALUES(?,?,?,?,?,?,?,?,?,?)')
+  db.prepare('INSERT INTO enderecos(usuario_id,apelido,cep,logradouro,numero,bairro,cidade,uf,criado_em,atualizado_em,principal) VALUES(?,?,?,?,?,?,?,?,?,?,1)')
     .run(1, 'Oficina', '01000000', 'Rua Teste', '1', 'Centro', 'Sao Paulo', 'SP', '2026-10-09', '2026-10-09');
   if (comItens) db.prepare('INSERT INTO carrinho_itens(usuario_id,codigo_produto,quantidade,adicionado_em) VALUES(?,?,?,?)').run(1, 'FIL', 7, '2026-10-09');
   const contas = db.prepare('SELECT * FROM usuarios').all(); const enderecos = db.prepare('SELECT * FROM enderecos').all();
@@ -61,7 +61,7 @@ test('banco na versao 1 recebe apenas a migracao de tentativas', () => {
   const antes = db.prepare('SELECT * FROM carrinhos').all();
   aplicarSchema(db); aplicarSchema(db);
   assert.deepEqual(db.prepare('SELECT * FROM carrinhos').all(), antes);
-  assert.equal(db.pragma('user_version', { simple: true }), 2);
+  assert.equal(db.pragma('user_version', { simple: true }), 5);
   db.close();
 });
 test('exclusao de usuario remove itens e tentativas sem orfaos', () => {

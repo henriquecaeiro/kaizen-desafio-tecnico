@@ -7,7 +7,8 @@ import { config } from '../config.js';
  * linha exata no journalctl da EC2.
  */
 export function identificarRequisicao(req, res, next) {
-  req.id = req.get('x-request-id')?.trim() || crypto.randomUUID();
+  const recebido = req.get('x-request-id');
+  req.id = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(recebido ?? '') ? recebido : crypto.randomUUID();
   res.setHeader('X-Request-Id', req.id);
   next();
 }
@@ -20,7 +21,8 @@ export function registrarAcesso(req, res, next) {
     const linha = [
       new Date().toISOString(),
       req.method,
-      req.originalUrl,
+      // Template da rota, nunca query, cookie, payload ou IDs fornecidos na URL.
+      req.route?.path ?? 'rota-nao-encontrada',
       res.statusCode,
       `${duracaoMs.toFixed(1)}ms`,
       req.id,

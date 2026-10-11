@@ -91,7 +91,9 @@ test('resposta antiga do catalogo nao substitui pesquisa mais recente', async ()
 test('listagem de pedidos tambem navega ate a terceira pagina', async () => {
   for (let i = 1; i <= 21; i++) {
     const numero = `LISTA-${i}`;
-    e.pedidos.push({ numero, situacao: 'ABERTO', quantidade_itens: 1 });
+    e.pedidos.push({ numero, situacao: 'ABERTO', quantidade_itens: 1, valor_total: 10,
+      criado_em: new Date().toISOString(), cliente: { nome: 'Pessoa A', documento: '00000000000' },
+      itens: [{ codigo_produto: 'FIL', descricao: 'Filtro', quantidade: 1, preco_unitario: 10, valor_total: 10 }] });
     e.db.prepare('INSERT INTO pedidos_usuario(usuario_id,numero_erp,endereco_entrega,valor_total_centavos,criado_em) VALUES(?,?,?,?,?)')
       .run(e.a.id, numero, JSON.stringify(e.casa), 1000, new Date().toISOString());
   }

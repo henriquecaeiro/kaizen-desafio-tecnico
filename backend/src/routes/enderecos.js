@@ -32,8 +32,9 @@ function validarEndereco(corpo) {
     bairro: textoObrigatorio(corpo.bairro, 'bairro', erros, { min: 2, max: 80 }),
     cidade: textoObrigatorio(corpo.cidade, 'cidade', erros, { min: 2, max: 80 }),
     uf: uf(corpo.uf, 'uf', erros),
-    principal: lerBooleano(corpo.principal) ?? false,
+    principal: Object.hasOwn(corpo, 'principal') ? lerBooleano(corpo.principal) : undefined,
   };
+  if (dados.principal === null) erros.adicionar('principal', 'Informe verdadeiro ou falso.');
 
   erros.lancarSeInvalido('Nao foi possivel salvar o endereco.');
   return dados;

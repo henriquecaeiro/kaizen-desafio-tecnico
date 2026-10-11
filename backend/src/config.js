@@ -38,7 +38,9 @@ export const config = {
     timeoutMs: Number(process.env.ERP_TIMEOUT_MS ?? 8000),
   },
 
-  corsOrigem: process.env.CORS_ORIGEM?.trim() || 'http://localhost:5173',
+  corsOrigens: (process.env.CORS_ORIGEM ?? (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173'))
+    .split(',').map(origem => origem.trim()).filter(Boolean),
+  proxiesConfiaveis: (process.env.TRUST_PROXY ?? '').split(',').map(ip => ip.trim()).filter(Boolean),
 
   paginacao: { tamanhoPadrao: 24, tamanhoMaximo: 100 },
 };
@@ -60,9 +62,26 @@ export function validarConfig() {
     problemas.push('SIAC_TOKEN nao definido. Configure a credencial no ambiente local.');
   }
 
-  if (!/^https?:\/\//.test(config.erp.url)) {
-    problemas.push(`SIAC_URL/ERP_URL invalida: ${config.erp.url}`);
+  try {
+    const url = new URL(config.erp.url);
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash ||
+      (emProducao && url.protocol !== 'https:' && !['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname))) throw new Error();
+  } catch { problemas.push('SIAC_URL/ERP_URL deve ser base HTTP(S) sem credenciais, query ou fragmento; HTTPS em producao.'); }
+  if (!Number.isSafeInteger(config.erp.timeoutMs) || config.erp.timeoutMs < 1 || config.erp.timeoutMs > 60_000)
+    problemas.push('ERP_TIMEOUT_MS deve ser um inteiro entre 1 e 60000.');
+
+  for (const origem of config.corsOrigens) {
+    try {
+      const url = new URL(origem);
+      if (url.origin !== origem || !['http:', 'https:'].includes(url.protocol) ||
+        (emProducao && url.protocol !== 'https:')) throw new Error();
+    } catch { problemas.push('CORS_ORIGEM deve conter origens HTTP(S) exatas, HTTPS em producao.'); }
   }
+  if (emProducao && config.corsOrigens.length === 0) problemas.push('Configure CORS_ORIGEM com a origem HTTPS publica.');
+  if (config.proxiesConfiaveis.some(ip => ['true', 'false', '*', '0.0.0.0/0', '::/0'].includes(ip))) {
+    problemas.push('TRUST_PROXY deve identificar os proxies, nunca confiar em toda a rede.');
+  }
+  if (!/^[1-9]\d*[smhd]$/.test(config.jwt.expiracao)) problemas.push('JWT_EXPIRACAO deve usar s, m, h ou d, por exemplo 7d.');
 
   if (problemas.length > 0) {
     throw new Error(`Configuracao invalida:\n  - ${problemas.join('\n  - ')}`);

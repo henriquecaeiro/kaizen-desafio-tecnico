@@ -124,7 +124,7 @@ export function Checkout() {
                   type="button"
                   onClick={() => setMostrarFormulario(true)}
                   disabled={enviando}
-                  className="text-sm text-marca-700 underline hover:text-marca-800"
+                  className="min-h-8 px-1 text-sm text-marca-700 underline hover:text-marca-800"
                 >
                   Adicionar outro
                 </button>
@@ -182,8 +182,9 @@ export function Checkout() {
           </section>
 
           <section className="rounded-xl border border-tinta-200 bg-white p-5">
-            <h2 className="font-semibold text-tinta-900">Observação (opcional)</h2>
+            <h2 id="rotulo-observacao" className="font-semibold text-tinta-900">Observação (opcional)</h2>
             <textarea
+              aria-labelledby="rotulo-observacao"
               value={observacao}
               disabled={enviando}
               onChange={(evento) => setObservacao(evento.target.value)}

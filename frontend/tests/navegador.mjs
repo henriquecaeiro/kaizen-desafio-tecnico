@@ -9,6 +9,7 @@ export async function abrirNavegador() {
     server: { host: '127.0.0.1', port: 0, proxy: { '/api': { target: e.base, changeOrigin: true } } } });
   await vite.listen();
   const base = `http://127.0.0.1:${vite.httpServer.address().port}`;
+  e.config.corsOrigens.push(base);
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext();
   const page = await context.newPage();

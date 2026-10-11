@@ -16,14 +16,18 @@ import {
   email,
   exigirObjeto,
   senha,
+  senhaInformada,
   telefone,
   textoObrigatorio,
 } from '../lib/validacao.js';
+import { revogarSessao } from '../services/sessaoService.js';
+import { config } from '../config.js';
+import { limitarAutenticacao } from '../middleware/limiteAutenticacao.js';
 
 export const rotasAuth = Router();
 
 /** POST /api/auth/cadastro - cria a conta e ja deixa a pessoa logada. */
-rotasAuth.post('/cadastro', async (req, res) => {
+rotasAuth.post('/cadastro', limitarAutenticacao('cadastro'), async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
@@ -39,28 +43,29 @@ rotasAuth.post('/cadastro', async (req, res) => {
 
   const usuario = await cadastrarUsuario(dados);
 
-  definirCookieSessao(res, assinarToken(usuario.id));
+  definirCookieSessao(res, assinarToken(usuario));
   res.status(201).json({ dados: serializarUsuario(usuario) });
 });
 
 /** POST /api/auth/login */
-rotasAuth.post('/login', async (req, res) => {
+rotasAuth.post('/login', limitarAutenticacao('login'), async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
   const enderecoEmail = email(corpo.email, 'email', erros);
-  const texto = textoObrigatorio(corpo.senha, 'senha', erros, { min: 1, max: 200 });
+  const texto = senhaInformada(corpo.senha, 'senha', erros);
 
   erros.lancarSeInvalido('Informe e-mail e senha.');
 
   const usuario = await autenticarUsuario(enderecoEmail, texto);
 
-  definirCookieSessao(res, assinarToken(usuario.id));
+  definirCookieSessao(res, assinarToken(usuario));
   res.json({ dados: serializarUsuario(usuario) });
 });
 
 /** POST /api/auth/logout - idempotente: sem sessao tambem responde 200. */
-rotasAuth.post('/logout', (_req, res) => {
+rotasAuth.post('/logout', (req, res) => {
+  revogarSessao(req.cookies?.[config.jwt.nomeCookie]);
   limparCookieSessao(res);
   res.json({ dados: { mensagem: 'Sessao encerrada.' } });
 });
