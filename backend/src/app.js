@@ -16,20 +16,36 @@ import { rotasEnderecos } from './routes/enderecos.js';
 import { rotasImagens } from './routes/imagens.js';
 import { rotasPedidos } from './routes/pedidos.js';
 import { rotasPerfil } from './routes/perfil.js';
+import { ApiError } from './lib/ApiError.js';
 
 export function criarApp() {
   const app = express();
 
-  app.set('trust proxy', true);
+  app.set('trust proxy', config.proxiesConfiaveis.length ? config.proxiesConfiaveis : false);
   app.disable('x-powered-by');
-
-  // O front roda em outra porta durante o desenvolvimento e estava dando erro
-  // de CORS no preflight. Refletir a origem da requisicao resolve em qualquer
-  // porta, sem precisar ficar ajustando a lista a cada ambiente.
-  app.use(cors({ origin: true, credentials: true }));
 
   app.use(identificarRequisicao);
   app.use(registrarAcesso);
+  // Mesma origem e o caminho normal. A lista explicita tambem impede mutacoes
+  // de origens nao autorizadas; CORS sozinho apenas controla leitura no browser.
+  app.use(cors({
+    origin(origem, callback) {
+      if (!origem) return callback(null, false);
+      if (config.corsOrigens.includes(origem)) return callback(null, origem);
+      callback(new ApiError(403, 'ORIGEM_NAO_PERMITIDA', 'Origem da requisicao nao permitida.'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-Carrinho-Id', 'X-Request-Id'],
+  }));
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'same-origin');
+    if (emProducao) {
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
+    }
+    next();
+  });
   app.use(express.json({ limit: '128kb' }));
   app.use(cookieParser());
 
@@ -69,7 +85,7 @@ export function criarApp() {
     // Fallback do React Router: qualquer caminho que nao seja /api devolve o
     // index.html para o roteamento acontecer no navegador.
     app.use((req, res, next) => {
-      if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
+      if (req.method !== 'GET' || req.path === '/api' || req.path.startsWith('/api/')) return next();
       res.sendFile(path.join(distFront, 'index.html'));
     });
   }

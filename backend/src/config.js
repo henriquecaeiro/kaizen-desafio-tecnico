@@ -38,7 +38,9 @@ export const config = {
     timeoutMs: Number(process.env.ERP_TIMEOUT_MS ?? 8000),
   },
 
-  corsOrigem: process.env.CORS_ORIGEM?.trim() || 'http://localhost:5173',
+  corsOrigens: (process.env.CORS_ORIGEM ?? (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173'))
+    .split(',').map(origem => origem.trim()).filter(Boolean),
+  proxiesConfiaveis: (process.env.TRUST_PROXY ?? '').split(',').map(ip => ip.trim()).filter(Boolean),
 
   paginacao: { tamanhoPadrao: 24, tamanhoMaximo: 100 },
 };
@@ -61,8 +63,21 @@ export function validarConfig() {
   }
 
   if (!/^https?:\/\//.test(config.erp.url)) {
-    problemas.push(`SIAC_URL/ERP_URL invalida: ${config.erp.url}`);
+    problemas.push('SIAC_URL/ERP_URL invalida.');
   }
+
+  for (const origem of config.corsOrigens) {
+    try {
+      const url = new URL(origem);
+      if (url.origin !== origem || !['http:', 'https:'].includes(url.protocol) ||
+        (emProducao && url.protocol !== 'https:')) throw new Error();
+    } catch { problemas.push('CORS_ORIGEM deve conter origens HTTP(S) exatas, HTTPS em producao.'); }
+  }
+  if (emProducao && config.corsOrigens.length === 0) problemas.push('Configure CORS_ORIGEM com a origem HTTPS publica.');
+  if (config.proxiesConfiaveis.some(ip => ['true', 'false', '*', '0.0.0.0/0', '::/0'].includes(ip))) {
+    problemas.push('TRUST_PROXY deve identificar os proxies, nunca confiar em toda a rede.');
+  }
+  if (!/^[1-9]\d*[smhd]$/.test(config.jwt.expiracao)) problemas.push('JWT_EXPIRACAO deve usar s, m, h ou d, por exemplo 7d.');
 
   if (problemas.length > 0) {
     throw new Error(`Configuracao invalida:\n  - ${problemas.join('\n  - ')}`);

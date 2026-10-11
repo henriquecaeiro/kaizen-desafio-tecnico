@@ -74,6 +74,7 @@ export async function prepararAmbiente() {
   mock.listen(0, '127.0.0.1');
   await once(mock, 'listening');
   process.env.SIAC_URL = `http://127.0.0.1:${mock.address().port}`;
+  const { config } = await import('../src/config.js');
   const banco = await import('../src/db/index.js');
   const usuarios = await import('../src/services/usuarioService.js');
   const enderecos = await import('../src/services/enderecoService.js');
@@ -117,6 +118,6 @@ export async function prepararAmbiente() {
     banco.fecharBanco(); globalThis.fetch = fetchOriginal;
     fs.rmSync(diretorio, { recursive: true });
   }
-  return { db, a, b, casa, oficina, enderecoB, endereco, produtos, pedidos, controle, semear,
+  return { db, config, a, b, casa, oficina, enderecoB, endereco, produtos, pedidos, controle, semear,
     carrinho, pedido, enderecos, base, chamada, login, fechar };
 }
