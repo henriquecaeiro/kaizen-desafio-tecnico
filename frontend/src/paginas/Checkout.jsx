@@ -6,7 +6,7 @@ import { FormularioEndereco } from '../componentes/FormularioEndereco.jsx';
 import { Alerta, Botao, Carregando, ErroGeral, EstadoVazio } from '../componentes/ui.jsx';
 
 export function Checkout() {
-  const { carrinho, carregando: carregandoCarrinho, recarregar } = useCarrinho();
+  const { carrinho, carregando: carregandoCarrinho, erro: erroCarrinho, recarregar } = useCarrinho();
   const navegar = useNavigate();
 
   const [enderecos, setEnderecos] = useState([]);
@@ -66,6 +66,8 @@ export function Checkout() {
   }
 
   if (carregando || carregandoCarrinho) return <Carregando texto="Preparando o checkout..." />;
+
+  if (erroCarrinho) return <Alerta titulo="Não foi possível carregar o carrinho">{erroCarrinho.message} <Botao onClick={recarregar}>Tentar novamente</Botao></Alerta>;
 
   if (carrinho.itens.length === 0) {
     return (

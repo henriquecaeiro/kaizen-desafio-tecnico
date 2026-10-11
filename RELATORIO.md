@@ -122,8 +122,8 @@ Recomendo enviar enderecoId; principal serve somente de escolha inicial. Testar 
 | **O que está errado** | P1: carrinho não acompanha login/logout/troca de usuário. |
 | **Como cheguei nele** | Login A mostrou vazio até F5; após sair e entrar B sem F5, UI mostrou itens/total anteriores da A. API de B continuou vazia. |
 | **Impacto** | Exposição visual de seleção de outro usuário no mesmo navegador e estado enganoso. Não foi comprovado acesso cruzado na API. |
-| **Corrigi?** | Não; limpar e recarregar por identidade, descartar respostas antigas e tratar 401 no sábado. |
-| **Arquivos alterados** | Nenhum funcional. Local: frontend/src/contextos/CarrinhoContext.jsx, integração AuthContext/main.jsx. |
+| **Corrigi?** | Sim. Contexto depende da identidade autenticada; limpa no logout, recarrega no login e aceita somente a requisição atual da mesma sessão. Falha de leitura tem estado próprio e opção de repetir. |
+| **Arquivos alterados** | CarrinhoContext.jsx, Carrinho.jsx, Checkout.jsx e frontend/tests/sessao.test.mjs. |
 
 Outros achados, com localização, reprodução, impacto, recomendação e prioridade na [auditoria detalhada](docs/DIAGNOSTICO-DIA1.md#auditoria-adicional):
 

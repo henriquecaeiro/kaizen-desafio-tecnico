@@ -261,9 +261,15 @@ cd backend
 npm test
 node scripts/verificar-segredos.mjs
 cd ../frontend
+npm test
 npm run build
 ```
 
 Os testes de backend usam SQLite temporário e ERP HTTP em loopback. Não enviam
 pedidos reais. `scripts/diagnostico-dia1.mjs` mantém expectativas históricas dos
 bugs e não deve ser usado para aprovar regressão da versão corrigida.
+
+Os testes de frontend abrem a aplicação modificada com Vite, backend temporário
+e ERP mock. Usam `playwright-core` com Chromium já instalado (não baixam outro
+navegador). Informe `CHROMIUM_PATH` se o executável não estiver em
+`/usr/bin/chromium`, por exemplo o caminho do Chrome no Windows.
