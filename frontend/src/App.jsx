@@ -35,7 +35,7 @@ export function App() {
 
       <Cabecalho />
 
-      <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Routes>
           {/* Publicas: da para navegar sem conta. */}
           <Route path="/" element={<Catalogo />} />

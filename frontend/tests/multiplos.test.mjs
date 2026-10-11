@@ -118,7 +118,8 @@ for (const largura of [360, 390, 768, 1440]) test(`painel em ${largura}px: sem o
       assert.equal(await painelAtual.evaluate(el => el.contains(document.activeElement) || document.activeElement === el), true);
     }
   }
-  await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/dia3-carrinho-${largura}.png`, import.meta.url)), fullPage: largura >= 1024 });
+  if (process.env.CAPTURAR_EVIDENCIAS === 'true')
+    await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-carrinho-${largura}.png`, import.meta.url)), fullPage: largura >= 1024 });
   const url = e.page.url();
   if (largura < 1024) await e.page.keyboard.press('Escape');
   else await e.page.getByRole('button', { name: 'Fechar painel' }).click();

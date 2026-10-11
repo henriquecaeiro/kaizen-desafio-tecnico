@@ -9,10 +9,12 @@ export function Pedidos() {
   const [pagina, setPagina] = useState(1);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
     setCarregando(true);
+    setErro(null);
 
     api.pedidos
       .listar({ pagina })
@@ -31,12 +33,15 @@ export function Pedidos() {
     return () => {
       ativo = false;
     };
-  }, [pagina]);
+  }, [pagina, tentativa]);
 
   if (carregando) return <Carregando texto="Carregando seus pedidos..." />;
 
   if (erro) {
-    return <Alerta tipo="erro" titulo="Não foi possível carregar os pedidos">{erro.message}</Alerta>;
+    return <Alerta tipo="erro" titulo="Não foi possível carregar os pedidos">
+      <p>{erro.message}</p>
+      <Botao variante="contorno" className="mt-3" onClick={() => setTentativa(atual => atual + 1)}>Tentar novamente</Botao>
+    </Alerta>;
   }
 
   if (pedidos.length === 0) {
@@ -52,6 +57,12 @@ export function Pedidos() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-tinta-900">Meus pedidos</h1>
+      {pedidos.some(pedido => pedido.situacao === 'INDISPONIVEL') && (
+        <Alerta tipo="aviso" titulo="Status temporariamente indisponível">
+          <p>Os pedidos foram preservados. Não foi possível consultar o status no sistema de estoque.</p>
+          <Botao variante="contorno" className="mt-3" onClick={() => setTentativa(atual => atual + 1)}>Tentar novamente</Botao>
+        </Alerta>
+      )}
 
       <ul className="space-y-3">
         {pedidos.map((pedido) => (

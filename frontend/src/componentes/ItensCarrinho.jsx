@@ -56,7 +56,7 @@ export function ItensCarrinho({ itens, ocupado, aoAlterar, aoRemover }) {
               type="button"
               disabled={ocupado}
               onClick={() => aoRemover(item.codigo_produto)}
-              className="text-sm text-tinta-600 underline hover:text-red-700 disabled:opacity-50"
+              className="min-h-8 px-1 text-sm text-tinta-600 underline hover:text-red-700 disabled:opacity-50"
             >
               Remover
             </button>

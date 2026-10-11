@@ -23,7 +23,7 @@ export async function prepararAmbiente() {
     ['FIL', { descricao: 'Filtro', preco_unitario: 10, estoque: 200 }],
     ['SUS', { descricao: 'Amortecedor', preco_unitario: 20, estoque: 200 }],
   ].map(([codigo, p]) => [codigo, {
-    codigo, ativo: true, marca: 'TESTE', categoria: 'TESTE', imagem_url: '/imagens/peca.svg', ...p,
+    codigo, ativo: true, marca: 'TESTE', categoria: 'TESTE', unidade: 'UN', imagem_url: '/imagens/peca.svg', ...p,
   }]));
   const pedidos = [];
   const controle = { recusar: false, barreira: null, produtoBarreira: null, pedidoInvalido: false, respostas: new Map() };

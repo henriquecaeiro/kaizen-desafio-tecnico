@@ -10,6 +10,7 @@ export function PedidoDetalhe() {
   const [pedido, setPedido] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const [tentativa, setTentativa] = useState(0);
 
   // Vindo do checkout, mostra a confirmacao no topo.
   const recemCriado = localizacao.state?.novo === true;
@@ -17,6 +18,7 @@ export function PedidoDetalhe() {
   useEffect(() => {
     let ativo = true;
     setCarregando(true);
+    setErro(null);
 
     api.pedidos
       .detalhe(numero)
@@ -33,11 +35,17 @@ export function PedidoDetalhe() {
     return () => {
       ativo = false;
     };
-  }, [numero]);
+  }, [numero, tentativa]);
 
   if (carregando) return <Carregando texto="Carregando pedido..." />;
 
   if (erro) {
+    if (erro.status !== 404) return (
+      <Alerta titulo="Não foi possível carregar o pedido">
+        <p>{erro.message}</p>
+        <Botao variante="contorno" className="mt-3" onClick={() => setTentativa(atual => atual + 1)}>Tentar novamente</Botao>
+      </Alerta>
+    );
     return (
       <EstadoVazio
         titulo="Pedido não encontrado"
