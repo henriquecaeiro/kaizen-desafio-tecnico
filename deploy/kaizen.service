@@ -1,0 +1,25 @@
+[Unit]
+Description=Kaizen Autopecas - loja Node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kaizen
+Group=kaizen
+WorkingDirectory=/opt/kaizen/app/backend
+EnvironmentFile=/etc/kaizen/loja.env
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+UMask=0077
+StateDirectory=kaizen
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

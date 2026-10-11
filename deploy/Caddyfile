@@ -1,0 +1,27 @@
+{
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request>uri delete
+				request>headers delete
+			}
+		}
+	}
+}
+
+# Substituir pelo dominio autorizado, com DNS apontando para o servidor.
+loja.example.invalid {
+	reverse_proxy 127.0.0.1:3001
+	header Strict-Transport-Security "max-age=31536000"
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri delete
+				request>headers delete
+			}
+		}
+	}
+}
