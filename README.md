@@ -236,7 +236,8 @@ Boa sorte.
 
 ## Execução e validação da solução
 
-Use Node LTS compatível com `engines` (a versão do Dia 1 está em `.nvmrc`).
+Use Node 24 LTS conforme `.nvmrc`. A validação final também foi executada nessa versão,
+com instalação limpa em uma cópia isolada do código.
 No backend, configure `backend/.env` a partir de `.env.example`, sem publicar segredos.
 
 ```sh
@@ -287,5 +288,36 @@ alterar busca, filtros ou página. Criar pela interface também ativa o novo car
 
 Tentativas de checkout com resultado incerto preservam o carrinho e bloqueiam
 nova compra até conferência pela loja. Não remova o bloqueio sem reconciliar o
-pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes em
+pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes atuais em
+[VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md) e histórico em
 [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md).
+
+## Entrega e produção
+
+Código publicado em [henriquecaeiro/kaizen-desafio-tecnico](https://github.com/henriquecaeiro/kaizen-desafio-tecnico),
+branch `main`. Chamados, múltiplos carrinhos e auditoria estão em [RELATORIO.md](RELATORIO.md).
+Resultados atuais e limitações: [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
+
+**Implantação pública pendente:** não há host/domínio/acesso autorizado ou credencial
+SIAC de produção identificados neste ambiente. Não há URL pública da solução.
+Publicar código no GitHub não substitui esse requisito. Preparação e bloqueio estão
+em [IMPLANTACAO.md](docs/IMPLANTACAO.md); exemplos em `deploy/` não foram implantados.
+
+O backend serve `frontend/dist` em produção e recusa iniciar sem o build. Configurar
+`NODE_ENV=production`, origem HTTPS exata em `CORS_ORIGEM`, segredos privados e
+`DB_PATH` num disco persistente fora do checkout. `TRUST_PROXY` só deve conter
+proxies reais autorizados; vazio ignora `X-Forwarded-For`. Senhas mantêm espaços e
+a normalização NFKC existente. Migração de sessões exige novo login de tokens
+antigos; logout e troca de senha revogam sessões no servidor.
+
+Backup online, sem sobrescrever destino existente:
+
+```sh
+cd backend
+npm run db:backup -- /caminho/real/ecommerce.db /diretorio/restrito/backup-novo.db
+```
+
+Nunca copiar só o arquivo principal enquanto SQLite/WAL estiver em uso. Procedimento
+de restauração e conferência de checkouts está no guia de implantação.
+Capturas atuais do painel podem ser geradas com `CAPTURAR_EVIDENCIAS=true npm test`
+no frontend. As evidências históricas do Dia 3 são preservadas.

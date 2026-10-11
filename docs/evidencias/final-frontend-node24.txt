@@ -1,0 +1,53 @@
+
+> kaizen-ecommerce-frontend@1.0.0 test
+> node --test --test-concurrency=1 tests/*.test.mjs
+
+✔ listagem se recupera de erro com retry, sem refresh (2191.776535ms)
+[erp] status 503 em GET
+[erp] status 503 em GET
+[erp] status 503 em GET
+[erp] status 503 em GET
+[erp] status 503 em GET
+✔ detalhes distinguem indisponibilidade de 404; pedido permite repetir leitura (1054.774482ms)
+✔ historico mostra dados locais e aviso de status indisponivel; retry recupera (399.917259ms)
+✔ perfil limpa telefone e troca senha mantendo novo cookie e revogando o antigo (1331.45084ms)
+✔ erro de formulario tem label, aria-invalid e descricao vinculada (388.279147ms)
+✔ atalho de teclado pula para o conteudo e foco permanece visivel (241.375115ms)
+✔ telas principais em 360px: sem overflow, labels e botoes acessiveis (3320.578058ms)
+✔ telas principais em 390px: sem overflow, labels e botoes acessiveis (3237.502959ms)
+✔ telas principais em 768px: sem overflow, labels e botoes acessiveis (3225.378787ms)
+✔ telas principais em 1440px: sem overflow, labels e botoes acessiveis (3354.479442ms)
+✔ buscar na primeira pagina e depois de paginar reinicia pagina preservando filtros (2540.488517ms)
+✔ categoria, disponibilidade e limpeza reiniciam pagina; URL acompanha historico e refresh (1620.161445ms)
+✔ paginacao compartilhada permite ultima pagina em listas com uma, duas e tres paginas (1653.142799ms)
+✔ resposta antiga do catalogo nao substitui pesquisa mais recente (491.890341ms)
+✔ listagem de pedidos tambem navega ate a terceira pagina (857.385807ms)
+✔ endereco principal e apenas inicial; secundario segue no payload e snapshot (2698.621559ms)
+✔ endereco removido em outra aba mostra erro e preserva carrinho (428.239709ms)
+✔ endereco criado no checkout fica selecionado e e enviado ao ERP (811.047082ms)
+✔ checkout do ativo preserva itens de outro carrinho na interface (529.796861ms)
+[erp] falha de rede em POST; tipo=timeout
+✔ checkout incerto informa conferência e desabilita nova compra (1195.802155ms)
+✔ painel cria, renomeia e troca carrinhos sem perder busca e pagina (3309.58791ms)
+✔ exclusao tem confirmacao, promove outro e persistencia sobrevive ao refresh (670.16803ms)
+✔ adicao, remocao e limpeza no painel mantem vitrine utilizavel (1088.298679ms)
+✔ estoque parcial permite reduzir quantidade e retirar pendencia (562.424303ms)
+✔ leitura atrasada de outro carrinho nao sobrescreve selecao nova (597.982938ms)
+✔ painel em 360px: sem overflow e foco pelo teclado (565.280415ms)
+✔ painel em 390px: sem overflow e foco pelo teclado (551.147929ms)
+✔ painel em 768px: sem overflow e foco pelo teclado (585.03734ms)
+✔ painel em 1440px: sem overflow e foco pelo teclado (437.449725ms)
+✔ limite aparece no painel e falha de gerenciamento preserva selecao (416.61307ms)
+✔ login carrega unidades; logout e outra conta limpam o estado (3076.087069ms)
+✔ resposta atrasada de A nao sobrescreve carrinho de B (984.714099ms)
+✔ leitura antiga nao sobrescreve uma inclusao mais recente (1195.730751ms)
+✔ erro de leitura aparece como erro e permite tentar novamente (408.954588ms)
+✔ resposta de sessao do boot nao desfaz login posterior (536.656971ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 50446.852479

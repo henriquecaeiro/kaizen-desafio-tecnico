@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { config, validarConfig } from '../src/config.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 function conferir(alteracoes, esperado) {
   const original = { ...config, erp: { ...config.erp }, jwt: { ...config.jwt } };
@@ -30,4 +35,20 @@ test('base ERP nao permite credenciais ou parametros e erro nao exibe valores', 
 test('timeout e expiracao invalida falham antes de iniciar servidor', () => {
   for (const timeoutMs of [NaN, 0, -1, 100_000]) conferir({ erp: { timeoutMs } }, /ERP_TIMEOUT_MS/);
   for (const expiracao of ['0d', '7', 'indefinida']) conferir({ jwt: { expiracao } }, /JWT_EXPIRACAO/);
+});
+test('producao sem build nao sobe um backend aparentemente saudavel nem migra banco', () => {
+  const diretorio = fs.mkdtempSync(path.join(os.tmpdir(), 'kaizen-sem-build-'));
+  try {
+    const programa = `import { config } from ${JSON.stringify(new URL('../src/config.js', import.meta.url).href)};
+      config.raizProjeto=${JSON.stringify(path.join(diretorio, 'backend'))};
+      await import(${JSON.stringify(new URL('../src/server.js', import.meta.url).href)});`;
+    const banco = path.join(diretorio, 'nao-criar.db');
+    const r = spawnSync(process.execPath, ['--input-type=module', '-e', programa], {
+      cwd: fileURLToPath(new URL('../', import.meta.url)), encoding: 'utf8', timeout: 5000,
+      env: { ...process.env, NODE_ENV: 'production', DB_PATH: banco, JWT_SEGREDO: 'a'.repeat(48),
+        SIAC_TOKEN: 'somente-mock', SIAC_URL: 'https://erp.example.test', CORS_ORIGEM: 'https://loja.example.test' },
+    });
+    assert.equal(r.status, 1); assert.match(r.stderr, /Build do frontend ausente/);
+    assert.equal(fs.existsSync(banco), false);
+  } finally { fs.rmSync(diretorio, { recursive: true }); }
 });

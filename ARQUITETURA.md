@@ -67,6 +67,18 @@ porta do backend.
 - Sessão em **JWT dentro de cookie `httpOnly`**, não em `localStorage`. Script
   injetado na página não lê o token. `SameSite=Lax` barra POST de outro site, e
   `secure` liga sozinho em produção.
+- JWT HS256 contém `jti` vinculado a `sessoes` no SQLite. Autenticação exige
+  assinatura, expiração e registro vigente da conta. Logout exclui aquela sessão;
+  troca de senha revoga todas as anteriores e emite um novo cookie atual.
+  Tokens anteriores à migração 003 exigem novo login. Respostas 401 não limpam
+  cookies, para uma resposta antiga não apagar um login mais recente.
+- Login revalida o hash antes de criar sessão; troca de senha usa comparação
+  otimista do hash e revogação na mesma transação. Requisições já autorizadas
+  em andamento não são canceladas pela revogação.
+- Limites persistidos em `autenticacao_limites`: login 30/IP e 10/conta por
+  15 minutos; cadastro 5/IP por hora; senha 10/IP e 5/conta por 15 minutos.
+  Incluem sucessos e payloads inválidos, com Retry-After; podem afetar NAT/contas
+  alvo. Não substituem proteção de borda contra DDoS.
 - Login não diz se o e-mail existe: e-mail desconhecido e senha errada devolvem
   a mesma mensagem, e o caso sem usuário ainda gasta o tempo de um hash para não
   responder visivelmente mais rápido.
@@ -114,10 +126,27 @@ Tudo sob `/api`. Erros seguem o mesmo formato do ERP:
 | Rede, timeout ou 5xx         | `502 ERP_INDISPONIVEL`                     |
 | 401 (token errado)           | `502 ERP_NAO_AUTORIZADO` + log no servidor |
 | 404 / 409 / 422              | Repassado como veio                        |
+| 2xx com JSON/contrato inválido | `502 ERP_RESPOSTA_INVALIDA`                |
 
 O 401 do ERP vira 5xx de propósito: token mal configurado é problema nosso, não
 de quem está comprando. O 409 de estoque, ao contrário, é informação que a
 pessoa precisa ver.
+
+Produtos/paginação/categorias/detalhe são validados nos campos consumidos pela
+loja, sem fechar enums nem proibir campos adicionais. Histórico pode continuar
+com dados locais e status indisponível explícito; não inventa lista vazia.
+Imagens validam tipo/corpo, usam pipeline e encerram a conexão se falharem após
+enviar bytes. Health valida JSON/status do ERP, não somente HTTP 200.
+
+### Origens, proxy e produção
+
+Mesma origem continua sendo o fluxo normal. `CORS_ORIGEM` permite somente origens
+exatas configuradas (HTTPS em produção); origem não autorizada recebe 403 sem
+headers permissivos. Requisições sem Origin continuam permitidas. Cookies Lax e
+checagem de Origin complementam a proteção; CORS não é autenticação.
+`TRUST_PROXY` vazio ignora headers encaminhados; em produção configurar apenas
+os proxies reais. Exemplos Node/systemd/Caddy, disco persistente e backup online
+estão em [IMPLANTACAO.md](docs/IMPLANTACAO.md). Não há deploy público concluído.
 
 ---
 
@@ -187,10 +216,16 @@ as bordas de seleção e o anel de foco do teclado.
 
 ### Verificação
 
-As 11 rotas foram auditadas com o contraste calculado **na página renderizada**
+Na base, as 11 rotas foram auditadas com o contraste calculado **na página renderizada**
 (cor e fundo efetivos, resolvidos via canvas — o Tailwind 4 emite `oklab()`, que
 um parser de `rgb()` lê errado), comparando contra o mínimo exigido para o
 tamanho e peso de cada texto. Zero falhas.
+
+Na revisão final, dez telas principais foram novamente testadas em quatro
+larguras, com cor resolvida por canvas, fundos/opacity e extremos do gradiente.
+A opacidade do bloco de e-mail no perfil prejudicava a ajuda e foi removida.
+Zero falhas nessa verificação após correção; não equivale a certificação WCAG
+completa ou teste com leitor de tela. Foco/labels/drawer também têm testes de navegador.
 
 Botões desabilitados são isentos pelo WCAG 1.4.3, mas aqui seguem a regra assim
 mesmo: "isento" não é desculpa para ninguém conseguir ler o rótulo.
@@ -223,6 +258,8 @@ como alerta. Os dois usam o tom 700, que passa em contraste.
   o endereço depois não reescreve o histórico.
 - **Primeiro endereço vira principal** sozinho. Apagar o principal promove o mais
   antigo que sobrou, para o checkout nunca ficar sem padrão.
+- **Desmarcar principal promove outro** ou mantém a seleção quando ele é o único.
+  Migração 005 corrige seleções legadas; índice parcial garante no máximo um.
 - **O e-mail não é editável** no perfil: trocar o identificador de login pede
   confirmação por e-mail, que está fora do escopo.
 
@@ -265,6 +302,9 @@ Decisões de escopo assumidas pelo time, não esquecimentos:
 - **Sem confirmação de e-mail** no cadastro, pelo mesmo motivo.
 - **Testes com ERP simulado.** Backend usa `node:test`, frontend usa Chromium
   instalado e `playwright-core`. Não verificam a atomicidade interna do SIAC.
+- **Implantação pública depende de host autorizado.** Configuração de serviço,
+  proxy, backup e produção local foram validados; DNS/HTTPS e operação no host real
+  continuam pendentes. SQLite requer disco persistente e reserva compartilhada.
 - **Checkout não é transacional entre os dois sistemas.** Tentativa persistida
   evita fechamento simultâneo e repetição automática após resultado ambíguo. Se
   o SIAC aceitar e a gravação local falhar, itens e bloqueio são preservados; o

@@ -22,7 +22,7 @@ test('listagem se recupera de erro com retry, sem refresh', async () => {
     assert.equal(await e.page.getByRole('alert').count(), 0);
   } finally { await e.page.unroute('**/api/pedidos?*'); }
 });
-test('detalhe distingue indisponibilidade de 404 e permite repetir leitura', async () => {
+test('detalhes distinguem indisponibilidade de 404; pedido permite repetir leitura', async () => {
   e.controle.respostas.set(`GET /pedidos/${pedido.numero}`, { status: 503, json: {} });
   await e.page.goto(`${e.base}/pedidos/${pedido.numero}`);
   await e.page.getByText('Não foi possível carregar o pedido').waitFor();
@@ -31,6 +31,13 @@ test('detalhe distingue indisponibilidade de 404 e permite repetir leitura', asy
   await e.page.getByRole('button', { name: 'Tentar novamente' }).click();
   await e.page.getByRole('heading', { name: pedido.numero }).waitFor();
   assert.equal(await e.page.getByRole('alert').count(), 0);
+  e.controle.respostas.set('GET /produtos/FIL', { status: 503, json: {} });
+  await e.page.goto(`${e.base}/produto/FIL`);
+  await e.page.getByText('Não foi possível carregar a peça', { exact: true }).waitFor();
+  assert.equal(await e.page.getByText('Peça não encontrada', { exact: true }).count(), 0);
+  e.controle.respostas.clear();
+  await e.page.goto(`${e.base}/produto/AUSENTE`);
+  await e.page.getByText('Peça não encontrada', { exact: true }).waitFor();
 });
 test('historico mostra dados locais e aviso de status indisponivel; retry recupera', async () => {
   e.controle.respostas.set(`GET /pedidos/${pedido.numero}`, { raw: 'invalido' });
@@ -101,6 +108,7 @@ for (const largura of [360, 390, 768, 1440]) test(`telas principais em ${largura
   }
   await e.page.goto(`${e.base}/produto/FIL`);
   await e.page.getByRole('heading', { name: 'Filtro', exact: true }).waitFor();
-  await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-produto-${largura}.png`, import.meta.url)), fullPage: true });
+  if (process.env.CAPTURAR_EVIDENCIAS === 'true')
+    await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-produto-${largura}.png`, import.meta.url)), fullPage: true });
   assert.deepEqual(e.erros, []);
 });
