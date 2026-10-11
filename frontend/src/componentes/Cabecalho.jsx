@@ -53,7 +53,7 @@ export function Cabecalho() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-tinta-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-x-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 text-lg font-bold text-tinta-900">
           {/* O K e grande e bold, entao 3:1 basta e o quadrado pode levar o
               #00a5ac exato - e onde a marca mais aparece. */}
@@ -66,7 +66,7 @@ export function Cabecalho() {
           </span>
         </Link>
 
-        <form onSubmit={pesquisar} className="min-w-[380px] flex-1">
+        <form onSubmit={pesquisar} className="order-last w-full min-w-0 md:order-none md:flex-1">
           <label htmlFor="busca-topo" className="sr-only">
             Buscar peças
           </label>
@@ -82,7 +82,7 @@ export function Cabecalho() {
           />
         </form>
 
-        <nav className="ml-auto flex items-center gap-1">
+        <nav className="flex flex-wrap items-center gap-1 sm:ml-auto">
           {autenticado ? (
             <>
               <ItemMenu para="/pedidos">Pedidos</ItemMenu>

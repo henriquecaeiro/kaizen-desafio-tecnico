@@ -61,6 +61,7 @@ test('leitura antiga nao sobrescreve uma inclusao mais recente', async () => {
   await esperar(async () => assert.equal(await e.page.getByLabel('1 itens no carrinho').count(), 1));
   liberar(); await terminada;
   await e.page.getByRole('link', { name: /Carrinho/ }).click();
+  await e.page.getByRole('heading', { name: 'Carrinho', exact: true }).waitFor();
   await e.page.getByText('Filtro', { exact: true }).waitFor();
   assert.equal(await e.page.getByLabel('1 itens no carrinho').count(), 1);
   await e.page.unroute('**/api/carrinho', handler);

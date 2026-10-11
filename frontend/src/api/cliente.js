@@ -44,7 +44,7 @@ function montarQuery(parametros) {
   return texto ? `?${texto}` : '';
 }
 
-async function requisitar(caminho, { metodo = 'GET', corpo, parametros } = {}) {
+async function requisitar(caminho, { metodo = 'GET', corpo, parametros, carrinhoId } = {}) {
   let resposta;
 
   try {
@@ -52,7 +52,10 @@ async function requisitar(caminho, { metodo = 'GET', corpo, parametros } = {}) {
       method: metodo,
       // Sem isto o cookie de sessao nao e enviado.
       credentials: 'include',
-      headers: corpo ? { 'Content-Type': 'application/json' } : undefined,
+      headers: {
+        ...(corpo ? { 'Content-Type': 'application/json' } : {}),
+        ...(carrinhoId ? { 'X-Carrinho-Id': String(carrinhoId) } : {}),
+      },
       body: corpo ? JSON.stringify(corpo) : undefined,
     });
   } catch {
@@ -105,16 +108,29 @@ export const api = {
 
   carrinho: {
     ler: () => requisitar('/carrinho'),
-    adicionar: (codigo_produto, quantidade = 1) =>
-      requisitar('/carrinho/itens', { metodo: 'POST', corpo: { codigo_produto, quantidade } }),
-    alterar: (codigo, quantidade) =>
+    adicionar: (codigo_produto, quantidade = 1, carrinhoId) =>
+      requisitar('/carrinho/itens', {
+        metodo: 'POST',
+        corpo: { codigo_produto, quantidade },
+        carrinhoId,
+      }),
+    alterar: (codigo, quantidade, carrinhoId) =>
       requisitar(`/carrinho/itens/${encodeURIComponent(codigo)}`, {
         metodo: 'PATCH',
         corpo: { quantidade },
+        carrinhoId,
       }),
-    remover: (codigo) =>
-      requisitar(`/carrinho/itens/${encodeURIComponent(codigo)}`, { metodo: 'DELETE' }),
-    limpar: () => requisitar('/carrinho', { metodo: 'DELETE' }),
+    remover: (codigo, carrinhoId) =>
+      requisitar(`/carrinho/itens/${encodeURIComponent(codigo)}`, { metodo: 'DELETE', carrinhoId }),
+    limpar: (carrinhoId) => requisitar('/carrinho', { metodo: 'DELETE', carrinhoId }),
+  },
+
+  carrinhos: {
+    listar: () => requisitar('/carrinhos'),
+    criar: (nome) => requisitar('/carrinhos', { metodo: 'POST', corpo: { nome } }),
+    renomear: (id, nome) => requisitar(`/carrinhos/${id}`, { metodo: 'PATCH', corpo: { nome } }),
+    ativar: (id) => requisitar(`/carrinhos/${id}/ativar`, { metodo: 'PUT' }),
+    excluir: (id) => requisitar(`/carrinhos/${id}`, { metodo: 'DELETE' }),
   },
 
   pedidos: {

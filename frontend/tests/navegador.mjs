@@ -1,6 +1,5 @@
 import { chromium } from 'playwright-core';
 import { createServer } from 'vite';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prepararAmbiente } from '../../backend/test-support/ambiente.mjs';
 
