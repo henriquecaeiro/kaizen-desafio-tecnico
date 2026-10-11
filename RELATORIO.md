@@ -86,10 +86,10 @@ Busca, categoria e disponibilidade removem `pagina`, preservando demais critéri
 |---|---|
 | **Causa** | Confirmada: Checkout.finalizar ignora enderecoId selecionado e envia id do endereço principal/primeiro. |
 | **Como reproduzi** | UI isolada: Casa principal, selecionar Oficina, confirmar. Pedido MOCK-1 exibiu Casa e mock recebeu observação com Casa. Chamada direta do serviço com id da Oficina enviou/gravou Oficina corretamente. |
-| **Arquivos alterados** | Nenhum funcional. Causa em frontend/src/paginas/Checkout.jsx; rastreados api/cliente.js, routes/pedidos.js, pedidoService.js e enderecoService.js. |
-| **Como validei a correção** | Não corrigido. Contraprova backend, captura visual e pedido exclusivamente simulado. |
+| **Arquivos alterados** | Checkout.jsx; backend/tests/checkout.test.mjs e frontend/tests/checkout.test.mjs. |
+| **Como validei a correção** | Checkout visual com Oficina, observação recebida pelo mock e snapshot SQLite; endereço único, criado, excluído/alheio, edição posterior e recusa de estoque no backend. |
 
-Recomendo enviar enderecoId; principal serve somente de escolha inicial. Testar endereço secundário, recém-criado, removido, inexistente/alheio e snapshot após edição. Backend já verifica posse e envia endereço na observação do ERP. [Evidências visuais](docs/DIAGNOSTICO-DIA1.md#evidências-visuais).
+O frontend envia `enderecoId` selecionado. Principal serve apenas de seleção inicial. O backend já verificava propriedade, guardava snapshot e incluía endereço na observação; não precisou de alteração neste chamado. Endereço excluído em outra aba retorna erro e preserva o carrinho.
 
 ---
 
@@ -216,6 +216,6 @@ node scripts/diagnostico-dia1.mjs
 
 Marcadores encontrados na leitura da base: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho). São referências de revisão presentes na origem, não chamados adicionais resolvidos.
 
-Dia 1: ambiente e diagnóstico concluídos. Restam quatro correções, priorização dos bugs ocultos, múltiplos carrinhos/painel na vitrine, implantação pública e validação final. Meta continua segunda-feira, 12/10, à noite; prazo oficial 13/10 às 15h Brasília.
+Dia 2: quatro chamados corrigidos e verificados com testes novos de comportamento esperado e build. Evidências e comandos em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Múltiplos carrinhos será a etapa seguinte. Implantação e auditoria independente ficam para o Dia 4.
 
 Histórico da entrega parte de 69c4843; importação segura registrada em eb0f240. O fechamento Git será verificável pelo histórico da main e comparação local/remoto; detalhes locais de backup estão no diagnóstico. Nenhum push foi direcionado ao repositório da empresa.
