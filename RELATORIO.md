@@ -4,7 +4,7 @@
 **Data de entrega:** em preparação; Dias 2 e 3 executados em 10/10/2026 (Brasília).
 **Tempo aproximado dedicado:** não cronometrado.
 
-Dias 2 e 3 implementados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); comandos/resultados em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Implantação pública e auditoria do Dia 4 ainda pendentes.
+Dias 2 e 3 implementados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); comandos/resultados históricos em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Auditoria final em execução em 11/10/2026; implantação pública depende de infraestrutura autorizada.
 
 ---
 
@@ -42,7 +42,7 @@ Falha de consulta é erro, não carrinho vazio; somente produto ausente vira pen
 | **Arquivos alterados** | carrinhoService.js, CarrinhoContext.jsx e consumidores; testes de carrinho/sessão. |
 | **Como validei** | 3+4=7, inclusão repetida, alteração, remoção/limpeza, login/logout/troca, resposta antiga de sessão e leitura anterior a mutação. Erro de leitura tem estado e opção de repetir. |
 
-Cabeçalho consome o contador do backend, sem cálculo duplicado. A correção visual não revoga JWT antigo; revogação permanece no Dia 4.
+Cabeçalho consome o contador do backend, sem cálculo duplicado. A auditoria final acrescentou revogação de sessões persistidas, além da consistência visual.
 
 ### KZN-325 — Busca diz que não encontrou peça que existe
 
@@ -86,7 +86,13 @@ Evidências originais e prioridades estão na auditoria do Dia 1.
 | A18 layout | Header/grid responsivos e painel testados em 360/390/768/1440 px. |
 | A16 contrato ERP | Criação de pedido valida número/total. Outras leituras ainda exigem revisão. |
 
-A01 teve remoção de segredos no Dia 1; rotação externa não foi realizada. CORS refletido, revogação JWT, limitação de autenticação, senhas com espaços, endereço principal, telefone e demais achados independentes não foram antecipados. Pendências priorizadas em [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md).
+A01 teve remoção de segredos no Dia 1; rotação externa não foi realizada. Na auditoria final foram corrigidos A07 (origens CORS exatas e proxies explícitos), A10 (telefone vazio/null versus omitido), A11 (principal em transação e índice único), A12 (senhas sem trim), A13 (JWT com sessão revogável), A16 (contratos de leitura), A19 (limites persistidos por conta/IP), A21 (retry e limpeza de erro em pedidos) e A22 (streams e logs sem query/corpo remoto).
+
+Migrações 003/004 criam sessoes e autenticacao_limites; 005 normaliza seleção de endereço sem alterar conteúdo/datas e cria índice parcial. Logout revoga apenas aquela sessão. Troca de senha revoga todas as anteriores e renova o cookie atual. JWT sem registro/jti é rejeitado. Login confere novamente o hash antes de abrir sessão; trocas concorrentes usam comparação do hash na atualização. Requisições já autorizadas em andamento não são canceladas.
+
+Login: 30/IP e 10/conta em 15 minutos; cadastro: 5/IP por hora; senha: 10/IP e 5/conta em 15 minutos. Contadores incluem sucesso e payload inválido, expiram, usam chaves SHA-256 e sobrevivem a reinício. Podem restringir usuários atrás de NAT ou permitir bloqueio temporário dirigido a uma conta; não substituem proteção contra DDoS na borda. TRUST_PROXY é vazio por padrão, ignorando X-Forwarded-For.
+
+Leituras ERP inválidas retornam 502. Histórico mantém dados locais com status explicitamente indisponível e opção de repetir. Imagens validam tipo/corpo e encerram o stream em falha. Scanner percorre arquivos e blobs históricos, sem exibir valores; é verificação heurística, não certificação de ausência de segredo. A credencial fictícia conhecida do diagnóstico não é credencial SIAC.
 
 ---
 
