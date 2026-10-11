@@ -42,7 +42,11 @@ test('JWT antigo sem jti, expirado, assinatura invalida e jti alheio sao rejeita
     jwt.sign({ sub: String(e.b.id), jti }, 'segredo-ficticio-diferente', { expiresIn: '7d' }),
     jwt.sign({ sub: String(e.a.id), jti }, e.config.jwt.segredo, { expiresIn: '7d' }),
   ];
-  for (const token of tokens) assert.equal((await e.chamada('/auth/eu', { cookie: cookie(token) })).status, 401);
+  for (const token of tokens) {
+    const r = await e.chamada('/auth/eu', { cookie: cookie(token) });
+    assert.equal(r.status, 401);
+    assert.equal(r.headers.get('set-cookie'), null, 'Resposta de sessao antiga nao deve apagar cookie de login recente');
+  }
 });
 test('expiracao persistida e exclusao de conta invalidam sessao', () => {
   const token = sessoes.criarSessao(e.b);
