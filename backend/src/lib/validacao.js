@@ -121,6 +121,16 @@ export function senha(valor, campo, erros) {
   return valor;
 }
 
+// Login e senha atual preservam os mesmos bytes/normalizacao usados pelo hash.
+// Nao aplicam a politica de novas senhas a credenciais antigas.
+export function senhaInformada(valor, campo, erros) {
+  if (typeof valor !== 'string' || valor.length === 0 || valor.length > 200) {
+    erros.adicionar(campo, 'Informe a senha (ate 200 caracteres).');
+    return null;
+  }
+  return valor;
+}
+
 /** Aceita CPF (11) ou CNPJ (14), com ou sem mascara. Valida so o tamanho. */
 export function documento(valor, campo, erros) {
   const texto = textoObrigatorio(valor, campo, erros, { min: 11, max: 18 });

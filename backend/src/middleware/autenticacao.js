@@ -1,21 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { config, emProducao } from '../config.js';
 import { ApiError } from '../lib/ApiError.js';
-import { buscarUsuarioPorId } from '../services/usuarioService.js';
+import { buscarSessao, criarSessao } from '../services/sessaoService.js';
 
-/** Converte "7d" / "12h" / "30m" em milissegundos, para o maxAge do cookie. */
-function paraMilissegundos(expiracao) {
-  const partida = /^(\d+)([smhd])$/.exec(String(expiracao).trim());
-  if (!partida) return 7 * 24 * 60 * 60 * 1000;
-
-  const unidades = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
-  return Number(partida[1]) * unidades[partida[2]];
-}
-
-export function assinarToken(usuarioId) {
-  return jwt.sign({ sub: String(usuarioId) }, config.jwt.segredo, {
-    expiresIn: config.jwt.expiracao,
-  });
+export function assinarToken(usuario) {
+  return criarSessao(usuario);
 }
 
 /**
@@ -30,7 +19,7 @@ export function definirCookieSessao(res, token) {
     httpOnly: true,
     sameSite: 'lax',
     secure: emProducao,
-    maxAge: paraMilissegundos(config.jwt.expiracao),
+    maxAge: Math.max(0, jwt.decode(token).exp * 1000 - Date.now()),
     path: '/',
   });
 }
@@ -52,16 +41,7 @@ export function autenticar(req, res, next) {
     return next(ApiError.naoAutorizado('NAO_AUTENTICADO', 'Faca login para continuar.'));
   }
 
-  let conteudo;
-  try {
-    conteudo = jwt.verify(token, config.jwt.segredo);
-  } catch {
-    limparCookieSessao(res);
-    return next(ApiError.naoAutorizado('SESSAO_INVALIDA', 'Sua sessao expirou. Entre de novo.'));
-  }
-
-  // Confere no banco: conta apagada nao deve continuar navegando com token velho.
-  const usuario = buscarUsuarioPorId(Number(conteudo.sub));
+  const usuario = buscarSessao(token);
   if (!usuario) {
     limparCookieSessao(res);
     return next(ApiError.naoAutorizado('SESSAO_INVALIDA', 'Sua sessao expirou. Entre de novo.'));
@@ -76,12 +56,7 @@ export function autenticarOpcional(req, _res, next) {
   const token = req.cookies?.[config.jwt.nomeCookie];
   if (!token) return next();
 
-  try {
-    const conteudo = jwt.verify(token, config.jwt.segredo);
-    req.usuario = buscarUsuarioPorId(Number(conteudo.sub)) ?? undefined;
-  } catch {
-    // Token invalido em rota publica e so "visitante".
-  }
+  req.usuario = buscarSessao(token) ?? undefined;
 
   next();
 }

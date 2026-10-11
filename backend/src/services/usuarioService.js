@@ -104,6 +104,12 @@ export async function trocarSenha(usuarioId, senhaAtual, novaSenha, db = obterBa
     ]);
   }
 
-  db.prepare('UPDATE usuarios SET senha_hash = ?, atualizado_em = ? WHERE id = ?')
-    .run(await gerarHash(novaSenha), agoraISO(), usuarioId);
+  const hash = await gerarHash(novaSenha);
+  return db.transaction(() => {
+    const resultado = db.prepare('UPDATE usuarios SET senha_hash = ?, atualizado_em = ? WHERE id = ? AND senha_hash = ?')
+      .run(hash, agoraISO(), usuarioId, usuario.senha_hash);
+    if (!resultado.changes) throw ApiError.conflito('SENHA_ALTERADA', 'A senha mudou durante esta operacao. Entre novamente.');
+    db.prepare('DELETE FROM sessoes WHERE usuario_id=?').run(usuarioId);
+    return buscarUsuarioPorId(usuarioId, db);
+  }).immediate();
 }

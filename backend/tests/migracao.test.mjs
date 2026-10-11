@@ -12,7 +12,7 @@ function usuario(db, id = 1) {
 
 test('banco novo e inicializacao repetida', () => {
   const db = novoBanco(); aplicarSchema(db); aplicarSchema(db);
-  assert.equal(db.pragma('user_version', { simple: true }), 2);
+  assert.equal(db.pragma('user_version', { simple: true }), 3);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM carrinhos').get().n, 0);
   assert.equal(db.pragma('integrity_check', { simple: true }), 'ok'); db.close();
 });
@@ -61,7 +61,7 @@ test('banco na versao 1 recebe apenas a migracao de tentativas', () => {
   const antes = db.prepare('SELECT * FROM carrinhos').all();
   aplicarSchema(db); aplicarSchema(db);
   assert.deepEqual(db.prepare('SELECT * FROM carrinhos').all(), antes);
-  assert.equal(db.pragma('user_version', { simple: true }), 2);
+  assert.equal(db.pragma('user_version', { simple: true }), 3);
   db.close();
 });
 test('exclusao de usuario remove itens e tentativas sem orfaos', () => {

@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { autenticar } from '../middleware/autenticacao.js';
+import { autenticar, assinarToken, definirCookieSessao } from '../middleware/autenticacao.js';
 import { atualizarPerfil, serializarUsuario, trocarSenha } from '../services/usuarioService.js';
 import {
   ColetorDeErros,
   documento,
   exigirObjeto,
   senha,
+  senhaInformada,
   telefone,
   textoObrigatorio,
 } from '../lib/validacao.js';
@@ -42,11 +43,12 @@ rotasPerfil.patch('/senha', async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
-  const atual = textoObrigatorio(corpo.senha_atual, 'senha_atual', erros, { min: 1, max: 200 });
+  const atual = senhaInformada(corpo.senha_atual, 'senha_atual', erros);
   const nova = senha(corpo.nova_senha, 'nova_senha', erros);
 
   erros.lancarSeInvalido('Nao foi possivel trocar a senha.');
 
-  await trocarSenha(req.usuario.id, atual, nova);
+  const usuario = await trocarSenha(req.usuario.id, atual, nova);
+  definirCookieSessao(res, assinarToken(usuario));
   res.json({ dados: { mensagem: 'Senha alterada.' } });
 });
