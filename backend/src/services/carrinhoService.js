@@ -90,7 +90,7 @@ export async function lerCarrinho(usuarioId, db = obterBanco()) {
   return {
     itens,
     quantidade_itens: itens.length,
-    quantidade_pecas: itens.length,
+    quantidade_pecas: itens.reduce((soma, item) => soma + item.quantidade, 0),
     valor_total: paraReais(totalCentavos),
     valor_itens: paraReais(itens.reduce(
       (soma, item) => soma + paraCentavos(item.preco_unitario) * item.quantidade, 0,

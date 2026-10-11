@@ -72,7 +72,7 @@ function LinhaItem({ item, aoAlterar, aoRemover, ocupado }) {
 }
 
 export function Carrinho() {
-  const { carrinho, carregando, alterar, remover, limpar } = useCarrinho();
+  const { carrinho, carregando, erro: erroCarga, recarregar, alterar, remover, limpar } = useCarrinho();
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -91,6 +91,8 @@ export function Carrinho() {
   if (carregando && carrinho.itens.length === 0) {
     return <Carregando texto="Carregando carrinho..." />;
   }
+
+  if (erroCarga) return <Alerta titulo="Não foi possível carregar o carrinho">{erroCarga.message} <Botao variante="contorno" onClick={recarregar}>Tentar novamente</Botao></Alerta>;
 
   if (carrinho.itens.length === 0) {
     return (
