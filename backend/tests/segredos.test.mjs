@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 test('scanner verifica arquivos e historico sem imprimir o valor identificado', () => {
   const diretorio = fs.mkdtempSync(path.join(os.tmpdir(), 'kaizen-segredos-'));
   const git = (...args) => execFileSync('git', args, { cwd: diretorio, stdio: 'pipe' });
-  const verificar = () => spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/verificar-segredos.mjs', import.meta.url))], { cwd: diretorio, encoding: 'utf8' });
+  const verificar = (ambiente = {}) => spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/verificar-segredos.mjs', import.meta.url))],
+    { cwd: diretorio, encoding: 'utf8', env: { ...process.env, ...ambiente } });
   try {
     fs.mkdirSync(path.join(diretorio, 'backend'));
     git('init', '-b', 'main');
@@ -17,6 +18,11 @@ test('scanner verifica arquivos e historico sem imprimir o valor identificado', 
     fs.writeFileSync(path.join(diretorio, 'README.md'), 'Fixture sem credenciais'); commit();
     assert.equal(verificar().status, 0);
     const valor = 'z'.repeat(48);
+    fs.writeFileSync(path.join(diretorio, 'README.md'), valor);
+    const doAmbiente = verificar({ SIAC_TOKEN: valor });
+    assert.equal(doAmbiente.status, 1); assert.match(doAmbiente.stderr, /README.md/);
+    assert.ok(!doAmbiente.stderr.includes(valor));
+    fs.writeFileSync(path.join(diretorio, 'README.md'), 'Fixture sem credenciais');
     fs.writeFileSync(path.join(diretorio, 'config.js'), `const SIAC_TOKEN='${valor}';`); commit();
     const comSegredo = verificar(); assert.equal(comSegredo.status, 1);
     assert.match(comSegredo.stderr, /config.js/); assert.ok(!comSegredo.stderr.includes(valor));

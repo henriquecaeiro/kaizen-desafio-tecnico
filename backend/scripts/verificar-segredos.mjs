@@ -4,7 +4,8 @@ import path from 'node:path';
 
 const raiz = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
 const arquivos = execFileSync('git', ['ls-files', '-z'], { cwd: raiz, encoding: 'utf8' }).split('\0').filter(Boolean);
-const segredos = [];
+const segredos = [process.env.SIAC_TOKEN, process.env.ERP_TOKEN, process.env.JWT_SEGREDO]
+  .filter(v => v && v.length >= 16 && !v.includes('troque-'));
 for (const diretorio of [raiz, path.join(raiz, 'backend')]) {
   for (const nome of fs.readdirSync(diretorio).filter(n => n.startsWith('.env') && n !== '.env.example')) {
     const linhas = fs.readFileSync(path.join(diretorio, nome), 'utf8').split('\n');
