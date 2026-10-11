@@ -65,7 +65,7 @@ export function Produto() {
   if (erro) {
     return (
       <EstadoVazio
-        titulo="Peça não encontrada"
+        titulo={erro.status === 404 ? 'Peça não encontrada' : 'Não foi possível carregar a peça'}
         descricao={erro.message}
         acao={<Link to="/"><Botao variante="contorno">Voltar ao catálogo</Botao></Link>}
       />
