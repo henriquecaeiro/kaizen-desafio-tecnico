@@ -19,7 +19,7 @@ export function obterBanco() {
 }
 
 export function aplicarSchema(db = obterBanco()) {
-  const migracoes = ['001-multiple-carts.sql', '002-checkout-attempts.sql', '003-sessions.sql'];
+  const migracoes = ['001-multiple-carts.sql', '002-checkout-attempts.sql', '003-sessions.sql', '004-auth-limits.sql', '005-primary-address.sql'];
   // schema.sql e a base v0. So e executada antes da primeira migracao;
   // reaplica-la no banco novo tentaria criar indices de colunas ja removidas.
   db.transaction(() => {

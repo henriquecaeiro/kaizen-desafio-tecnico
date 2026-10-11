@@ -22,11 +22,12 @@ import {
 } from '../lib/validacao.js';
 import { revogarSessao } from '../services/sessaoService.js';
 import { config } from '../config.js';
+import { limitarAutenticacao } from '../middleware/limiteAutenticacao.js';
 
 export const rotasAuth = Router();
 
 /** POST /api/auth/cadastro - cria a conta e ja deixa a pessoa logada. */
-rotasAuth.post('/cadastro', async (req, res) => {
+rotasAuth.post('/cadastro', limitarAutenticacao('cadastro'), async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
@@ -47,7 +48,7 @@ rotasAuth.post('/cadastro', async (req, res) => {
 });
 
 /** POST /api/auth/login */
-rotasAuth.post('/login', async (req, res) => {
+rotasAuth.post('/login', limitarAutenticacao('login'), async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 

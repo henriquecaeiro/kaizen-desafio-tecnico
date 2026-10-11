@@ -84,7 +84,7 @@ export function atualizarPerfil(usuarioId, { nome, telefone, documento }, db = o
      WHERE id = ?
   `).run(
     nome ?? atual.nome,
-    telefone || atual.telefone,
+    telefone !== undefined ? telefone : atual.telefone,
     documento ?? atual.documento,
     agoraISO(),
     usuarioId,

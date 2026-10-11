@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { autenticar, assinarToken, definirCookieSessao } from '../middleware/autenticacao.js';
 import { atualizarPerfil, serializarUsuario, trocarSenha } from '../services/usuarioService.js';
+import { limitarAutenticacao } from '../middleware/limiteAutenticacao.js';
 import {
   ColetorDeErros,
   documento,
@@ -28,18 +29,17 @@ rotasPerfil.patch('/', (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
-  const dados = {
-    nome: textoObrigatorio(corpo.nome, 'nome', erros, { min: 3, max: 120 }),
-    documento: documento(corpo.documento, 'documento', erros),
-    telefone: telefone(corpo.telefone, 'telefone', erros),
-  };
+  const dados = {};
+  if (Object.hasOwn(corpo, 'nome')) dados.nome = textoObrigatorio(corpo.nome, 'nome', erros, { min: 3, max: 120 });
+  if (Object.hasOwn(corpo, 'documento')) dados.documento = documento(corpo.documento, 'documento', erros);
+  if (Object.hasOwn(corpo, 'telefone')) dados.telefone = telefone(corpo.telefone, 'telefone', erros);
 
   erros.lancarSeInvalido('Nao foi possivel salvar o perfil.');
 
   res.json({ dados: serializarUsuario(atualizarPerfil(req.usuario.id, dados)) });
 });
 
-rotasPerfil.patch('/senha', async (req, res) => {
+rotasPerfil.patch('/senha', limitarAutenticacao('senha'), async (req, res) => {
   const corpo = exigirObjeto(req.body);
   const erros = new ColetorDeErros();
 
