@@ -23,11 +23,9 @@ async function enriquecerItens(linhas) {
       try {
         produto = await erp.buscarProduto(linha.codigo_produto);
       } catch (erro) {
-        // Produto sumiu do catalogo ou o ERP tropecou: o carrinho continua
-        // aparecendo, com o item marcado. Melhor que uma tela de erro.
-        if (erro?.status !== 404) {
-          console.error(`[carrinho] falha ao ler ${linha.codigo_produto}:`, erro?.mensagem);
-        }
+        // Ausencia de produto e uma pendencia; falha de consulta precisa ser
+        // informada como erro, pois nao conhecemos o preco nem o estoque atual.
+        if (erro?.status !== 404) throw erro;
       }
 
       if (!produto) {
@@ -39,6 +37,7 @@ async function enriquecerItens(linhas) {
           problema: 'Produto indisponivel no catalogo.',
           preco_unitario: 0,
           valor_total: 0,
+          valor_elegivel: 0,
         };
       }
 
@@ -64,6 +63,7 @@ async function enriquecerItens(linhas) {
         disponivel: problema === null,
         problema,
         valor_total: paraReais(totalCentavos),
+        valor_elegivel: problema === null ? paraReais(totalCentavos) : 0,
       };
     }),
   );
@@ -83,7 +83,7 @@ export async function lerCarrinho(usuarioId, db = obterBanco()) {
   const itens = await enriquecerItens(linhas);
 
   const totalCentavos = itens.reduce(
-    (soma, item) => soma + paraCentavos(item.valor_total),
+    (soma, item) => soma + (item.disponivel ? paraCentavos(item.preco_unitario) * item.quantidade : 0),
     0,
   );
 
@@ -92,6 +92,9 @@ export async function lerCarrinho(usuarioId, db = obterBanco()) {
     quantidade_itens: itens.length,
     quantidade_pecas: itens.length,
     valor_total: paraReais(totalCentavos),
+    valor_itens: paraReais(itens.reduce(
+      (soma, item) => soma + paraCentavos(item.preco_unitario) * item.quantidade, 0,
+    )),
     pronto_para_checkout: itens.length > 0 && itens.every((item) => item.disponivel),
   };
 }

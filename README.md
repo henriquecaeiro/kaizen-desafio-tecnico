@@ -231,3 +231,39 @@ Entregar menos sabendo explicar vale mais do que entregar tudo sem saber.
 - A entrega da solução é o link do repositório, commits realizados após o prazo não serão considerados
 
 Boa sorte.
+
+---
+
+## Execução e validação da solução
+
+Use Node LTS compatível com `engines` (a versão do Dia 1 está em `.nvmrc`).
+No backend, configure `backend/.env` a partir de `.env.example`, sem publicar segredos.
+
+```sh
+cd backend
+npm ci
+npm run db:init
+npm start
+```
+
+Em outro terminal:
+
+```sh
+cd frontend
+npm ci
+npm run dev
+```
+
+Validação:
+
+```sh
+cd backend
+npm test
+node scripts/verificar-segredos.mjs
+cd ../frontend
+npm run build
+```
+
+Os testes de backend usam SQLite temporário e ERP HTTP em loopback. Não enviam
+pedidos reais. `scripts/diagnostico-dia1.mjs` mantém expectativas históricas dos
+bugs e não deve ser usado para aprovar regressão da versão corrigida.
