@@ -69,7 +69,7 @@ export function inteiroPositivo(valor, campo, erros, { max = 9999 } = {}) {
     return null;
   }
   const numero = Number(valor);
-  if (!Number.isInteger(numero)) {
+  if (!['number', 'string'].includes(typeof valor) || !Number.isSafeInteger(numero)) {
     erros.adicionar(campo, 'Deve ser um numero inteiro.');
     return null;
   }

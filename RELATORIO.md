@@ -152,7 +152,13 @@ Mudanças no contrato da API — endpoints novos ou alterados:
 
 | Método | Rota | O que faz |
 |---|---|---|
-| — | — | Nenhum endpoint de negócio criado/alterado no Dia 1. |
+| GET | /api/carrinhos | Lista nomes, ativo e contadores da conta autenticada |
+| POST | /api/carrinhos | Cria carrinho vazio, mantendo o ativo atual |
+| PATCH | /api/carrinhos/:id | Renomeia |
+| PUT | /api/carrinhos/:id/ativar | Persiste a seleção |
+| DELETE | /api/carrinhos/:id | Exclui e garante um ativo válido |
+
+As rotas `/api/carrinho` e `/api/carrinho/itens` operam sobre o ativo. Resposta de leitura inclui id/nome. Header opcional `X-Carrinho-Id` exige que o ativo seja o mesmo exibido pelo cliente; id alheio é 404, seleção antiga é 409. Consulta, ativação e mutações usam usuário autenticado e parâmetros SQL. Não há rota pública para itens de carrinho arbitrário. Inclusão verifica novamente a seleção depois da consulta externa, em transação curta. Limite de quantidade não satura silenciosamente; tipos booleano/array são rejeitados na validação central.
 
 ### Decisões que o enunciado deixou abertas
 
