@@ -41,3 +41,21 @@ test('falha de consulta ERP nao se apresenta como carrinho vazio', async () => {
   await assert.rejects(e.pedido.finalizarPedido(e.a, e.casa.id, ''), { codigo: 'ERP_INDISPONIVEL' });
   assert.equal(e.pedidos.length, 0);
 });
+
+test('contador distingue produtos de unidades, incluindo pendencias', async () => {
+  e.semear([['FIL', 3], ['SUS', 4]]);
+  let c = await e.carrinho.lerCarrinho(e.a.id);
+  assert.equal(c.quantidade_itens, 2); assert.equal(c.quantidade_pecas, 7);
+  c = await e.carrinho.adicionarItem(e.a.id, 'FIL', 2);
+  assert.equal(c.quantidade_itens, 2); assert.equal(c.quantidade_pecas, 9);
+  c = await e.carrinho.alterarQuantidade(e.a.id, 'FIL', 1);
+  assert.equal(c.quantidade_pecas, 5);
+  c = await e.carrinho.removerItem(e.a.id, 'SUS');
+  assert.equal(c.quantidade_pecas, 1); assert.equal(c.quantidade_itens, 1);
+  e.semear([['RAD', 3], ['FIL', 4]]);
+  c = await e.carrinho.lerCarrinho(e.a.id);
+  assert.equal(c.quantidade_pecas, 7);
+  e.carrinho.limparCarrinho(e.a.id);
+  c = await e.carrinho.lerCarrinho(e.a.id);
+  assert.equal(c.quantidade_pecas, 0); assert.equal(c.quantidade_itens, 0);
+});

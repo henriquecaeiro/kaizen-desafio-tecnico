@@ -64,10 +64,10 @@ O serviço retorna `valor_total` elegível e `valor_itens` de todas as linhas co
 |---|---|
 | **Causa** | Confirmada: lerCarrinho usa itens.length também para quantidade_pecas. Contexto, badge e resumo apenas exibem esse campo. |
 | **Como reproduzi** | FIL=3 e SUS=4 retornaram quantidade_pecas=2; UI após F5 exibiu 2 no badge/resumo, embora haja 7 unidades. |
-| **Arquivos alterados** | Nenhum arquivo funcional deste chamado. Fluxo: carrinhoService.js → CarrinhoContext.jsx → Cabecalho.jsx/Carrinho.jsx. |
-| **Como validei a correção** | Não corrigido. Reprodução automatizada e visual confirmada. |
+| **Arquivos alterados** | carrinhoService.js e testes de carrinho; CarrinhoContext.jsx para sincronização de sessão. |
+| **Como validei a correção** | node:test: 3+4=7, inclusão repetida, alteração, remoção, limpeza e pendências. Testes de navegador cobrem login/logout/troca e respostas antigas. |
 
-Recomendo somar quantidades no backend, mantendo quantidade_itens como produtos distintos. Testar 3+4, mesma peça, editar/remover/limpar, vazio, pendentes e 99+. Não confundir esse problema com o estado antigo do carrinho entre sessões.
+A soma de unidades é feita no serviço, inclusive para linhas pendentes; `quantidade_itens` continua contando produtos distintos. O cabeçalho consome o valor do backend sem cálculo próprio.
 
 ### KZN-325 — Busca diz que não encontrou peça que existe
 
