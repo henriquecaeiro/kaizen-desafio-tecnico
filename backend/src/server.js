@@ -1,10 +1,14 @@
-import { config, validarConfig } from './config.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { config, validarConfig, emProducao } from './config.js';
 import { aplicarSchema, fecharBanco, obterBanco } from './db/index.js';
 import { verificarErp } from './erp/cliente.js';
 import { criarApp } from './app.js';
 
 try {
   validarConfig();
+  if (emProducao && !fs.existsSync(path.resolve(config.raizProjeto, '../frontend/dist/index.html')))
+    throw new Error('Build do frontend ausente. Execute npm run build em frontend antes de iniciar producao.');
 } catch (erro) {
   console.error(erro.message);
   process.exit(1);

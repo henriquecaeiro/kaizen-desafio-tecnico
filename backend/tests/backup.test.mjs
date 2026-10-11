@@ -35,6 +35,9 @@ test('origem ausente e backup incompleto nao sao anunciados como sucesso', async
   const inexistente = path.join(path.dirname(e.db.name), 'ausente.db');
   await assert.rejects(criarBackup(inexistente, path.join(path.dirname(e.db.name), 'outro.db')));
   assert.equal(fs.existsSync(inexistente), false);
+  const invalido = path.join(path.dirname(e.db.name), 'invalido.db');
+  await assert.rejects(criarBackup(path.dirname(e.db.name), invalido));
+  assert.equal(fs.existsSync(`${invalido}.parcial`), false);
   assert.equal(fs.existsSync(`${destino}.parcial`), false);
 });
 test('restauracao em novo caminho preserva selecao, itens e enderecos', () => {
