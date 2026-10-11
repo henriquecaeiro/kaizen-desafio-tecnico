@@ -4,7 +4,7 @@
 **Data de entrega:** em preparação; registro do Dia 1 em 09/10/2026 (Brasília).
 **Tempo aproximado dedicado:** não cronometrado; não estimado como evidência.
 
-Este é um relatório parcial de investigação. Os quatro chamados e múltiplos carrinhos **ainda não foram implementados**. A única mudança de produção hoje foi a configuração segura para executar/importar o projeto. Evidências detalhadas, arquitetura, auditoria e plano de sábado estão em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md).
+Implementação dos Dias 2 e 3 em andamento. A investigação original e suas reproduções históricas estão em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); esse diagnóstico não é uma suíte de regressão.
 
 ---
 
@@ -53,10 +53,10 @@ Arquivos criados: `.nvmrc`, complementos no `.gitignore`, `backend/.env` **ignor
 |---|---|
 | **Causa** | Confirmada: enriquecerItens mantém subtotal de item sem estoque e lerCarrinho soma todos, incluindo indisponíveis, em backend/src/services/carrinhoService.js. |
 | **Como reproduzi** | SQLite temporário + ERP mock: radiador sem estoque 1 × 684, filtro 3 × 10 e amortecedor 4 × 20. Total 794; soma elegível 110; diferença 684. Checkout bloqueou corretamente. |
-| **Arquivos alterados** | Nenhum arquivo funcional deste chamado. |
-| **Como validei a correção** | Não há correção. Reproduzido pelo diagnóstico automatizado. |
+| **Arquivos alterados** | carrinhoService.js, dinheiro.js, Carrinho.jsx; testes em backend/tests/carrinho.test.mjs e dinheiro.test.mjs. |
+| **Como validei a correção** | Testes node:test com SQLite temporário e ERP HTTP simulado; build Vite. Total elegível 110 com radiador pendente; checkout continua bloqueado. |
 
-O total coincide com todas as linhas exibidas, inclusive a indisponível; o desvio comprovado é em relação aos itens elegíveis. Recomendo total comprável calculado no serviço, mantendo pendência visível e checkout bloqueado. Testar zero/parcial/inativo/404/502 e dinheiro; validar coerência de subtotais, sem descarte silencioso de itens. Detalhes e efeitos colaterais no diagnóstico.
+O serviço retorna `valor_total` elegível e `valor_itens` de todas as linhas conhecidas. Cada linha mantém `valor_total` e recebe `valor_elegivel`; indisponíveis são identificadas como fora do total na tela. Estoque parcial deixa a linha inteira pendente, sem remover ou reduzir quantidades. Falhas de consulta ERP são erros; 404 vira pendência visível. A conversão central arredonda meio centavo para cima e as somas usam preço em centavos × quantidade, evitando reconversão de subtotais.
 
 ### KZN-318 — Número no ícone do carrinho está errado
 
@@ -112,8 +112,8 @@ Recomendo enviar enderecoId; principal serve somente de escolha inicial. Testar 
 | **O que está errado** | P1: Math.floor na conversão monetária perde centavos. |
 | **Como cheguei nele** | Execução real de paraCentavos(1.15) retornou 114. |
 | **Impacto** | Divergência de preço/subtotal/total e vínculo local de pedido. |
-| **Corrigi?** | Não; reservado para correção de causa monetária e regressões relacionadas ao KZN-312. |
-| **Arquivos alterados** | Nenhum funcional. Local: backend/src/lib/dinheiro.js. |
+| **Corrigi?** | Sim. Arredondamento explícito, rejeição de valores inválidos e cálculos em centavos inteiros. |
+| **Arquivos alterados** | backend/src/lib/dinheiro.js e backend/tests/dinheiro.test.mjs. |
 
 ### Problema 3
 

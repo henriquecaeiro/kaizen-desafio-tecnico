@@ -65,6 +65,7 @@ function LinhaItem({ item, aoAlterar, aoRemover, ocupado }) {
 
       <p className="shrink-0 text-right text-sm font-bold text-tinta-900">
         {dinheiro.format(item.valor_total)}
+        {!item.disponivel && <span className="block text-xs font-normal text-amber-700">Fora do total</span>}
       </p>
     </li>
   );
@@ -147,7 +148,7 @@ export function Carrinho() {
               <dd className="font-medium">{carrinho.quantidade_pecas}</dd>
             </div>
             <div className="flex justify-between border-t border-tinta-200 pt-3 text-base">
-              <dt className="font-semibold text-tinta-900">Total</dt>
+              <dt className="font-semibold text-tinta-900">Total elegível</dt>
               <dd className="font-bold text-tinta-900">{dinheiro.format(carrinho.valor_total)}</dd>
             </div>
           </dl>
