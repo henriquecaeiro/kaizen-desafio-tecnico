@@ -75,6 +75,10 @@ test('API rejeita carrinhos da outra conta em ativacao, alteracao e exclusao', a
   }
   const lista = (await e.chamada('/carrinhos', { cookie })).json.dados;
   assert.ok(lista.every(c => c.usuario_id === e.a.id));
+  for (const [metodo, rota, corpo] of [['POST', '/carrinho/itens', { codigo_produto: 'FIL', quantidade: 1 }],
+    ['PATCH', '/carrinho/itens/FIL', { quantidade: 1 }], ['DELETE', '/carrinho/itens/FIL'], ['DELETE', '/carrinho']]) {
+    assert.equal((await e.chamada(rota, { metodo, cookie, corpo, headers: { 'X-Carrinho-Id': String(alheio.id) } })).status, 404);
+  }
 });
 test('acao de aba antiga nao modifica carrinho recem-ativado', async () => {
   const lista = s.listarCarrinhos(e.a.id); const antes = lista.find(c => c.ativo);
@@ -86,4 +90,19 @@ test('adicao nao satura quantidades silenciosamente', async () => {
   e.semear([['FIL', 98]]);
   await assert.rejects(e.carrinho.adicionarItem(e.a.id, 'FIL', 5), { codigo: 'LIMITE_QUANTIDADE' });
   assert.equal((await e.carrinho.lerCarrinho(e.a.id)).quantidade_pecas, 98);
+});
+test('inclusoes simultaneas somam unidades sem perder atualizacao', async () => {
+  e.semear([]);
+  await Promise.all([e.carrinho.adicionarItem(e.a.id, 'FIL', 3), e.carrinho.adicionarItem(e.a.id, 'FIL', 4)]);
+  assert.equal((await e.carrinho.lerCarrinho(e.a.id)).quantidade_pecas, 7);
+});
+test('criacao concorrente respeita limite e ativacao concorrente deixa um ativo', async () => {
+  const cookie = await e.login(e.b);
+  while (s.listarCarrinhos(e.b.id).length < 9) s.criarCarrinho(e.b.id, 'Reserva');
+  const resultados = await Promise.all([1, 2, 3].map(i => e.chamada('/carrinhos', { metodo: 'POST', cookie, corpo: { nome: `Novo ${i}` } })));
+  assert.equal(resultados.filter(r => r.status === 201).length, 1);
+  assert.equal(resultados.filter(r => r.status === 409).length, 2);
+  const lista = s.listarCarrinhos(e.b.id);
+  await Promise.all(lista.slice(0, 2).map(c => e.chamada(`/carrinhos/${c.id}/ativar`, { metodo: 'PUT', cookie })));
+  assert.equal(s.listarCarrinhos(e.b.id).filter(c => c.ativo).length, 1);
 });
