@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api/cliente.js';
 
 const AuthContext = createContext(null);
@@ -11,21 +11,24 @@ const AuthContext = createContext(null);
 export function ProvedorAuth({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const versaoSessao = useRef(0);
 
   useEffect(() => {
     let ativo = true;
+    const versao = versaoSessao.current;
+    const vigente = () => ativo && versaoSessao.current === versao;
 
     api.auth
       .eu()
       .then((resposta) => {
-        if (ativo) setUsuario(resposta.dados);
+        if (vigente()) setUsuario(resposta.dados);
       })
       .catch(() => {
         // 401 aqui e o caso normal de visitante sem sessao.
-        if (ativo) setUsuario(null);
+        if (vigente()) setUsuario(null);
       })
       .finally(() => {
-        if (ativo) setCarregando(false);
+        if (vigente()) setCarregando(false);
       });
 
     return () => {
@@ -35,13 +38,18 @@ export function ProvedorAuth({ children }) {
 
   const entrar = useCallback(async (credenciais) => {
     const resposta = await api.auth.entrar(credenciais);
+    // A leitura de sessao iniciada no boot pode terminar depois deste login.
+    versaoSessao.current++;
     setUsuario(resposta.dados);
+    setCarregando(false);
     return resposta.dados;
   }, []);
 
   const cadastrar = useCallback(async (dados) => {
     const resposta = await api.auth.cadastrar(dados);
+    versaoSessao.current++;
     setUsuario(resposta.dados);
+    setCarregando(false);
     return resposta.dados;
   }, []);
 
@@ -50,7 +58,9 @@ export function ProvedorAuth({ children }) {
       await api.auth.sair();
     } finally {
       // Mesmo se a chamada falhar, o estado local tem que sair do ar logado.
+      versaoSessao.current++;
       setUsuario(null);
+      setCarregando(false);
     }
   }, []);
 
