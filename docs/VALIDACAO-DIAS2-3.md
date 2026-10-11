@@ -1,5 +1,8 @@
 # Validação dos Dias 2 e 3
 
+Registro histórico preservado. A auditoria e regressão posteriores estão em
+[VALIDACAO-FINAL.md](VALIDACAO-FINAL.md); os números abaixo não representam a suíte atual.
+
 ## Dia 2
 
 Workspace Linux: `/home/henrique/DEV/kaizen-desafio-tecnico`, Node 20.19.2,

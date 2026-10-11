@@ -1,0 +1,682 @@
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm.
+
+> kaizen-ecommerce-backend@1.0.0 test
+> node --test --test-concurrency=1 tests/*.test.mjs
+
+TAP version 13
+# Subtest: limite por conta normaliza e-mail, bloqueia e fornece Retry-After
+ok 1 - limite por conta normaliza e-mail, bloqueia e fornece Retry-After
+  ---
+  duration_ms: 661.796743
+  ...
+# Subtest: limite por IP nao pode ser burlado alterando X-Forwarded-For
+ok 2 - limite por IP nao pode ser burlado alterando X-Forwarded-For
+  ---
+  duration_ms: 1671.844982
+  ...
+# Subtest: janela expirada libera tentativas, nao um reinicio da aplicacao
+ok 3 - janela expirada libera tentativas, nao um reinicio da aplicacao
+  ---
+  duration_ms: 788.071435
+  ...
+# Subtest: cadastro conta payloads invalidos e bloqueia depois de cinco
+ok 4 - cadastro conta payloads invalidos e bloqueia depois de cinco
+  ---
+  duration_ms: 52.150614
+  ...
+# Subtest: tentativas concorrentes nao ultrapassam o limite da conta
+ok 5 - tentativas concorrentes nao ultrapassam o limite da conta
+  ---
+  duration_ms: 315.215498
+  ...
+# Subtest: proxy explicitamente confiavel usa o primeiro salto nao confiavel
+ok 6 - proxy explicitamente confiavel usa o primeiro salto nao confiavel
+  ---
+  duration_ms: 2371.505386
+  ...
+# Subtest: backup online preserva dados confirmados no WAL, migracoes e integridade
+ok 7 - backup online preserva dados confirmados no WAL, migracoes e integridade
+  ---
+  duration_ms: 26.246457
+  ...
+# Subtest: backup nao sobrescreve arquivo existente nem o banco original
+ok 8 - backup nao sobrescreve arquivo existente nem o banco original
+  ---
+  duration_ms: 3.424936
+  ...
+# Subtest: origem ausente e backup incompleto nao sao anunciados como sucesso
+ok 9 - origem ausente e backup incompleto nao sao anunciados como sucesso
+  ---
+  duration_ms: 1.75056
+  ...
+# Subtest: restauracao em novo caminho preserva selecao, itens e enderecos
+ok 10 - restauracao em novo caminho preserva selecao, itens e enderecos
+  ---
+  duration_ms: 1.9411
+  ...
+# Subtest: carrinho vazio tem total zero e nao fecha
+ok 11 - carrinho vazio tem total zero e nao fecha
+  ---
+  duration_ms: 567.45295
+  ...
+# Subtest: todos disponiveis: quantidades e centavos compoem o total
+ok 12 - todos disponiveis: quantidades e centavos compoem o total
+  ---
+  duration_ms: 159.165882
+  ...
+# Subtest: pendencia sem estoque: preserva linha, exclui do total e bloqueia checkout
+ok 13 - pendencia sem estoque: preserva linha, exclui do total e bloqueia checkout
+  ---
+  duration_ms: 45.630325
+  ...
+# Subtest: pendencia inativo: preserva linha, exclui do total e bloqueia checkout
+ok 14 - pendencia inativo: preserva linha, exclui do total e bloqueia checkout
+  ---
+  duration_ms: 31.14975
+  ...
+# Subtest: pendencia estoque insuficiente: preserva linha, exclui do total e bloqueia checkout
+ok 15 - pendencia estoque insuficiente: preserva linha, exclui do total e bloqueia checkout
+  ---
+  duration_ms: 21.44715
+  ...
+# Subtest: pendencia ausente: preserva linha, exclui do total e bloqueia checkout
+ok 16 - pendencia ausente: preserva linha, exclui do total e bloqueia checkout
+  ---
+  duration_ms: 15.015695
+  ...
+# [erp] status 503 em GET
+# [erp] status 503 em GET
+# Subtest: falha de consulta ERP nao se apresenta como carrinho vazio
+ok 17 - falha de consulta ERP nao se apresenta como carrinho vazio
+  ---
+  duration_ms: 8.629781
+  ...
+# Subtest: contador distingue produtos de unidades, incluindo pendencias
+ok 18 - contador distingue produtos de unidades, incluindo pendencias
+  ---
+  duration_ms: 31.790056
+  ...
+# Subtest: dois usuarios podem fechar carrinhos simultaneamente sem compartilhar dados
+ok 19 - dois usuarios podem fechar carrinhos simultaneamente sem compartilhar dados
+  ---
+  duration_ms: 199.983386
+  ...
+# Subtest: queda real do processo em VALIDANDO conserva reserva apos reinicio
+ok 20 - queda real do processo em VALIDANDO conserva reserva apos reinicio
+  ---
+  duration_ms: 706.495014
+  ...
+# Subtest: queda real do processo em ENVIANDO conserva reserva apos reinicio
+ok 21 - queda real do processo em ENVIANDO conserva reserva apos reinicio
+  ---
+  duration_ms: 875.15996
+  ...
+# Subtest: checkout respeita endereco casa e observacao
+ok 22 - checkout respeita endereco casa e observacao
+  ---
+  duration_ms: 713.339063
+  ...
+# Subtest: checkout respeita endereco oficina e observacao
+ok 23 - checkout respeita endereco oficina e observacao
+  ---
+  duration_ms: 17.573897
+  ...
+# Subtest: usuario com endereco unico e endereco recem-criado
+ok 24 - usuario com endereco unico e endereco recem-criado
+  ---
+  duration_ms: 31.987698
+  ...
+# Subtest: endereco excluido ou alheio rejeita checkout e preserva itens
+ok 25 - endereco excluido ou alheio rejeita checkout e preserva itens
+  ---
+  duration_ms: 17.120684
+  ...
+# Subtest: editar endereco depois nao altera snapshot do pedido
+ok 26 - editar endereco depois nao altera snapshot do pedido
+  ---
+  duration_ms: 15.589144
+  ...
+# Subtest: falha de checkout preserva itens e nao grava vinculo
+ok 27 - falha de checkout preserva itens e nao grava vinculo
+  ---
+  duration_ms: 18.372339
+  ...
+# Subtest: rotas exigem sessao, validam endereco e negam pedido alheio
+ok 28 - rotas exigem sessao, validam endereco e negam pedido alheio
+  ---
+  duration_ms: 156.747694
+  ...
+# Subtest: checkout limpa somente carrinho capturado mesmo se ativo mudar durante HTTP
+ok 29 - checkout limpa somente carrinho capturado mesmo se ativo mudar durante HTTP
+  ---
+  duration_ms: 623.215662
+  ...
+# Subtest: duas conexoes SQLite nao conseguem fechar o mesmo carrinho simultaneamente
+ok 30 - duas conexoes SQLite nao conseguem fechar o mesmo carrinho simultaneamente
+  ---
+  duration_ms: 30.96018
+  ...
+# Subtest: incluir, alterar, remover, esvaziar e excluir sao rejeitados durante fechamento
+ok 31 - incluir, alterar, remover, esvaziar e excluir sao rejeitados durante fechamento
+  ---
+  duration_ms: 22.30244
+  ...
+# Subtest: adicao iniciada antes da reserva e revalidada ao retornar do ERP
+ok 32 - adicao iniciada antes da reserva e revalidada ao retornar do ERP
+  ---
+  duration_ms: 44.142124
+  ...
+# Subtest: retry com mesma tentativa concluida retorna pedido sem criar outro
+ok 33 - retry com mesma tentativa concluida retorna pedido sem criar outro
+  ---
+  duration_ms: 18.405569
+  ...
+# Subtest: HTTP concorrente rejeita segunda tentativa e nega carrinho alheio
+ok 34 - HTTP concorrente rejeita segunda tentativa e nega carrinho alheio
+  ---
+  duration_ms: 148.03182
+  ...
+# Subtest: recusa de estoque libera bloqueio e preserva os outros carrinhos
+ok 35 - recusa de estoque libera bloqueio e preserva os outros carrinhos
+  ---
+  duration_ms: 36.664073
+  ...
+# [pedido] ERP criou MOCK-7; tentativa 81bd1ede-cd43-4aff-bf43-3b2caf2e5c1d exige reconciliacao local.
+# Subtest: falha local depois do aceite faz rollback do vinculo e limpeza; registra numero para reconciliar
+ok 36 - falha local depois do aceite faz rollback do vinculo e limpeza; registra numero para reconciliar
+  ---
+  duration_ms: 19.162344
+  ...
+# Subtest: resposta invalida apos aceite mantem tentativa incerta
+ok 37 - resposta invalida apos aceite mantem tentativa incerta
+  ---
+  duration_ms: 17.354046
+  ...
+# [erp] falha de rede em POST; tipo=timeout
+# Subtest: timeout apos aceite preserva itens e bloqueia retry, inclusive em outra conexao
+ok 38 - timeout apos aceite preserva itens e bloqueia retry, inclusive em outra conexao
+  ---
+  duration_ms: 274.98901
+  ...
+# Subtest: configuracao de desenvolvimento permite origem exata e proxy desabilitado
+ok 39 - configuracao de desenvolvimento permite origem exata e proxy desabilitado
+  ---
+  duration_ms: 3.639899
+  ...
+# Subtest: CORS rejeita wildcard, null, caminho e credenciais na origem
+ok 40 - CORS rejeita wildcard, null, caminho e credenciais na origem
+  ---
+  duration_ms: 1.656429
+  ...
+# Subtest: trust proxy nao aceita configuracao que confia em qualquer remetente
+ok 41 - trust proxy nao aceita configuracao que confia em qualquer remetente
+  ---
+  duration_ms: 0.762145
+  ...
+# Subtest: base ERP nao permite credenciais ou parametros e erro nao exibe valores
+ok 42 - base ERP nao permite credenciais ou parametros e erro nao exibe valores
+  ---
+  duration_ms: 0.86798
+  ...
+# Subtest: timeout e expiracao invalida falham antes de iniciar servidor
+ok 43 - timeout e expiracao invalida falham antes de iniciar servidor
+  ---
+  duration_ms: 2.20209
+  ...
+# Subtest: producao sem build nao sobe um backend aparentemente saudavel nem migra banco
+ok 44 - producao sem build nao sobe um backend aparentemente saudavel nem migra banco
+  ---
+  duration_ms: 615.505292
+  ...
+# Subtest: origem permitida recebe CORS com credenciais e Vary
+ok 45 - origem permitida recebe CORS com credenciais e Vary
+  ---
+  duration_ms: 192.86364
+  ...
+# Subtest: origens arbitrarias, null e sufixos parecidos sao rejeitados sem headers permissivos
+ok 46 - origens arbitrarias, null e sufixos parecidos sao rejeitados sem headers permissivos
+  ---
+  duration_ms: 22.172547
+  ...
+# Subtest: requisicao sem Origin continua funcionando sem liberar CORS
+ok 47 - requisicao sem Origin continua funcionando sem liberar CORS
+  ---
+  duration_ms: 11.697338
+  ...
+# Subtest: preflight permitido retorna 204 e o nao permitido retorna 403
+ok 48 - preflight permitido retorna 204 e o nao permitido retorna 403
+  ---
+  duration_ms: 9.714388
+  ...
+# Subtest: conversao monetaria 0 → 0
+ok 49 - conversao monetaria 0 → 0
+  ---
+  duration_ms: 3.631921
+  ...
+# Subtest: conversao monetaria 1.15 → 115
+ok 50 - conversao monetaria 1.15 → 115
+  ---
+  duration_ms: 0.320036
+  ...
+# Subtest: conversao monetaria 1.005 → 101
+ok 51 - conversao monetaria 1.005 → 101
+  ---
+  duration_ms: 0.489786
+  ...
+# Subtest: conversao monetaria 10.075 → 1008
+ok 52 - conversao monetaria 10.075 → 1008
+  ---
+  duration_ms: 0.287713
+  ...
+# Subtest: conversao monetaria 19.99 → 1999
+ok 53 - conversao monetaria 19.99 → 1999
+  ---
+  duration_ms: 0.207634
+  ...
+# Subtest: conversao monetaria 684 → 68400
+ok 54 - conversao monetaria 684 → 68400
+  ---
+  duration_ms: 0.171118
+  ...
+# Subtest: soma e multiplicacao usam centavos inteiros
+ok 55 - soma e multiplicacao usam centavos inteiros
+  ---
+  duration_ms: 0.301452
+  ...
+# Subtest: valores invalidos sao rejeitados
+ok 56 - valores invalidos sao rejeitados
+  ---
+  duration_ms: 0.881415
+  ...
+# Subtest: /catalogo: JSON malformado nao se apresenta como sucesso vazio
+ok 57 - /catalogo: JSON malformado nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 35.535639
+  ...
+# Subtest: /catalogo: corpo vazio nao se apresenta como sucesso vazio
+ok 58 - /catalogo: corpo vazio nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 10.983005
+  ...
+# Subtest: /catalogo: null nao se apresenta como sucesso vazio
+ok 59 - /catalogo: null nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 16.065712
+  ...
+# Subtest: /catalogo: array na raiz nao se apresenta como sucesso vazio
+ok 60 - /catalogo: array na raiz nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 18.551465
+  ...
+# Subtest: /catalogo: dados ausentes nao se apresenta como sucesso vazio
+ok 61 - /catalogo: dados ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 20.659269
+  ...
+# Subtest: /catalogo: tipo incorreto nao se apresenta como sucesso vazio
+ok 62 - /catalogo: tipo incorreto nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 29.716866
+  ...
+# Subtest: /catalogo: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+ok 63 - /catalogo: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 21.167843
+  ...
+# Subtest: /catalogo/FIL: JSON malformado nao se apresenta como sucesso vazio
+ok 64 - /catalogo/FIL: JSON malformado nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 14.392597
+  ...
+# Subtest: /catalogo/FIL: corpo vazio nao se apresenta como sucesso vazio
+ok 65 - /catalogo/FIL: corpo vazio nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 12.827182
+  ...
+# Subtest: /catalogo/FIL: null nao se apresenta como sucesso vazio
+ok 66 - /catalogo/FIL: null nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 10.14075
+  ...
+# Subtest: /catalogo/FIL: array na raiz nao se apresenta como sucesso vazio
+ok 67 - /catalogo/FIL: array na raiz nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 9.64275
+  ...
+# Subtest: /catalogo/FIL: dados ausentes nao se apresenta como sucesso vazio
+ok 68 - /catalogo/FIL: dados ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 9.611088
+  ...
+# Subtest: /catalogo/FIL: tipo incorreto nao se apresenta como sucesso vazio
+ok 69 - /catalogo/FIL: tipo incorreto nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.871094
+  ...
+# Subtest: /catalogo/FIL: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+ok 70 - /catalogo/FIL: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.089706
+  ...
+# Subtest: /catalogo/categorias: JSON malformado nao se apresenta como sucesso vazio
+ok 71 - /catalogo/categorias: JSON malformado nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 7.85083
+  ...
+# Subtest: /catalogo/categorias: corpo vazio nao se apresenta como sucesso vazio
+ok 72 - /catalogo/categorias: corpo vazio nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.867595
+  ...
+# Subtest: /catalogo/categorias: null nao se apresenta como sucesso vazio
+ok 73 - /catalogo/categorias: null nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.201401
+  ...
+# Subtest: /catalogo/categorias: array na raiz nao se apresenta como sucesso vazio
+ok 74 - /catalogo/categorias: array na raiz nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 5.592573
+  ...
+# Subtest: /catalogo/categorias: dados ausentes nao se apresenta como sucesso vazio
+ok 75 - /catalogo/categorias: dados ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 5.167743
+  ...
+# Subtest: /catalogo/categorias: tipo incorreto nao se apresenta como sucesso vazio
+ok 76 - /catalogo/categorias: tipo incorreto nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 5.689647
+  ...
+# Subtest: /catalogo/categorias: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+ok 77 - /catalogo/categorias: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 4.095792
+  ...
+# Subtest: /pedidos/MOCK-1: JSON malformado nao se apresenta como sucesso vazio
+ok 78 - /pedidos/MOCK-1: JSON malformado nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 8.38101
+  ...
+# Subtest: /pedidos/MOCK-1: corpo vazio nao se apresenta como sucesso vazio
+ok 79 - /pedidos/MOCK-1: corpo vazio nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 7.188783
+  ...
+# Subtest: /pedidos/MOCK-1: null nao se apresenta como sucesso vazio
+ok 80 - /pedidos/MOCK-1: null nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 15.817526
+  ...
+# Subtest: /pedidos/MOCK-1: array na raiz nao se apresenta como sucesso vazio
+ok 81 - /pedidos/MOCK-1: array na raiz nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.214576
+  ...
+# Subtest: /pedidos/MOCK-1: dados ausentes nao se apresenta como sucesso vazio
+ok 82 - /pedidos/MOCK-1: dados ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 5.707745
+  ...
+# Subtest: /pedidos/MOCK-1: tipo incorreto nao se apresenta como sucesso vazio
+ok 83 - /pedidos/MOCK-1: tipo incorreto nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 6.384269
+  ...
+# Subtest: /pedidos/MOCK-1: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+ok 84 - /pedidos/MOCK-1: campos obrigatorios ausentes nao se apresenta como sucesso vazio
+  ---
+  duration_ms: 5.906188
+  ...
+# Subtest: respostas validas preservam produtos, categorias e detalhe do pedido
+ok 85 - respostas validas preservam produtos, categorias e detalhe do pedido
+  ---
+  duration_ms: 25.102746
+  ...
+# Subtest: paginacao invalida e produto com preco/estoque/ativo invalidos sao rejeitados
+ok 86 - paginacao invalida e produto com preco/estoque/ativo invalidos sao rejeitados
+  ---
+  duration_ms: 36.778345
+  ...
+# Subtest: lista legitimamente vazia continua sendo sucesso
+ok 87 - lista legitimamente vazia continua sendo sucesso
+  ---
+  duration_ms: 12.981442
+  ...
+# [erp] falha de rede em GET; tipo=timeout
+# [erp] falha de rede em GET; tipo=timeout
+# [erp] falha de rede em GET; tipo=timeout
+# [erp] falha de rede em GET; tipo=timeout
+# Subtest: timeout e erro de integracao, nao ausencia de produtos/pedidos
+ok 88 - timeout e erro de integracao, nao ausencia de produtos/pedidos
+  ---
+  duration_ms: 1027.845712
+  ...
+# [erp] status 503 em GET
+# [erp] status 503 em GET
+# [erp] status 503 em GET
+# [erp] status 503 em GET
+# Subtest: HTTP 5xx e erro de integracao, nao ausencia de produtos/pedidos
+ok 89 - HTTP 5xx e erro de integracao, nao ausencia de produtos/pedidos
+  ---
+  duration_ms: 32.742391
+  ...
+# [erp] token recusado pelo ERP - confira ERP_TOKEN no .env
+# [erp] token recusado pelo ERP - confira ERP_TOKEN no .env
+# [erp] token recusado pelo ERP - confira ERP_TOKEN no .env
+# [erp] token recusado pelo ERP - confira ERP_TOKEN no .env
+# Subtest: HTTP 401 e erro de integracao, nao ausencia de produtos/pedidos
+ok 90 - HTTP 401 e erro de integracao, nao ausencia de produtos/pedidos
+  ---
+  duration_ms: 27.932872
+  ...
+# Subtest: historico informa status indisponivel sem inventar lista vazia nem perder dados locais
+ok 91 - historico informa status indisponivel sem inventar lista vazia nem perder dados locais
+  ---
+  duration_ms: 8.816343
+  ...
+# Subtest: carrinho com resposta invalida de produto informa erro, sem virar vazio
+ok 92 - carrinho com resposta invalida de produto informa erro, sem virar vazio
+  ---
+  duration_ms: 10.215831
+  ...
+# Subtest: health verifica corpo alem de HTTP 200
+ok 93 - health verifica corpo alem de HTTP 200
+  ---
+  duration_ms: 268.21596
+  ...
+# Subtest: imagem valida preserva tipo; tipo inesperado e falhas upstream sao erros
+ok 94 - imagem valida preserva tipo; tipo inesperado e falhas upstream sao erros
+  ---
+  duration_ms: 296.500597
+  ...
+# [8763a441-39e7-4507-8c4f-78df1cd8bc4c] imagem interrompida
+# Subtest: stream interrompido encerra conexao sem derrubar backend
+ok 95 - stream interrompido encerra conexao sem derrubar backend
+  ---
+  duration_ms: 50.819241
+  ...
+# Subtest: logs nao contêm query, cookie, request-id arbitrario ou corpo remoto sensivel
+ok 96 - logs nao contêm query, cookie, request-id arbitrario ou corpo remoto sensivel
+  ---
+  duration_ms: 10.641895
+  ...
+# Subtest: banco novo e inicializacao repetida
+ok 97 - banco novo e inicializacao repetida
+  ---
+  duration_ms: 11.402764
+  ...
+# Subtest: banco antigo com itens preserva contas e enderecos
+ok 98 - banco antigo com itens preserva contas e enderecos
+  ---
+  duration_ms: 7.410147
+  ...
+# Subtest: banco antigo sem itens preserva contas e enderecos
+ok 99 - banco antigo sem itens preserva contas e enderecos
+  ---
+  duration_ms: 4.824629
+  ...
+# Subtest: erro na migracao faz rollback sem perder dados antigos
+ok 100 - erro na migracao faz rollback sem perder dados antigos
+  ---
+  duration_ms: 3.20123
+  ...
+# Subtest: indice impede dois carrinhos ativos para a mesma conta
+ok 101 - indice impede dois carrinhos ativos para a mesma conta
+  ---
+  duration_ms: 4.706902
+  ...
+# Subtest: banco na versao 1 recebe apenas a migracao de tentativas
+ok 102 - banco na versao 1 recebe apenas a migracao de tentativas
+  ---
+  duration_ms: 5.041372
+  ...
+# Subtest: exclusao de usuario remove itens e tentativas sem orfaos
+ok 103 - exclusao de usuario remove itens e tentativas sem orfaos
+  ---
+  duration_ms: 5.277532
+  ...
+# Subtest: primeiro acesso cria padrao, renomeia e persiste selecao
+ok 104 - primeiro acesso cria padrao, renomeia e persiste selecao
+  ---
+  duration_ms: 476.967579
+  ...
+# Subtest: itens ficam isolados e precos sao consultados novamente no ERP
+ok 105 - itens ficam isolados e precos sao consultados novamente no ERP
+  ---
+  duration_ms: 215.661662
+  ...
+# Subtest: excluir ativo promove outro; excluir ultimo recria padrao vazio
+ok 106 - excluir ativo promove outro; excluir ultimo recria padrao vazio
+  ---
+  duration_ms: 3.505994
+  ...
+# Subtest: limite de dez carrinhos e protegido em transacao
+ok 107 - limite de dez carrinhos e protegido em transacao
+  ---
+  duration_ms: 7.778025
+  ...
+# Subtest: servicos negam ids alheios sem revelar dados
+ok 108 - servicos negam ids alheios sem revelar dados
+  ---
+  duration_ms: 3.734379
+  ...
+# Subtest: rotas gerenciam carrinhos e rejeitam nomes, ids e quantidades invalidos
+ok 109 - rotas gerenciam carrinhos e rejeitam nomes, ids e quantidades invalidos
+  ---
+  duration_ms: 260.05017
+  ...
+# Subtest: API rejeita carrinhos da outra conta em ativacao, alteracao e exclusao
+ok 110 - API rejeita carrinhos da outra conta em ativacao, alteracao e exclusao
+  ---
+  duration_ms: 95.361607
+  ...
+# Subtest: acao de aba antiga nao modifica carrinho recem-ativado
+ok 111 - acao de aba antiga nao modifica carrinho recem-ativado
+  ---
+  duration_ms: 2.233878
+  ...
+# Subtest: adicao nao satura quantidades silenciosamente
+ok 112 - adicao nao satura quantidades silenciosamente
+  ---
+  duration_ms: 7.656422
+  ...
+# Subtest: inclusoes simultaneas somam unidades sem perder atualizacao
+ok 113 - inclusoes simultaneas somam unidades sem perder atualizacao
+  ---
+  duration_ms: 22.639849
+  ...
+# Subtest: criacao concorrente respeita limite e ativacao concorrente deixa um ativo
+ok 114 - criacao concorrente respeita limite e ativacao concorrente deixa um ativo
+  ---
+  duration_ms: 148.091501
+  ...
+# Subtest: primeiro endereco e principal; criar outro nao muda a selecao, salvo principal explicito
+ok 115 - primeiro endereco e principal; criar outro nao muda a selecao, salvo principal explicito
+  ---
+  duration_ms: 7.12409
+  ...
+# Subtest: editar principal sem mudar selecao preserva; desmarcar promove outro
+ok 116 - editar principal sem mudar selecao preserva; desmarcar promove outro
+  ---
+  duration_ms: 3.178969
+  ...
+# Subtest: excluir principal promove mais antigo; unico nao pode ser desmarcado
+ok 117 - excluir principal promove mais antigo; unico nao pode ser desmarcado
+  ---
+  duration_ms: 2.438069
+  ...
+# Subtest: indice unico e transacao impedem dois principais e revertem falha de edicao
+ok 118 - indice unico e transacao impedem dois principais e revertem falha de edicao
+  ---
+  duration_ms: 3.199101
+  ...
+# Subtest: API rejeita endereco alheio em edicao/exclusao e preserva principal
+ok 119 - API rejeita endereco alheio em edicao/exclusao e preserva principal
+  ---
+  duration_ms: 312.894234
+  ...
+# Subtest: telefone aceita preenchimento, substituicao, vazio e null; omitido nao altera
+ok 120 - telefone aceita preenchimento, substituicao, vazio e null; omitido nao altera
+  ---
+  duration_ms: 178.952822
+  ...
+# Subtest: migracao repara selecao ausente ou duplicada sem alterar conteudo ou datas
+ok 121 - migracao repara selecao ausente ou duplicada sem alterar conteudo ou datas
+  ---
+  duration_ms: 7.257946
+  ...
+# Subtest: scanner verifica arquivos e historico sem imprimir o valor identificado
+ok 122 - scanner verifica arquivos e historico sem imprimir o valor identificado
+  ---
+  duration_ms: 1139.33457
+  ...
+# Subtest: logout revoga o cookie antigo, e nao outra sessao da conta
+ok 123 - logout revoga o cookie antigo, e nao outra sessao da conta
+  ---
+  duration_ms: 411.173645
+  ...
+# Subtest: troca de senha revoga todas as sessoes anteriores e emite nova sessao
+ok 124 - troca de senha revoga todas as sessoes anteriores e emite nova sessao
+  ---
+  duration_ms: 420.272167
+  ...
+# Subtest: senha incorreta nao revoga a sessao
+ok 125 - senha incorreta nao revoga a sessao
+  ---
+  duration_ms: 104.652427
+  ...
+# Subtest: JWT antigo sem jti, expirado, assinatura invalida e jti alheio sao rejeitados
+ok 126 - JWT antigo sem jti, expirado, assinatura invalida e jti alheio sao rejeitados
+  ---
+  duration_ms: 13.788092
+  ...
+# Subtest: expiracao persistida e exclusao de conta invalidam sessao
+ok 127 - expiracao persistida e exclusao de conta invalidam sessao
+  ---
+  duration_ms: 2.235731
+  ...
+# Subtest: login validado com hash antigo nao abre sessao depois de trocar senha
+ok 128 - login validado com hash antigo nao abre sessao depois de trocar senha
+  ---
+  duration_ms: 139.392847
+  ...
+# Subtest: trocas concorrentes de senha nao sobrescrevem credencial nova
+ok 129 - trocas concorrentes de senha nao sobrescrevem credencial nova
+  ---
+  duration_ms: 149.874024
+  ...
+# Subtest: cadastro, login e troca preservam espacos e normalizacao Unicode existente
+ok 130 - cadastro, login e troca preservam espacos e normalizacao Unicode existente
+  ---
+  duration_ms: 423.28751
+  ...
+1..130
+# tests 130
+# suites 0
+# pass 130
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27005.052598

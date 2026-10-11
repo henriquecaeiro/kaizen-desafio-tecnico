@@ -1,18 +1,18 @@
 # Relatório de entrega
 
 **Candidato:** Henrique Caeiro
-**Data de entrega:** em preparação; Dias 2 e 3 executados em 10/10/2026 (Brasília).
+**Data de entrega:** 11/10/2026 (publicação técnica; envio à empresa e implantação pública ainda pendentes).
 **Tempo aproximado dedicado:** não cronometrado.
 
-Dias 2 e 3 implementados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); comandos/resultados históricos em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Auditoria final em execução em 11/10/2026; implantação pública depende de infraestrutura autorizada.
+Chamados, múltiplos carrinhos e auditoria final implementados/testados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); resultados anteriores preservados em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Resultados atuais em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md). **Entrega parcial somente pela implantação pública:** faltam host/acesso/domínio e credencial de produção autorizados; não há URL pública da solução.
 
 ---
 
 ## 1. Subindo o projeto
 
-Dia 1 executado em Windows/Node 24 LTS. Dias 2 e 3 no workspace Linux, Node 20.19.2 compatível com engines, npm e Chromium instalado. Instalação com npm ci em backend/frontend; better-sqlite3 compilado localmente. Execução e testes estão no README. Configurar backend/.env a partir de .env.example, sem publicar segredos.
+Dia 1 executado em Windows/Node 24 LTS. Dias 2 e 3 e revisão final no workspace Linux, inicialmente Node 20.19.2 e Chromium instalado. Confirmei main/remoto e merges anteriores; não encontrei o workspace Windows montado. Validação final adicional com Node 24.21.0 de .nvmrc, em cópia isolada com npm ci nos dois projetos, sem substituir dependências do workspace. Execução no README; segredos somente no ambiente.
 
-npm run db:init ou início do servidor aplica migrações, sem db:reset. Não alterei banco existente para testar; fixtures usam SQLite temporário. Não existe implantação pública da solução ainda. Em produção, o backend serve frontend/dist na mesma origem.
+npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express serve frontend/dist na mesma origem e recusa iniciar sem build. Serviço systemd/Caddy, variáveis privadas, backup online/restauração e atualização estão em [IMPLANTACAO.md](docs/IMPLANTACAO.md). Configurações e produção local foram validadas; host público não foi disponibilizado. Não criei cobrança nem usei infraestrutura pessoal/corporativa.
 
 Push HTTPS falhou por falta de credencial no ambiente. Chave SSH existente autenticou na conta de Henrique e permitiu publicar as branches/main. Nenhum push foi dirigido ao repositório da empresa. package-lock.json não versionado na raiz já existia e foi preservado.
 
@@ -84,11 +84,11 @@ Evidências originais e prioridades estão na auditoria do Dia 1.
 | A09 estoque parcial | Quantidade pode ser reduzida mesmo com pendência; backend revalida. |
 | A14/A15 entrada e saturação | Validação rejeita booleano/array e inteiro inseguro; somar acima de 99 dá conflito, sem sucesso parcial. |
 | A18 layout | Header/grid responsivos e painel testados em 360/390/768/1440 px. |
-| A16 contrato ERP | Criação de pedido valida número/total. Outras leituras ainda exigem revisão. |
+| A16 contrato ERP | Criação valida número/total; auditoria final valida produto, catálogo/paginação, categorias, detalhe, health e imagens. |
 
 A01 teve remoção de segredos no Dia 1; rotação externa não foi realizada. Na auditoria final foram corrigidos A07 (origens CORS exatas e proxies explícitos), A10 (telefone vazio/null versus omitido), A11 (principal em transação e índice único), A12 (senhas sem trim), A13 (JWT com sessão revogável), A16 (contratos de leitura), A19 (limites persistidos por conta/IP), A21 (retry e limpeza de erro em pedidos) e A22 (streams e logs sem query/corpo remoto).
 
-Migrações 003/004 criam sessoes e autenticacao_limites; 005 normaliza seleção de endereço sem alterar conteúdo/datas e cria índice parcial. Logout revoga apenas aquela sessão. Troca de senha revoga todas as anteriores e renova o cookie atual. JWT sem registro/jti é rejeitado. Login confere novamente o hash antes de abrir sessão; trocas concorrentes usam comparação do hash na atualização. Requisições já autorizadas em andamento não são canceladas.
+Migrações 003/004 criam sessoes e autenticacao_limites; 005 normaliza seleção de endereço sem alterar conteúdo/datas e cria índice parcial. Logout revoga apenas aquela sessão. Troca de senha revoga todas as anteriores e renova o cookie atual. JWT sem registro/jti é rejeitado. Login confere novamente o hash antes de abrir sessão; trocas concorrentes usam comparação do hash na atualização. Respostas 401 antigas não apagam cookie de login mais recente. Requisições já autorizadas em andamento não são canceladas.
 
 Login: 30/IP e 10/conta em 15 minutos; cadastro: 5/IP por hora; senha: 10/IP e 5/conta em 15 minutos. Contadores incluem sucesso e payload inválido, expiram, usam chaves SHA-256 e sobrevivem a reinício. Podem restringir usuários atrás de NAT ou permitir bloqueio temporário dirigido a uma conta; não substituem proteção contra DDoS na borda. TRUST_PROXY é vazio por padrão, ignorando X-Forwarded-For.
 
@@ -144,15 +144,23 @@ Carrinho fica fixado antes da espera. Mutações de itens/exclusão dele são bl
 
 Timeout, 5xx, resposta inválida ou falha local depois do aceite preservam itens e bloqueio para conferência. Número conhecido fica na tentativa/log. Queda de processo também não expira reserva automaticamente. UUID concluído retorna pedido existente; assinatura impede reutilizar com dados diferentes. Não há garantia exactly-once entre sistemas sem suporte do SIAC.
 
+Auditoria independente manteve o mecanismo e acrescentou testes de dois usuários simultâneos e encerramento abrupto/reinício de processo nos estados VALIDANDO/ENVIANDO. Reservas continuam bloqueadas, sem reenvio. Tentativas nesses estados após manutenção também exigem conferência operacional; não é seguro presumir recusa pelo tempo decorrido.
+
 ---
 
 ## 5. Como testei
 
 Testes node:test com SQLite temporário e ERP HTTP mock; fetch limitado a loopback. Navegador usa aplicação modificada pelo Vite e backend temporário. Nenhum pedido real foi gerado.
 
-Dia 2 integrado: 23 testes backend e 12 navegador aprovados; build aprovado. Suíte final dos Dias 2/3: **51 backend + 25 navegador = 76 aprovados, zero falhas/skips**. Build e smoke do bootstrap production aprovados. Resultados/saídas em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Cobertura de migração, isolamento de dois usuários, gestão/limites, itens/preço/estoque, checkout, concorrência HTTP/duas conexões, falha local/timeout após aceite, sessão, URL e quatro larguras. Screenshots fictícios em docs/evidencias/dia3-carrinho-*.png.
+Histórico preservado: Dia 2 integrado 23 backend/12 navegador; Dias 2/3 finais **51 + 25 = 76 aprovados**. Reexecução inicial confirmou os 76. Auditoria final ampliou para **130 backend + 35 navegador = 165 testes**, sem falhas/skips na execução aprovada, incluindo Node 24.21.0 com instalação limpa. Build Vite (62 módulos) e smoke de produção/reinício aprovados. Saídas e comandos em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
 
-Comandos: backend npm test; frontend npm test e npm run build; git diff --check; node backend/scripts/verificar-segredos.mjs. O diagnóstico histórico afirma bugs anteriores e não é evidência de regressão aprovada. Não executei escrita no SIAC real, carga, Safari/Firefox ou produção pública.
+Cobertura: quatro chamados, migrações, autorização entre contas, múltiplos carrinhos, preço/estoque, checkout e concorrência; CORS, replay/expiração/concorrência de sessões, senhas com espaços/Unicode, rate limit/proxy, principal/telefone, ERP malformado/timeout/5xx/401, stream/logs e backup/restauração. Frontend modificado realmente executado em Chromium com mock isolado.
+
+Dez telas em 360/390/768/1440 px: overflow, nomes/labels, botões e contraste de textos renderizados (canvas, fundos/opacity, extremos do gradiente). Drawer cobre Tab/Shift+Tab/Escape/retorno de foco; atalho pula ao conteúdo. Corrigi área de clique, observação sem nome acessível e opacidade da ajuda do e-mail. Capturas finais fictícias de produto/painel, com inspeção visual por imagem; não houve teste manual humano em dispositivo real ou certificação WCAG.
+
+Comandos: backend npm test; frontend npm test/npm run build; node scripts/smoke-producao.mjs e verificar-segredos.mjs no backend; git diff --check; node --check; npm audit; systemd-analyze verify; caddy validate. Scanner verifica arquivos/blobs do histórico e segredos conhecidos do ambiente, sem imprimir valores. npm audit não apontou vulnerabilidades conhecidas na execução. Diagnóstico antigo não foi usado como aprovação. Health público do SIAC teve consulta somente leitura 200/ok; não validei catálogo autenticado real nesta etapa nem gerei pedido real.
+
+Falhas de desenvolvimento foram registradas: seletores iniciais incorretos, alvos pequenos/label/contraste corrigidos; teste de restauração esperava carrinho de usuário que ainda não havia acessado; fixture ajustada para exercitar esse acesso. Um mock excedeu timeout de 250ms com muitos arquivos concorrentes. Suítes passaram após serializar arquivos; concorrência de requisições/conexões/processos continua dentro dos casos. Essas execuções falhas/interrompidas não foram usadas como aprovação.
 
 ---
 
@@ -169,14 +177,14 @@ Comandos: backend npm test; frontend npm test e npm run build; git diff --check;
 
 ## 7. O que faria com mais tempo
 
-Idempotência/reconciliação por chave no SIAC, fluxo administrativo de conferência, auditoria de sessões/CORS e autenticação, validação dos contratos de leitura, testes em outros navegadores e operação com backup/restauração.
+Idempotência/reconciliação por chave no SIAC e interface administrativa de conferência; publicar em infraestrutura autorizada e validar operação real; testar Safari/Firefox, carga e leitor de tela. Proteção de borda contra DDoS e políticas de retenção/backup externo dependem da infraestrutura.
 
 ---
 
 ## 8. Outras observações
 
-[ENTREVISTA-DIAS2-3.md](docs/ENTREVISTA-DIAS2-3.md) resume as decisões do código. [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md) organiza segurança, problemas ocultos, implantação obrigatória e revisão final. Não foi criada branch de auditoria nem enviado e-mail.
+[ENTREVISTA-DIAS2-3.md](docs/ENTREVISTA-DIAS2-3.md) é histórico. Decisões atuais em [ENTREVISTA-FINAL.md](docs/ENTREVISTA-FINAL.md); pendências reais em [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md); mensagem pronta para revisão em [EMAIL-ENTREGA.md](docs/EMAIL-ENTREGA.md). Nenhum e-mail enviado.
 
 Marcadores da base lidos: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho).
 
-Histórico inicial e commits do Dia 1 preservados; branches separadas e merges no-ff. Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Entrega pública ainda exige hospedagem e validação do Dia 4.
+Histórico inicial e commits anteriores preservados; branches separadas e merges no-ff. Auditoria em fix/security-and-integrity; preparação/documentação em chore/deployment-and-delivery; integração na main do repositório público de Henrique, sem force-push. package-lock.json não versionado preexistente na raiz não faz parte da entrega. Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantação é o requisito bloqueante restante: não declarar entrega 100% concluída sem URL real validada. Rotação SIAC e conferência de pedidos permanecem responsabilidades externas explicitadas.

@@ -108,6 +108,7 @@ for (const largura of [360, 390, 768, 1440]) test(`telas principais em ${largura
   }
   await e.page.goto(`${e.base}/produto/FIL`);
   await e.page.getByRole('heading', { name: 'Filtro', exact: true }).waitFor();
-  await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-produto-${largura}.png`, import.meta.url)), fullPage: true });
+  if (process.env.CAPTURAR_EVIDENCIAS === 'true')
+    await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-produto-${largura}.png`, import.meta.url)), fullPage: true });
   assert.deepEqual(e.erros, []);
 });
