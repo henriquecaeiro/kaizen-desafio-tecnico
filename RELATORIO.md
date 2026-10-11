@@ -144,7 +144,9 @@ Não implementado no Dia 1, conforme escopo. Existe um carrinho implícito por u
 
 ### Modelagem
 
-Não alterada. Banco tem usuarios, enderecos, carrinho_itens e pedidos_usuario. Itens usam UNIQUE(usuario_id, codigo_produto); não há tabela carrinhos. Produtos/estoque vêm do SIAC. Snapshot de endereço é JSON no vínculo do pedido. WAL, foreign_keys e busy_timeout ativos. Schema é idempotente, mas não há migrações versionadas; migração será necessária para preservar itens existentes ao introduzir carrinhos.
+Tabela `carrinhos`: id, usuario_id, nome (1–80 caracteres), ativo e datas. Índice único parcial limita um ativo por usuário. `carrinho_itens` referencia carrinho com cascade e UNIQUE(carrinho_id, codigo_produto), guardando somente código, quantidade e data. Preço/estoque continuam no SIAC.
+
+`schema.sql` permanece como base v0. Migração 001 cria um padrão por usuário existente e transfere itens preservando ids, códigos, quantidades e datas. `PRAGMA user_version` controla execução única. Inicialização e migrações rodam na mesma transação IMMEDIATE; inconsistência, perda de linhas ou falha referencial causam rollback. Sem db:reset. Testes: banco novo/antigo, com/sem itens, repetição, cascade, índice de ativo e rollback com item órfão.
 
 Mudanças no contrato da API — endpoints novos ou alterados:
 

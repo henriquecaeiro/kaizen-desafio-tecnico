@@ -25,6 +25,8 @@ Essas execuções não foram contadas como validação aprovada.
 As branches são publicadas no repositório de Henrique. HTTPS sem credencial
 falhou; push passou usando a chave SSH já existente, sem exibir credenciais.
 
+Regressão final na main do Dia 2: backend 23/23, frontend 12/12, build aprovado.
+
 ## Dia 3
 
 Em implementação. Resultados finais serão registrados após execução da suíte.
