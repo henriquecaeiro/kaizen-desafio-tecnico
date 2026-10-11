@@ -43,7 +43,8 @@ export function autenticar(req, res, next) {
 
   const usuario = buscarSessao(token);
   if (!usuario) {
-    limparCookieSessao(res);
+    // Uma resposta antiga de sessao revogada nao pode apagar o cookie emitido
+    // por um login mais recente. Login/logout/troca de senha controlam o cookie.
     return next(ApiError.naoAutorizado('SESSAO_INVALIDA', 'Sua sessao expirou. Entre de novo.'));
   }
 
