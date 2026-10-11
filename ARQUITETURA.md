@@ -125,7 +125,7 @@ pessoa precisa ver.
 
 | Rota                | Sessão | O que tem                                        |
 | ------------------- | :----: | ------------------------------------------------ |
-| `/`                 |   —    | Vitrine: busca, filtro por categoria, paginação   |
+| `/`                 |   —    | Vitrine, busca, filtros, paginação e painel do carrinho para contas autenticadas |
 | `/produto/:codigo`  |   —    | Detalhe, escolha de quantidade                   |
 | `/entrar`           |   —    | Login                                            |
 | `/cadastro`         |   —    | Criar conta                                      |
@@ -210,6 +210,14 @@ como alerta. Os dois usam o tom 700, que passa em contraste.
   aparece marcado em vez de quebrar a tela.
 - **Checkout bloqueia com pendência.** Se algum item perdeu estoque, o botão
   trava até ajustar.
+- **Até 10 carrinhos por conta.** Um ativo persistido em `carrinhos`, com índice
+  único parcial. Itens referenciam o carrinho; `/carrinho` continua operando sobre
+  o ativo. Endpoints de gerenciamento estão no relatório.
+- **Total elegível separado.** Linhas pendentes permanecem visíveis; `valor_total`
+  do carrinho soma somente linhas disponíveis. `valor_itens` soma todas as linhas
+  com preço conhecido; checkout exige resolver todas as pendências.
+- **Tentativa de checkout persistida.** Reserva por carrinho, sem manter transação
+  durante HTTP. Mutações de itens/exclusão são bloqueadas até conclusão. Incerto exige reconciliação.
 - **Endereço vai no snapshot do pedido.** O ERP não tem campo de entrega (vai na
   observação, como o SIAC recebe hoje), e a loja guarda uma cópia em JSON: editar
   o endereço depois não reescreve o histórico.
@@ -255,12 +263,14 @@ Decisões de escopo assumidas pelo time, não esquecimentos:
   de frete nem emissão de nota.
 - **Sem recuperação de senha.** Precisa de envio de e-mail.
 - **Sem confirmação de e-mail** no cadastro, pelo mesmo motivo.
-- **Sem testes automatizados.** Uma suíte com `node:test` cobrindo login, posse
-  de pedido/endereço e o checkout com estoque insuficiente seria o primeiro passo.
-- **Checkout não é transacional entre os dois sistemas.** Se o ERP criar o pedido
-  e a gravação local falhar, o pedido existe mas não aparece em "meus pedidos".
-  O log registra o número para reconciliar à mão; resolver de verdade pede um
-  *outbox* ou um endpoint de cancelamento no ERP.
+- **Testes com ERP simulado.** Backend usa `node:test`, frontend usa Chromium
+  instalado e `playwright-core`. Não verificam a atomicidade interna do SIAC.
+- **Checkout não é transacional entre os dois sistemas.** Tentativa persistida
+  evita fechamento simultâneo e repetição automática após resultado ambíguo. Se
+  o SIAC aceitar e a gravação local falhar, itens e bloqueio são preservados; o
+  número conhecido é registrado para reconciliar. Garantia entre sistemas exige
+  idempotência/reconciliação suportada pelo ERP; um outbox sozinho não elimina
+  duplicação em um POST ambíguo.
 - **`GET /pedidos` faz N chamadas ao ERP** (uma por pedido da página, em
   paralelo) para trazer o status atual. Com páginas de 10 compensa a
   simplicidade; volume maior pediria cache ou consulta em lote no ERP.

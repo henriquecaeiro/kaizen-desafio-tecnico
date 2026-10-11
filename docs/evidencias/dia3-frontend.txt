@@ -1,0 +1,141 @@
+npm warn Unknown builtin config "globalignorefile". This will stop working in the next major version of npm.
+
+> kaizen-ecommerce-frontend@1.0.0 test
+> node --test --test-concurrency=1 tests/*.test.mjs
+
+TAP version 13
+# Subtest: buscar na primeira pagina e depois de paginar reinicia pagina preservando filtros
+ok 1 - buscar na primeira pagina e depois de paginar reinicia pagina preservando filtros
+  ---
+  duration_ms: 4563.541357
+  ...
+# Subtest: categoria, disponibilidade e limpeza reiniciam pagina; URL acompanha historico e refresh
+ok 2 - categoria, disponibilidade e limpeza reiniciam pagina; URL acompanha historico e refresh
+  ---
+  duration_ms: 1979.900316
+  ...
+# Subtest: paginacao compartilhada permite ultima pagina em listas com uma, duas e tres paginas
+ok 3 - paginacao compartilhada permite ultima pagina em listas com uma, duas e tres paginas
+  ---
+  duration_ms: 2328.546545
+  ...
+# Subtest: resposta antiga do catalogo nao substitui pesquisa mais recente
+ok 4 - resposta antiga do catalogo nao substitui pesquisa mais recente
+  ---
+  duration_ms: 641.884532
+  ...
+# Subtest: listagem de pedidos tambem navega ate a terceira pagina
+ok 5 - listagem de pedidos tambem navega ate a terceira pagina
+  ---
+  duration_ms: 1091.777103
+  ...
+# Subtest: endereco principal e apenas inicial; secundario segue no payload e snapshot
+ok 6 - endereco principal e apenas inicial; secundario segue no payload e snapshot
+  ---
+  duration_ms: 3803.616808
+  ...
+# Subtest: endereco removido em outra aba mostra erro e preserva carrinho
+ok 7 - endereco removido em outra aba mostra erro e preserva carrinho
+  ---
+  duration_ms: 660.854219
+  ...
+# Subtest: endereco criado no checkout fica selecionado e e enviado ao ERP
+ok 8 - endereco criado no checkout fica selecionado e e enviado ao ERP
+  ---
+  duration_ms: 976.516554
+  ...
+# Subtest: checkout do ativo preserva itens de outro carrinho na interface
+ok 9 - checkout do ativo preserva itens de outro carrinho na interface
+  ---
+  duration_ms: 813.723742
+  ...
+# [erp] falha de rede em POST /pedidos: tempo limite excedido
+# Subtest: checkout incerto informa conferência e desabilita nova compra
+ok 10 - checkout incerto informa conferência e desabilita nova compra
+  ---
+  duration_ms: 1275.198393
+  ...
+# Subtest: painel cria, renomeia e troca carrinhos sem perder busca e pagina
+ok 11 - painel cria, renomeia e troca carrinhos sem perder busca e pagina
+  ---
+  duration_ms: 4754.62221
+  ...
+# Subtest: exclusao tem confirmacao, promove outro e persistencia sobrevive ao refresh
+ok 12 - exclusao tem confirmacao, promove outro e persistencia sobrevive ao refresh
+  ---
+  duration_ms: 961.025732
+  ...
+# Subtest: adicao, remocao e limpeza no painel mantem vitrine utilizavel
+ok 13 - adicao, remocao e limpeza no painel mantem vitrine utilizavel
+  ---
+  duration_ms: 1544.33145
+  ...
+# Subtest: estoque parcial permite reduzir quantidade e retirar pendencia
+ok 14 - estoque parcial permite reduzir quantidade e retirar pendencia
+  ---
+  duration_ms: 868.974964
+  ...
+# Subtest: leitura atrasada de outro carrinho nao sobrescreve selecao nova
+ok 15 - leitura atrasada de outro carrinho nao sobrescreve selecao nova
+  ---
+  duration_ms: 857.050989
+  ...
+# Subtest: painel em 360px: sem overflow e foco pelo teclado
+ok 16 - painel em 360px: sem overflow e foco pelo teclado
+  ---
+  duration_ms: 1032.358463
+  ...
+# Subtest: painel em 390px: sem overflow e foco pelo teclado
+ok 17 - painel em 390px: sem overflow e foco pelo teclado
+  ---
+  duration_ms: 905.74059
+  ...
+# Subtest: painel em 768px: sem overflow e foco pelo teclado
+ok 18 - painel em 768px: sem overflow e foco pelo teclado
+  ---
+  duration_ms: 975.650758
+  ...
+# Subtest: painel em 1440px: sem overflow e foco pelo teclado
+ok 19 - painel em 1440px: sem overflow e foco pelo teclado
+  ---
+  duration_ms: 944.195069
+  ...
+# Subtest: limite aparece no painel e falha de gerenciamento preserva selecao
+ok 20 - limite aparece no painel e falha de gerenciamento preserva selecao
+  ---
+  duration_ms: 624.388153
+  ...
+# Subtest: login carrega unidades; logout e outra conta limpam o estado
+ok 21 - login carrega unidades; logout e outra conta limpam o estado
+  ---
+  duration_ms: 4330.953991
+  ...
+# Subtest: resposta atrasada de A nao sobrescreve carrinho de B
+ok 22 - resposta atrasada de A nao sobrescreve carrinho de B
+  ---
+  duration_ms: 1360.741687
+  ...
+# Subtest: leitura antiga nao sobrescreve uma inclusao mais recente
+ok 23 - leitura antiga nao sobrescreve uma inclusao mais recente
+  ---
+  duration_ms: 1663.403751
+  ...
+# Subtest: erro de leitura aparece como erro e permite tentar novamente
+ok 24 - erro de leitura aparece como erro e permite tentar novamente
+  ---
+  duration_ms: 541.609516
+  ...
+# Subtest: resposta de sessao do boot nao desfaz login posterior
+ok 25 - resposta de sessao do boot nao desfaz login posterior
+  ---
+  duration_ms: 715.967949
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45243.761403

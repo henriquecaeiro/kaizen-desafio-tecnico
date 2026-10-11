@@ -1,47 +1,20 @@
 # Relatório de entrega
 
 **Candidato:** Henrique Caeiro
-**Data de entrega:** em preparação; registro do Dia 1 em 09/10/2026 (Brasília).
-**Tempo aproximado dedicado:** não cronometrado; não estimado como evidência.
+**Data de entrega:** em preparação; Dias 2 e 3 executados em 10/10/2026 (Brasília).
+**Tempo aproximado dedicado:** não cronometrado.
 
-Implementação dos Dias 2 e 3 em andamento. A investigação original e suas reproduções históricas estão em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); esse diagnóstico não é uma suíte de regressão.
+Dias 2 e 3 implementados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); comandos/resultados em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Implantação pública e auditoria do Dia 4 ainda pendentes.
 
 ---
 
 ## 1. Subindo o projeto
 
-Aplicação executada localmente com Node 24.21.0 LTS, npm 11.19.0 e SQLite/better-sqlite3. Backend em `http://127.0.0.1:3001`; frontend Vite em `http://127.0.0.1:5173`. Backend, frontend, banco, proxy e SIAC responderam corretamente nas verificações de leitura. **Ainda não há implantação pública da solução.**
+Dia 1 executado em Windows/Node 24 LTS. Dias 2 e 3 no workspace Linux, Node 20.19.2 compatível com engines, npm e Chromium instalado. Instalação com npm ci em backend/frontend; better-sqlite3 compilado localmente. Execução e testes estão no README. Configurar backend/.env a partir de .env.example, sem publicar segredos.
 
-Com Node 24 no PATH, comandos efetivamente utilizados:
+npm run db:init ou início do servidor aplica migrações, sem db:reset. Não alterei banco existente para testar; fixtures usam SQLite temporário. Não existe implantação pública da solução ainda. Em produção, o backend serve frontend/dist na mesma origem.
 
-```powershell
-# Terminal backend
-cd C:\DEV\teste-tecnico-kaizen\backend
-npm ci
-npm run db:init
-npm start
-
-# Outro terminal, frontend
-cd C:\DEV\teste-tecnico-kaizen\frontend
-npm ci
-npm run dev -- --host 127.0.0.1
-
-# Build, no frontend
-npm run build
-
-# Diagnóstico seguro, no backend
-node scripts/diagnostico-dia1.mjs
-# Reprodução visual com ERP simulado, em processo separado
-node scripts/diagnostico-dia1.mjs --servir
-```
-
-Os manifests não oferecem testes ou lint. Backend também dispõe de `npm run dev` (watch), frontend de `npm run preview`. `db:reset` é destrutivo e não foi usado.
-
-Dificuldades: máquina estava no Node 26.5.0; instalado Node 24 LTS local sem substituir o global. Código esperava ERP_URL/ERP_TOKEN e tinha segredos fixos: removidos e adicionados SIAC_URL/SIAC_TOKEN, mantendo aliases antigos. Ausência de segredo/token agora bloqueia inicialização, conferida em processo sem `.env`. Os avisos de npm sobre scripts nativos não impediram SQLite/build.
-
-Arquivos criados: `.nvmrc`, complementos no `.gitignore`, `backend/.env` **ignorado** com segredo JWT aleatório e credencial SIAC, novo banco de desenvolvimento ignorado, diagnóstico reproduzível e documentação/evidências. `.env.example` atualizado sem credenciais. SIAC_URL utilizada: `https://teste-tecnico.kaizenautopecas.com.br`.
-
-`/health` do SIAC e `/api/health` direto/por proxy retornaram 200. Catálogo autenticado retornou 55 produtos e nove categorias na observação. Nenhum pedido foi criado no SIAC real: checkout testado exclusivamente contra mock de loopback.
+Push HTTPS falhou por falta de credencial no ambiente. Chave SSH existente autenticou na conta de Henrique e permitiu publicar as branches/main. Nenhum push foi dirigido ao repositório da empresa. package-lock.json não versionado na raiz já existia e foi preservado.
 
 ---
 
@@ -51,88 +24,69 @@ Arquivos criados: `.nvmrc`, complementos no `.gitignore`, `backend/.env` **ignor
 
 | | |
 |---|---|
-| **Causa** | Confirmada: enriquecerItens mantém subtotal de item sem estoque e lerCarrinho soma todos, incluindo indisponíveis, em backend/src/services/carrinhoService.js. |
-| **Como reproduzi** | SQLite temporário + ERP mock: radiador sem estoque 1 × 684, filtro 3 × 10 e amortecedor 4 × 20. Total 794; soma elegível 110; diferença 684. Checkout bloqueou corretamente. |
-| **Arquivos alterados** | carrinhoService.js, dinheiro.js, Carrinho.jsx; testes em backend/tests/carrinho.test.mjs e dinheiro.test.mjs. |
-| **Como validei a correção** | Testes node:test com SQLite temporário e ERP HTTP simulado; build Vite. Total elegível 110 com radiador pendente; checkout continua bloqueado. |
+| **Causa** | O serviço somava subtotais de todas as linhas, inclusive pendentes. Math.floor na conversão monetária perdia centavos (1.15 → 114). |
+| **Como reproduzi** | Dia 1: radiador sem estoque 684 + disponíveis 110 → total 794. |
+| **Correção** | valor_total soma somente linhas disponíveis; valor_itens mantém soma das linhas conhecidas. Linha mantém valor_total e recebe valor_elegivel. Sem remoção/redução automática. Checkout exige resolver todas as pendências. |
+| **Arquivos alterados** | carrinhoService.js, dinheiro.js, Carrinho.jsx/ItensCarrinho.jsx; backend/tests/carrinho.test.mjs e dinheiro.test.mjs. |
+| **Como validei** | Vazio, disponíveis, zero/parcial/inativo/404, falha ERP, quantidades e centavos; pendência bloqueia pedido. Conversão arredonda meio centavo para cima, somas usam preço em centavos × quantidade, sem reconverter subtotais. |
 
-O serviço retorna `valor_total` elegível e `valor_itens` de todas as linhas conhecidas. Cada linha mantém `valor_total` e recebe `valor_elegivel`; indisponíveis são identificadas como fora do total na tela. Estoque parcial deixa a linha inteira pendente, sem remover ou reduzir quantidades. Falhas de consulta ERP são erros; 404 vira pendência visível. A conversão central arredonda meio centavo para cima e as somas usam preço em centavos × quantidade, evitando reconversão de subtotais.
+Falha de consulta é erro, não carrinho vazio; somente produto ausente vira pendência. Um item sem preço conhecido tem valor zero informado, sem permitir compra.
 
 ### KZN-318 — Número no ícone do carrinho está errado
 
 | | |
 |---|---|
-| **Causa** | Confirmada: lerCarrinho usa itens.length também para quantidade_pecas. Contexto, badge e resumo apenas exibem esse campo. |
-| **Como reproduzi** | FIL=3 e SUS=4 retornaram quantidade_pecas=2; UI após F5 exibiu 2 no badge/resumo, embora haja 7 unidades. |
-| **Arquivos alterados** | carrinhoService.js e testes de carrinho; CarrinhoContext.jsx para sincronização de sessão. |
-| **Como validei a correção** | node:test: 3+4=7, inclusão repetida, alteração, remoção, limpeza e pendências. Testes de navegador cobrem login/logout/troca e respostas antigas. |
+| **Causa** | quantidade_pecas usava itens.length; contexto também ignorava mudanças da sessão. |
+| **Como reproduzi** | Dia 1: FIL=3 e SUS=4 → duas peças; logout/login B manteve estado visual de A. |
+| **Correção** | Serviço soma unidades, inclusive pendentes; quantidade_itens continua contando produtos distintos. Contexto limpa/recarrega por identidade e aceita somente requisição atual da mesma sessão. AuthContext descarta consulta inicial da sessão quando um login/cadastro/logout mais recente já terminou. |
+| **Arquivos alterados** | carrinhoService.js, CarrinhoContext.jsx e consumidores; testes de carrinho/sessão. |
+| **Como validei** | 3+4=7, inclusão repetida, alteração, remoção/limpeza, login/logout/troca, resposta antiga de sessão e leitura anterior a mutação. Erro de leitura tem estado e opção de repetir. |
 
-A soma de unidades é feita no serviço, inclusive para linhas pendentes; `quantidade_itens` continua contando produtos distintos. O cabeçalho consome o valor do backend sem cálculo próprio.
+Cabeçalho consome o contador do backend, sem cálculo duplicado. A correção visual não revoga JWT antigo; revogação permanece no Dia 4.
 
 ### KZN-325 — Busca diz que não encontrou peça que existe
 
 | | |
 |---|---|
-| **Causa** | Confirmada: Cabecalho.pesquisar mantém pagina da query anterior. Catalogo.trocarParametro também não reinicia pagina ao mudar filtros. |
-| **Como reproduzi** | Navegador com SIAC real: Próxima → página 2 → pesquisar amortecedor. URL ficou /?pagina=2&busca=amortecedor, lista vazia. HTTP confirmou total=3/total_paginas=1, e três resultados na página 1. |
+| **Causa** | Busca/filtros preservavam pagina anterior. Próxima comparava pagina com total_paginas - 1. Campo não acompanhava URL. |
+| **Como reproduzi** | Dia 1: /?pagina=2&busca=amortecedor tinha lista vazia, apesar de resultados na página 1. |
+| **Correção** | Mudar critérios remove pagina, preservando demais filtros; paginar conserva critérios. Campo acompanha termo da URL. Próxima desabilita na última página. |
 | **Arquivos alterados** | Cabecalho.jsx, Catalogo.jsx, ui.jsx; frontend/tests/catalogo.test.mjs. |
-| **Como validei a correção** | Chromium com aplicação modificada e ERP mock: busca após página 2, filtros combinados, limpeza, histórico, refresh, 1/2/3 páginas e resposta atrasada. |
+| **Como validei** | Busca inicial/depois de paginar, categoria/disponibilidade/limpeza, combinações, URL, back/forward/refresh, 1/2/3 páginas, Pedidos até terceira página e resposta atrasada. |
 
-Busca, categoria e disponibilidade removem `pagina`, preservando demais critérios. Navegação de página mantém os filtros. O campo acompanha o termo da URL por efeito dependente somente desse termo. Próxima desabilita na última página; o componente compartilhado continua usado em Pedidos. O catálogo já descartava respostas de efeitos encerrados; teste controlado confirma essa proteção.
+O catálogo já descartava respostas de efeitos encerrados. Esse comportamento foi preservado e testado; não acrescentei ciclos de atualização.
 
 ### KZN-331 — Pedido saiu com o endereço errado
 
 | | |
 |---|---|
-| **Causa** | Confirmada: Checkout.finalizar ignora enderecoId selecionado e envia id do endereço principal/primeiro. |
-| **Como reproduzi** | UI isolada: Casa principal, selecionar Oficina, confirmar. Pedido MOCK-1 exibiu Casa e mock recebeu observação com Casa. Chamada direta do serviço com id da Oficina enviou/gravou Oficina corretamente. |
-| **Arquivos alterados** | Checkout.jsx; backend/tests/checkout.test.mjs e frontend/tests/checkout.test.mjs. |
-| **Como validei a correção** | Checkout visual com Oficina, observação recebida pelo mock e snapshot SQLite; endereço único, criado, excluído/alheio, edição posterior e recusa de estoque no backend. |
+| **Causa** | Radio alterava enderecoId, mas finalizar buscava novamente o principal. |
+| **Como reproduzi** | Dia 1 com mock: Oficina selecionada; payload/snapshot recebiam Casa. Contraprova backend já respeitava ID. |
+| **Correção** | Frontend envia enderecoId; principal só define seleção inicial. |
+| **Arquivos alterados** | Checkout.jsx; testes backend/frontend de checkout. |
+| **Como validei** | Único, principal/secundário, recém-criado, excluído em outra aba, alheio, snapshot/observação, edição posterior e falha de estoque. |
 
-O frontend envia `enderecoId` selecionado. Principal serve apenas de seleção inicial. O backend já verificava propriedade, guardava snapshot e incluía endereço na observação; não precisou de alteração neste chamado. Endereço excluído em outra aba retorna erro e preserva o carrinho.
+Backend não precisou mudar para corrigir endereço: autenticação, propriedade e snapshot foram preservados. Sua alteração posterior no Dia 3 trata carrinho e concorrência.
 
 ---
 
 ## 3. Problemas que encontrei por conta própria
 
-### Problema 1
+Evidências originais e prioridades estão na auditoria do Dia 1.
 
-| | |
+| Achados relacionados | Tratamento nos Dias 2 e 3 |
 |---|---|
-| **O que está errado** | P0: credenciais fixas e fallback de segredo JWT em config.js original. |
-| **Como cheguei nele** | Leitura da configuração, marcador KZN-2B9C; ausência de ambiente não impedia uso de credenciais embutidas. |
-| **Impacto** | Republicação de segredo ERP; assinatura de sessão possível se segredo público estiver em uso. Não houve exploração externa. |
-| **Corrigi?** | Sim, somente configuração/importação: removidos valores fixos, aliases SIAC, `.env` ignorado, novo JWT local. A credencial externa não foi revogada; rotação depende do responsável pelo SIAC. |
-| **Arquivos alterados** | backend/src/config.js, backend/.env.example, .gitignore, .nvmrc. |
+| A02 dinheiro | Arredondamento central e inteiros; inválidos rejeitados. |
+| A03/A20 sessão e respostas | Contexto vinculado à identidade/requisição; erro separado de vazio. |
+| A04/A05 checkout duplicado/perda de itens | Reserva persistente por carrinho; mutações bloqueadas, limpeza somente do capturado. |
+| A06 resposta perdida depois de aceite | Itens/bloqueio preservados; tentativa incerta requer reconciliação. Não resolve transação distribuída. |
+| A08/A17 paginação/campo | Correções compartilhadas e sincronização com URL. |
+| A09 estoque parcial | Quantidade pode ser reduzida mesmo com pendência; backend revalida. |
+| A14/A15 entrada e saturação | Validação rejeita booleano/array e inteiro inseguro; somar acima de 99 dá conflito, sem sucesso parcial. |
+| A18 layout | Header/grid responsivos e painel testados em 360/390/768/1440 px. |
+| A16 contrato ERP | Criação de pedido valida número/total. Outras leituras ainda exigem revisão. |
 
-### Problema 2
-
-| | |
-|---|---|
-| **O que está errado** | P1: Math.floor na conversão monetária perde centavos. |
-| **Como cheguei nele** | Execução real de paraCentavos(1.15) retornou 114. |
-| **Impacto** | Divergência de preço/subtotal/total e vínculo local de pedido. |
-| **Corrigi?** | Sim. Arredondamento explícito, rejeição de valores inválidos e cálculos em centavos inteiros. |
-| **Arquivos alterados** | backend/src/lib/dinheiro.js e backend/tests/dinheiro.test.mjs. |
-
-### Problema 3
-
-| | |
-|---|---|
-| **O que está errado** | P1: carrinho não acompanha login/logout/troca de usuário. |
-| **Como cheguei nele** | Login A mostrou vazio até F5; após sair e entrar B sem F5, UI mostrou itens/total anteriores da A. API de B continuou vazia. |
-| **Impacto** | Exposição visual de seleção de outro usuário no mesmo navegador e estado enganoso. Não foi comprovado acesso cruzado na API. |
-| **Corrigi?** | Sim. Contexto depende da identidade autenticada; limpa no logout, recarrega no login e aceita somente a requisição atual da mesma sessão. Falha de leitura tem estado próprio e opção de repetir. |
-| **Arquivos alterados** | CarrinhoContext.jsx, Carrinho.jsx, Checkout.jsx e frontend/tests/sessao.test.mjs. |
-
-Outros achados, com localização, reprodução, impacto, recomendação e prioridade na [auditoria detalhada](docs/DIAGNOSTICO-DIA1.md#auditoria-adicional):
-
-- **P1, reproduzidos:** checkout simultâneo duplica pedidos; item adicionado durante espera do ERP é apagado; timeout após aceite remoto deixa pedido sem vínculo; CORS reflete origem arbitrária com credenciais (exploração em navegador não afirmada); sessão antiga permanece válida após troca de senha/logout.
-- **P2, reproduzidos:** Próxima bloqueia antes da última página; não é possível limpar telefone; endereço pode ficar sem principal; senha cadastrada com espaços não entra; booleano/array aceitos como quantidade; 98+5 satura silenciosamente em 99; JSON inválido do ERP vira catálogo vazio; limpar busca não limpa texto do campo.
-- **Confirmado por leitura, sem reprodução visual:** quantidade fica bloqueada quando estoque é insuficiente, impedindo reduzir para o disponível.
-- **Suspeitas/risco ainda sem reprodução:** resposta antiga sobrescrever carrinho, layout móvel, recuperação visual após erro em pedidos, falha de stream de imagem. Ausência de rate limit e trust proxy irrestrito foram identificados por inspeção, sem teste de exploração.
-
-Não alterei os fluxos funcionais desses achados hoje. Não tratei limites declarados de produto (sem pagamento, recuperação de senha, verificação de dígitos CPF/CNPJ etc.) como descobertas novas.
+A01 teve remoção de segredos no Dia 1; rotação externa não foi realizada. CORS refletido, revogação JWT, limitação de autenticação, senhas com espaços, endereço principal, telefone e demais achados independentes não foram antecipados. Pendências priorizadas em [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md).
 
 ---
 
@@ -140,98 +94,83 @@ Não alterei os fluxos funcionais desses achados hoje. Não tratei limites decla
 
 ### Como ficou
 
-Não implementado no Dia 1, conforme escopo. Existe um carrinho implícito por usuário.
+Gerenciamento na página de carrinho e na vitrine: criar, renomear, selecionar/excluir, incluir/alterar/remover/esvaziar itens, disponibilidade, total e checkout. Criar pela interface também ativa o novo carrinho; POST da API apenas cria, permitindo ao cliente escolher quando ativar.
+
+Desktop tem painel lateral sem bloquear o catálogo; mobile/tablet usa dialog sobreposto. Nenhuma ação de gerenciamento altera busca, filtros, paginação ou histórico. Componentes são compartilhados com a página de carrinho, usando tokens existentes. Drawer permite Tab/Shift+Tab, Escape e retorno do foco; exclusão/limpeza exigem confirmação.
 
 ### Modelagem
 
-Tabela `carrinhos`: id, usuario_id, nome (1–80 caracteres), ativo e datas. Índice único parcial limita um ativo por usuário. `carrinho_itens` referencia carrinho com cascade e UNIQUE(carrinho_id, codigo_produto), guardando somente código, quantidade e data. Preço/estoque continuam no SIAC.
+carrinhos: id, usuario_id (cascade), nome (1–80), ativo e datas. Índice único parcial garante no máximo um ativo por usuário. carrinho_itens: FK carrinho_id com cascade e UNIQUE(carrinho_id,codigo_produto); somente código, quantidade e data. Preço/estoque continuam no SIAC.
 
-`schema.sql` permanece como base v0. Migração 001 cria um padrão por usuário existente e transfere itens preservando ids, códigos, quantidades e datas. `PRAGMA user_version` controla execução única. Inicialização e migrações rodam na mesma transação IMMEDIATE; inconsistência, perda de linhas ou falha referencial causam rollback. Sem db:reset. Testes: banco novo/antigo, com/sem itens, repetição, cascade, índice de ativo e rollback com item órfão.
-
-Mudanças no contrato da API — endpoints novos ou alterados:
+schema.sql é base v0. Migração 001 cria um padrão para cada usuário existente e transfere itens preservando ids, códigos, quantidades e datas. Contagem verifica perda de linhas; foreign_key_check verifica relações. Migração 002 cria checkout_tentativas. user_version evita execução repetida; todas as migrações pendentes rodam numa transação IMMEDIATE com rollback. Usuários, endereços e vínculos de pedidos são preservados. Banco novo e banco anterior são suportados.
 
 | Método | Rota | O que faz |
 |---|---|---|
-| GET | /api/carrinhos | Lista nomes, ativo e contadores da conta autenticada |
-| POST | /api/carrinhos | Cria carrinho vazio, mantendo o ativo atual |
+| GET | /api/carrinhos | Lista carrinhos e contadores da conta |
+| POST | /api/carrinhos | Cria vazio |
 | PATCH | /api/carrinhos/:id | Renomeia |
-| PUT | /api/carrinhos/:id/ativar | Persiste a seleção |
-| DELETE | /api/carrinhos/:id | Exclui e garante um ativo válido |
+| PUT | /api/carrinhos/:id/ativar | Persiste seleção |
+| DELETE | /api/carrinhos/:id | Exclui e garante ativo válido |
 
-As rotas `/api/carrinho` e `/api/carrinho/itens` operam sobre o ativo. Resposta de leitura inclui id/nome. Header opcional `X-Carrinho-Id` exige que o ativo seja o mesmo exibido pelo cliente; id alheio é 404, seleção antiga é 409. Consulta, ativação e mutações usam usuário autenticado e parâmetros SQL. Não há rota pública para itens de carrinho arbitrário. Inclusão verifica novamente a seleção depois da consulta externa, em transação curta. Limite de quantidade não satura silenciosamente; tipos booleano/array são rejeitados na validação central.
+Rotas /api/carrinho e /itens continuam funcionando sobre o ativo. Leitura inclui id/nome, totais e checkout_estado. Header opcional X-Carrinho-Id exige o ativo exibido: alheio → 404; seleção antiga → 409. POST /api/pedidos aceita carrinho_id e tentativa_id (UUID) opcionais, mantendo clientes antigos compatíveis.
 
 ### Decisões que o enunciado deixou abertas
 
 | Pergunta | Sua decisão | Motivo |
 |---|---|---|
-| Quantos carrinhos por pessoa? Tem limite? | Pendente para desenho da funcionalidade. | Não antecipar implementação/decisão sem avaliar fluxo. |
-| O que acontece ao apagar o carrinho ativo? | Pendente. | Exige política de seleção e persistência. |
-| Como o carrinho aparece na vitrine? | Pendente. | Desenho previsto para a etapa da funcionalidade. |
-| E no celular? | Pendente. | Validar responsividade e espaço útil. |
-| Qual carrinho vem selecionado ao entrar? | Pendente. | Precisa definir persistência por usuário e entre dispositivos. |
-| O que acontece com os carrinhos após fechar um pedido? | Pendente. | Checkout deve fechar só o ativo, preservando os demais. |
+| Limite | 10 por conta | Suficiente para orçamentos sem crescimento ilimitado |
+| Apagar ativo | Promover o mais antigo restante | Seleção determinística e simples |
+| Apagar último | Recriar padrão vazio | Evitar estado inválido |
+| Vitrine | Painel lateral no desktop | Conferir itens mantendo catálogo utilizável |
+| Celular | Drawer modal até 390 px de largura | Dar espaço aos controles, fechar e continuar navegando |
+| Reentrada | Último ativo persistido | Retomar orçamento |
+| Checkout | Limpar só itens do utilizado, manter nome/seleção | Preservar outros orçamentos e reutilizar carrinho |
 
 ### Isolamento
 
-Hoje serviços filtram usuario_id; testes negaram endereço/pedido alheio e retornaram carrinho vazio para B. O frontend retém estado antigo entre sessões, problema documentado acima. Na nova modelagem será necessário verificar posse de carrinho, itens e checkout em todas as operações, com migração que preserve vínculo por usuário.
+Toda consulta/ação verifica usuário autenticado e propriedade, com SQL parametrizado. IDs alheios não revelam dados. Limites, ativação e mudanças de itens usam transações curtas; inclusão/alteração verificam novamente o ativo e bloqueio depois do HTTP. Índices/foreign keys sustentam integridade. Contexto protege sessão e ordem de respostas; não substitui autorização backend.
 
 ### Checkout e concorrência
 
-Migração 002 cria `checkout_tentativas` (UUID, usuário, carrinho, assinatura dos dados, estado, número ERP e datas). Índice único parcial permite uma tentativa VALIDANDO/ENVIANDO/INCERTO por carrinho. Reserva e checagens rodam em transação IMMEDIATE, antes de HTTP; nenhuma transação fica aberta durante a chamada externa. Inserção/alteração revalidam reserva depois do HTTP. Remover, limpar e excluir também respeitam o bloqueio. Outro carrinho pode ser ativado e usado normalmente.
+checkout_tentativas guarda UUID, usuário, carrinho, assinatura dos dados, estado, número ERP quando conhecido e datas. Índice parcial permite uma tentativa VALIDANDO/ENVIANDO/INCERTO por carrinho. Reserva ocorre antes de HTTP; nenhuma transação SQLite fica aberta na chamada externa.
 
-Depois do aceite, vínculo/snapshot, limpeza do carrinho capturado e conclusão da tentativa são uma transação local. Falhas de validação ou recusas explícitas liberam o carrinho sem limpar. Timeout, 5xx, pedido inválido ou falha local após aceite preservam itens e bloqueio para reconciliação. Número conhecido fica na tentativa e no log. Tentativas interrompidas por queda do processo também não expiram automaticamente: liberar sem conferir poderia duplicar pedido. Retry de UUID concluído retorna o pedido existente, sem novo POST ao ERP; assinatura impede reutilização com dados diferentes.
+Carrinho fica fixado antes da espera. Mutações de itens/exclusão dele são bloqueadas; outro pode ser ativado/utilizado. Renomeação não altera os itens do pedido. Depois do aceite, vínculo/snapshot, limpeza do capturado e conclusão da tentativa são uma transação local. Falha antes do envio ou recusa explícita preserva itens e libera edição.
 
-Testes simulam duas conexões SQLite, dois POSTs simultâneos, troca de ativo, mutações em voo, recusa, timeout após aceite, resposta inválida e trigger que faz falhar a gravação local. Não há promessa de exactly-once entre loja e SIAC. Evolução: chave idempotente reconhecida pelo SIAC e consulta/reconciliação por essa chave. Até lá, conferir pedidos no ERP antes de resolver tentativas incertas; não apagar bloqueios para repetir a compra.
+Timeout, 5xx, resposta inválida ou falha local depois do aceite preservam itens e bloqueio para conferência. Número conhecido fica na tentativa/log. Queda de processo também não expira reserva automaticamente. UUID concluído retorna pedido existente; assinatura impede reutilizar com dados diferentes. Não há garantia exactly-once entre sistemas sem suporte do SIAC.
 
 ---
 
 ## 5. Como testei
 
-- Instalações com lockfiles: npm ci; auditoria automática de ambos reportou zero vulnerabilidades naquele momento. Isso não equivale a auditoria de segurança completa.
-- SQLite original e novo: contagens sem ler dados pessoais, integrity_check=ok, foreign_key_check=[], user_version=0. Ambos vazios antes dos testes; testes usam banco próprio temporário.
-- Health SIAC/backend/proxy 200; catálogo e categorias reais por leitura autenticada; build Vite concluído (58 módulos).
-- Script de diagnóstico: **20 grupos de evidências**, exit 0; configuração, SQLite, KZN-312/318, contraprova KZN-331, dinheiro, isolamento, CORS, perfil/endereço, senhas/sessão, validação/limites, tradução de erros, JSON inesperado, estoque no checkout e corridas/timeout.
-- Navegador: KZN-325 com SIAC real; KZN-318/331 e estado entre contas com mock. Três screenshots fictícios guardados em docs/evidencias.
-- Configuração sem credenciais em processo isolado: fail-fast confirmado; nenhum valor impresso.
-- Comparação com origem, normalizando CRLF: regras de negócio e componentes preservados. Alterações de configuração: config.js/.env.example; README só teve remoção de whitespace para verificação do diff.
-- Verificação dos arquivos candidatos a commit contra valores de segredos conhecidos e revisão dos arquivos ignorados. Nenhum segredo encontrado nos arquivos da entrega.
+Testes node:test com SQLite temporário e ERP HTTP mock; fetch limitado a loopback. Navegador usa aplicação modificada pelo Vite e backend temporário. Nenhum pedido real foi gerado.
 
-Como executar o diagnóstico automatizado:
+Dia 2 integrado: 23 testes backend e 12 navegador aprovados; build aprovado. Suíte final dos Dias 2/3: **51 backend + 25 navegador = 76 aprovados, zero falhas/skips**. Build e smoke do bootstrap production aprovados. Resultados/saídas em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Cobertura de migração, isolamento de dois usuários, gestão/limites, itens/preço/estoque, checkout, concorrência HTTP/duas conexões, falha local/timeout após aceite, sessão, URL e quatro larguras. Screenshots fictícios em docs/evidencias/dia3-carrinho-*.png.
 
-```powershell
-cd backend
-node scripts/diagnostico-dia1.mjs
-```
-
-**Este script registra bugs existentes, não afirma que foram corrigidos.** As expectativas precisam ser convertidas em testes do comportamento correto durante as correções. Checkout só pode sair para 127.0.0.1 nesse script. Sem testes end-to-end de produção, carga, viewport móvel ou escrita real no ERP.
+Comandos: backend npm test; frontend npm test e npm run build; git diff --check; node backend/scripts/verificar-segredos.mjs. O diagnóstico histórico afirma bugs anteriores e não é evidência de regressão aprovada. Não executei escrita no SIAC real, carga, Safari/Firefox ou produção pública.
 
 ---
 
 ## 6. Decisões e suposições
 
-- Preservar commit inicial já existente no repositório de entrega, README antigo e licença, sem importar história da empresa nem fazer force-push. Desenvolvimento do Dia 1 em codex/dia1-preparacao, com integração por fast-forward na main.
-- Remoção de credenciais é requisito de preparação, não correção antecipada dos chamados. Não copiar banco ou dist para Git. Manter lockfiles e código funcional da base.
-- Separar ambiente real de leitura e ambiente isolado de checkout. Dados fictícios do mock não provam comportamento interno/atomicidade do SIAC.
-- KZN-312: recomendação é total elegível, com pendências preservadas e checkout bloqueado; indisponibilidade parcial não implica comprar quantidade menor automaticamente.
-- KZN-318: unidades incluem itens ainda presentes com pendência; disponibilidade é campo separado. Confirmar decisão ao implementar.
-- Discordâncias: fallbacks secretos, CORS refletido e perda de centavos contradizem as garantias descritas na arquitetura. Diagnóstico cita comportamento do código, não assume que documentação prova segurança.
+- Respeitar camada de regra no serviço, formato de erros e autenticação existentes.
+- Sem ORM, catálogo local, dependência de UI, fila ou lock distribuído.
+- playwright-core é dependência somente de desenvolvimento e usa navegador instalado.
+- SQLite deve estar num volume persistente compartilhado pelos processos desta loja; múltiplas cópias independentes do banco não compartilham reservas.
+- O SIAC ainda pode recusar estoque no POST. Mock não comprova sua atomicidade.
+- Tentativas incertas/interrompidas precisam de conferência operacional. Não é seguro liberar por tempo e repetir sem idempotência externa.
 
 ---
 
 ## 7. O que faria com mais tempo
 
-1. Checkout idempotente com tentativas persistidas/reconciliação; proteção de concorrência e testes de falha após aceite remoto, dentro do contrato disponível do SIAC.
-2. Robustez de sessão, validação, limitação de autenticação e tratamento de contratos inválidos; testes de regressão para achados priorizados.
-3. Operação: migrações, observabilidade sem dados sensíveis, backup/restauração SQLite, testes de implantação e responsividade/acessibilidade.
+Idempotência/reconciliação por chave no SIAC, fluxo administrativo de conferência, auditoria de sessões/CORS e autenticação, validação dos contratos de leitura, testes em outros navegadores e operação com backup/restauração.
 
 ---
 
 ## 8. Outras observações
 
-[Plano de sábado](docs/DIAGNOSTICO-DIA1.md#plano-para-sábado-1010): KZN-312 (serviço/centavos), KZN-318 (contrato de unidades), KZN-325 (URL/filtros/paginação), KZN-331 (enderecoId). Cada etapa registra arquivos, testes novos e riscos; não é necessário reiniciar a investigação.
+[ENTREVISTA-DIAS2-3.md](docs/ENTREVISTA-DIAS2-3.md) resume as decisões do código. [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md) organiza segurança, problemas ocultos, implantação obrigatória e revisão final. Não foi criada branch de auditoria nem enviado e-mail.
 
-Marcadores encontrados na leitura da base: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho). São referências de revisão presentes na origem, não chamados adicionais resolvidos.
+Marcadores da base lidos: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho).
 
-Dia 2: quatro chamados corrigidos e verificados com testes novos de comportamento esperado e build. Evidências e comandos em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Múltiplos carrinhos será a etapa seguinte. Implantação e auditoria independente ficam para o Dia 4.
-
-Histórico da entrega parte de 69c4843; importação segura registrada em eb0f240. O fechamento Git será verificável pelo histórico da main e comparação local/remoto; detalhes locais de backup estão no diagnóstico. Nenhum push foi direcionado ao repositório da empresa.
+Histórico inicial e commits do Dia 1 preservados; branches separadas e merges no-ff. Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Entrega pública ainda exige hospedagem e validação do Dia 4.
