@@ -3,7 +3,7 @@ import { ApiError } from '../lib/ApiError.js';
 import { paraCentavos, paraReais } from '../lib/dinheiro.js';
 import * as erp from '../erp/cliente.js';
 import { comImagemDaLoja } from '../lib/produto.js';
-import { obterCarrinhoAtivo, exigirCarrinho, conferirAtivo } from './carrinhosService.js';
+import { obterCarrinhoAtivo, exigirCarrinho, conferirAtivo, exigirCarrinhoEditavel } from './carrinhosService.js';
 
 const MAXIMO_ITENS = 50;
 const MAXIMO_POR_ITEM = 99;
@@ -92,6 +92,8 @@ export async function lerCarrinho(usuarioId, db = obterBanco(), carrinhoId) {
   return {
     id: carrinho.id,
     nome: carrinho.nome,
+    checkout_estado: db.prepare(`SELECT estado FROM checkout_tentativas WHERE carrinho_id=?
+      AND estado IN ('VALIDANDO','ENVIANDO','INCERTO')`).get(carrinho.id)?.estado ?? null,
     itens,
     quantidade_itens: itens.length,
     quantidade_pecas: itens.reduce((soma, item) => soma + item.quantidade, 0),
@@ -106,6 +108,7 @@ export async function lerCarrinho(usuarioId, db = obterBanco(), carrinhoId) {
 /** Soma a quantidade se o item ja estiver no carrinho. */
 export async function adicionarItem(usuarioId, codigoProduto, quantidade, db = obterBanco(), esperadoId) {
   const carrinho = conferirAtivo(usuarioId, esperadoId, db);
+  exigirCarrinhoEditavel(carrinho.id, db);
   // Valida contra o ERP antes de gravar: nao faz sentido guardar codigo que
   // nao existe e so descobrir isso no checkout.
   const produto = await erp.buscarProduto(codigoProduto);
@@ -120,6 +123,7 @@ export async function adicionarItem(usuarioId, codigoProduto, quantidade, db = o
 
   db.transaction(() => {
     conferirAtivo(usuarioId, carrinho.id, db);
+    exigirCarrinhoEditavel(carrinho.id, db);
     const existente = db
       .prepare('SELECT * FROM carrinho_itens WHERE carrinho_id = ? AND codigo_produto = ?')
       .get(carrinho.id, produto.codigo);
@@ -161,6 +165,7 @@ export async function adicionarItem(usuarioId, codigoProduto, quantidade, db = o
 
 export async function alterarQuantidade(usuarioId, codigoProduto, quantidade, db = obterBanco(), esperadoId) {
   const carrinho = conferirAtivo(usuarioId, esperadoId, db);
+  exigirCarrinhoEditavel(carrinho.id, db);
   const existente = db
     .prepare('SELECT * FROM carrinho_itens WHERE carrinho_id = ? AND UPPER(codigo_produto) = ?')
     .get(carrinho.id, String(codigoProduto).toUpperCase());
@@ -181,6 +186,7 @@ export async function alterarQuantidade(usuarioId, codigoProduto, quantidade, db
 
   db.transaction(() => {
     conferirAtivo(usuarioId, carrinho.id, db);
+    exigirCarrinhoEditavel(carrinho.id, db);
     const resultado = db.prepare('UPDATE carrinho_itens SET quantidade = ? WHERE id = ? AND carrinho_id = ?')
       .run(quantidade, existente.id, carrinho.id);
     if (!resultado.changes) throw ApiError.naoEncontrado('Esse produto nao esta no seu carrinho.');
@@ -190,21 +196,24 @@ export async function alterarQuantidade(usuarioId, codigoProduto, quantidade, db
 }
 
 export async function removerItem(usuarioId, codigoProduto, db = obterBanco(), esperadoId) {
-  const carrinho = conferirAtivo(usuarioId, esperadoId, db);
-  const resultado = db
-    .prepare('DELETE FROM carrinho_itens WHERE carrinho_id = ? AND UPPER(codigo_produto) = ?')
-    .run(carrinho.id, String(codigoProduto).toUpperCase());
-
-  if (resultado.changes === 0) {
-    throw ApiError.naoEncontrado('Esse produto nao esta no seu carrinho.');
-  }
+  const carrinho = db.transaction(() => {
+    const ativo = conferirAtivo(usuarioId, esperadoId, db);
+    exigirCarrinhoEditavel(ativo.id, db);
+    const resultado = db.prepare('DELETE FROM carrinho_itens WHERE carrinho_id=? AND UPPER(codigo_produto)=?')
+      .run(ativo.id, String(codigoProduto).toUpperCase());
+    if (!resultado.changes) throw ApiError.naoEncontrado('Esse produto nao esta no seu carrinho.');
+    return ativo;
+  }).immediate();
 
   return lerCarrinho(usuarioId, db, carrinho.id);
 }
 
 export function limparCarrinho(usuarioId, db = obterBanco(), esperadoId) {
-  const carrinho = conferirAtivo(usuarioId, esperadoId, db);
-  db.prepare('DELETE FROM carrinho_itens WHERE carrinho_id = ?').run(carrinho.id);
+  db.transaction(() => {
+    const carrinho = conferirAtivo(usuarioId, esperadoId, db);
+    exigirCarrinhoEditavel(carrinho.id, db);
+    db.prepare('DELETE FROM carrinho_itens WHERE carrinho_id = ?').run(carrinho.id);
+  }).immediate();
 }
 
 export { MAXIMO_ITENS, MAXIMO_POR_ITEM };

@@ -12,7 +12,7 @@ function usuario(db, id = 1) {
 
 test('banco novo e inicializacao repetida', () => {
   const db = novoBanco(); aplicarSchema(db); aplicarSchema(db);
-  assert.equal(db.pragma('user_version', { simple: true }), 1);
+  assert.equal(db.pragma('user_version', { simple: true }), 2);
   assert.equal(db.prepare('SELECT COUNT(*) n FROM carrinhos').get().n, 0);
   assert.equal(db.pragma('integrity_check', { simple: true }), 'ok'); db.close();
 });

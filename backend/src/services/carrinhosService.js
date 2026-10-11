@@ -3,6 +3,17 @@ import { ApiError } from '../lib/ApiError.js';
 
 export const MAXIMO_CARRINHOS = 10;
 
+export function exigirCarrinhoEditavel(carrinhoId, db) {
+  const tentativa = db.prepare(`SELECT estado FROM checkout_tentativas WHERE carrinho_id=?
+    AND estado IN ('VALIDANDO','ENVIANDO','INCERTO')`).get(carrinhoId);
+  if (tentativa) throw ApiError.conflito(
+    tentativa.estado === 'INCERTO' ? 'CHECKOUT_INCERTO' : 'CHECKOUT_EM_ANDAMENTO',
+    tentativa.estado === 'INCERTO'
+      ? 'O resultado do pedido precisa ser conferido pela loja. O carrinho foi preservado; nao repita a compra.'
+      : 'Este carrinho esta fechando um pedido. Aguarde a conclusao antes de altera-lo.',
+  );
+}
+
 export function exigirCarrinho(usuarioId, id, db = obterBanco()) {
   const carrinho = db.prepare('SELECT * FROM carrinhos WHERE id=? AND usuario_id=?').get(id, usuarioId);
   if (!carrinho) throw ApiError.naoEncontrado('Carrinho nao encontrado.');
@@ -72,6 +83,7 @@ export function ativarCarrinho(usuarioId, id, db = obterBanco()) {
 export function excluirCarrinho(usuarioId, id, db = obterBanco()) {
   db.transaction(() => {
     const alvo = exigirCarrinho(usuarioId, id, db);
+    exigirCarrinhoEditavel(alvo.id, db);
     db.prepare('DELETE FROM carrinhos WHERE id=? AND usuario_id=?').run(alvo.id, usuarioId);
     // Excluir o ultimo recria um padrao vazio; excluir o ativo promove o mais antigo.
     obterCarrinhoAtivo(usuarioId, db);

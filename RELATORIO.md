@@ -175,6 +175,14 @@ As rotas `/api/carrinho` e `/api/carrinho/itens` operam sobre o ativo. Resposta 
 
 Hoje serviços filtram usuario_id; testes negaram endereço/pedido alheio e retornaram carrinho vazio para B. O frontend retém estado antigo entre sessões, problema documentado acima. Na nova modelagem será necessário verificar posse de carrinho, itens e checkout em todas as operações, com migração que preserve vínculo por usuário.
 
+### Checkout e concorrência
+
+Migração 002 cria `checkout_tentativas` (UUID, usuário, carrinho, assinatura dos dados, estado, número ERP e datas). Índice único parcial permite uma tentativa VALIDANDO/ENVIANDO/INCERTO por carrinho. Reserva e checagens rodam em transação IMMEDIATE, antes de HTTP; nenhuma transação fica aberta durante a chamada externa. Inserção/alteração revalidam reserva depois do HTTP. Remover, limpar e excluir também respeitam o bloqueio. Outro carrinho pode ser ativado e usado normalmente.
+
+Depois do aceite, vínculo/snapshot, limpeza do carrinho capturado e conclusão da tentativa são uma transação local. Falhas de validação ou recusas explícitas liberam o carrinho sem limpar. Timeout, 5xx, pedido inválido ou falha local após aceite preservam itens e bloqueio para reconciliação. Número conhecido fica na tentativa e no log. Tentativas interrompidas por queda do processo também não expiram automaticamente: liberar sem conferir poderia duplicar pedido. Retry de UUID concluído retorna o pedido existente, sem novo POST ao ERP; assinatura impede reutilização com dados diferentes.
+
+Testes simulam duas conexões SQLite, dois POSTs simultâneos, troca de ativo, mutações em voo, recusa, timeout após aceite, resposta inválida e trigger que faz falhar a gravação local. Não há promessa de exactly-once entre loja e SIAC. Evolução: chave idempotente reconhecida pelo SIAC e consulta/reconciliação por essa chave. Até lá, conferir pedidos no ERP antes de resolver tentativas incertas; não apagar bloqueios para repetir a compra.
+
 ---
 
 ## 5. Como testei

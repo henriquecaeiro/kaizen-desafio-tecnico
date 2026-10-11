@@ -119,7 +119,12 @@ export async function buscarPedido(numero) {
 
 export async function criarPedido(payload) {
   const json = await requisitar('/pedidos', { metodo: 'POST', corpo: payload });
-  return json?.dados ?? null;
+  const pedido = json?.dados;
+  if (!pedido || typeof pedido.numero !== 'string' || !pedido.numero.trim() ||
+    typeof pedido.valor_total !== 'number' || !Number.isFinite(pedido.valor_total) || pedido.valor_total < 0) {
+    throw new ApiError(502, 'ERP_RESPOSTA_INVALIDA', 'O sistema de estoque retornou um pedido invalido.');
+  }
+  return pedido;
 }
 
 // ------------------------------------------------------------------ imagens --

@@ -3,7 +3,8 @@ import { ApiError } from '../lib/ApiError.js';
 import { paraCentavos, paraReais } from '../lib/dinheiro.js';
 import * as erp from '../erp/cliente.js';
 import { buscarEndereco, serializarEndereco } from './enderecoService.js';
-import { lerCarrinho, limparCarrinho } from './carrinhoService.js';
+import { lerCarrinho } from './carrinhoService.js';
+import { iniciarTentativa, atualizarTentativa } from './checkoutTentativaService.js';
 
 function enderecoEmUmaLinha(e) {
   const complemento = e.complemento ? `, ${e.complemento}` : '';
@@ -17,60 +18,72 @@ function enderecoEmUmaLinha(e) {
  * numero <-> usuario, porque o ERP conhece "Fulano, CPF X", nao "a conta
  * fulano@email.com". Sem esse vinculo nao daria para montar "meus pedidos".
  */
-export async function finalizarPedido(usuario, enderecoId, observacao, db = obterBanco()) {
-  const enderecoLinha = buscarEndereco(usuario.id, enderecoId, db);
-  if (!enderecoLinha) {
-    throw ApiError.naoProcessavel('Nao foi possivel fechar o pedido.', [
-      { campo: 'endereco_id', mensagem: 'Endereco de entrega nao encontrado.' },
-    ]);
-  }
-
-  const carrinho = await lerCarrinho(usuario.id, db);
-
-  if (carrinho.itens.length === 0) {
-    throw ApiError.conflito('CARRINHO_VAZIO', 'Seu carrinho esta vazio.');
-  }
-
-  if (!carrinho.pronto_para_checkout) {
-    throw ApiError.conflito(
-      'CARRINHO_COM_PENDENCIAS',
-      'Alguns itens do carrinho precisam de ajuste antes de fechar o pedido.',
-      carrinho.itens
-        .filter((item) => !item.disponivel)
-        .map((item) => ({ codigo_produto: item.codigo_produto, motivo: item.problema })),
-    );
-  }
-
-  const endereco = serializarEndereco(enderecoLinha);
-
-  // O ERP nao tem campo de endereco de entrega; vai na observacao, que e como
-  // o SIAC recebe esse dado hoje.
-  const partesObservacao = [`Entrega: ${enderecoEmUmaLinha(endereco)}`];
-  if (observacao) partesObservacao.push(`Obs. do cliente: ${observacao}`);
-
-  const pedidoErp = await erp.criarPedido({
-    cliente: { nome: usuario.nome, documento: usuario.documento },
-    observacao: partesObservacao.join(' | ').slice(0, 500),
-    itens: carrinho.itens.map((item) => ({
-      codigo_produto: item.codigo_produto,
-      quantidade: item.quantidade,
-    })),
-  });
-
-  /*
-   * Daqui para baixo o estoque JA foi baixado no ERP. Se a gravacao local
-   * falhar, o pedido existe mas nao aparece em "meus pedidos" - por isso o log
-   * abaixo carrega o numero: da para reconciliar a mao.
-   * Resolver isso de verdade exigiria um outbox ou um endpoint de
-   * cancelamento no ERP; esta anotado no README como evolucao.
-   */
+export async function finalizarPedido(
+  usuario,
+  enderecoId,
+  observacao,
+  db = obterBanco(),
+  opcoes = {},
+) {
+  const tentativa = iniciarTentativa(usuario.id, enderecoId, observacao, opcoes, db);
+  if (tentativa.estado === 'CONCLUIDO')
+    return buscarPedidoDoUsuario(usuario.id, tentativa.numero_erp, db);
+  let enviado = false;
+  let pedidoErp = null;
   try {
+    const enderecoLinha = buscarEndereco(usuario.id, enderecoId, db);
+    if (!enderecoLinha) {
+      throw ApiError.naoProcessavel('Nao foi possivel fechar o pedido.', [
+        { campo: 'endereco_id', mensagem: 'Endereco de entrega nao encontrado.' },
+      ]);
+    }
+
+    // O id e fixado antes de aguardar HTTP. Outra aba pode ativar outro carrinho
+    // enquanto este fecha; o pedido e a limpeza continuam no carrinho capturado.
+    const carrinho = await lerCarrinho(usuario.id, db, tentativa.carrinho_id);
+
+    if (carrinho.itens.length === 0) {
+      throw ApiError.conflito('CARRINHO_VAZIO', 'Seu carrinho esta vazio.');
+    }
+
+    if (!carrinho.pronto_para_checkout) {
+      throw ApiError.conflito(
+        'CARRINHO_COM_PENDENCIAS',
+        'Alguns itens do carrinho precisam de ajuste antes de fechar o pedido.',
+        carrinho.itens
+          .filter((item) => !item.disponivel)
+          .map((item) => ({ codigo_produto: item.codigo_produto, motivo: item.problema })),
+      );
+    }
+
+    const endereco = serializarEndereco(enderecoLinha);
+
+    // O ERP nao tem campo de endereco de entrega; vai na observacao, que e como
+    // o SIAC recebe esse dado hoje.
+    const partesObservacao = [`Entrega: ${enderecoEmUmaLinha(endereco)}`];
+    if (observacao) partesObservacao.push(`Obs. do cliente: ${observacao}`);
+
+    atualizarTentativa(tentativa.id, 'ENVIANDO', db);
+    enviado = true;
+    pedidoErp = await erp.criarPedido({
+      cliente: { nome: usuario.nome, documento: usuario.documento },
+      observacao: partesObservacao.join(' | ').slice(0, 500),
+      itens: carrinho.itens.map((item) => ({
+        codigo_produto: item.codigo_produto,
+        quantidade: item.quantidade,
+      })),
+    });
+
+    // Nenhuma transacao SQLite fica aberta durante HTTP. Vinculo, limpeza e
+    // conclusao da tentativa sao confirmados juntos somente apos aceite remoto.
     db.transaction(() => {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO pedidos_usuario (
           usuario_id, numero_erp, endereco_entrega, valor_total_centavos, criado_em
         ) VALUES (?, ?, ?, ?, ?)
-      `).run(
+      `,
+      ).run(
         usuario.id,
         pedidoErp.numero,
         JSON.stringify(endereco),
@@ -78,18 +91,27 @@ export async function finalizarPedido(usuario, enderecoId, observacao, db = obte
         agoraISO(),
       );
 
-      limparCarrinho(usuario.id, db);
-    })();
+      db.prepare('DELETE FROM carrinho_itens WHERE carrinho_id=?').run(tentativa.carrinho_id);
+      atualizarTentativa(tentativa.id, 'CONCLUIDO', db, pedidoErp.numero);
+    }).immediate();
+    return { ...pedidoErp, endereco_entrega: endereco };
   } catch (erro) {
-    console.error(
-      `[pedido] ERP criou ${pedidoErp.numero} para o usuario ${usuario.id}, ` +
-      'mas a gravacao local falhou. Reconciliar manualmente.',
-      erro,
-    );
+    // Timeout/5xx nao provam que o SIAC recusou: preservar o bloqueio evita
+    // uma repeticao insegura. Recusas explicitas e falhas anteriores ao envio
+    // liberam o carrinho. Tentativas interrompidas tambem exigem conferência.
+    const incerto = enviado && ![401, 404, 409, 422].includes(erro.status);
+    atualizarTentativa(tentativa.id, incerto ? 'INCERTO' : 'RECUSADO', db, pedidoErp?.numero);
+    if (pedidoErp)
+      console.error(
+        `[pedido] ERP criou ${pedidoErp.numero}; tentativa ${tentativa.id} exige reconciliacao local.`,
+      );
+    if (incerto)
+      throw ApiError.conflito(
+        'CHECKOUT_INCERTO',
+        'O resultado do pedido precisa ser conferido pela loja. O carrinho foi preservado; nao repita a compra.',
+      );
     throw erro;
   }
-
-  return { ...pedidoErp, endereco_entrega: endereco };
 }
 
 /**
@@ -106,12 +128,14 @@ export async function listarPedidos(usuarioId, { pagina, tamanho }, db = obterBa
     .get(usuarioId);
 
   const linhas = db
-    .prepare(`
+    .prepare(
+      `
       SELECT * FROM pedidos_usuario
        WHERE usuario_id = ?
        ORDER BY id DESC
        LIMIT ? OFFSET ?
-    `)
+    `,
+    )
     .all(usuarioId, tamanho, (pagina - 1) * tamanho);
 
   const pedidos = await Promise.all(
