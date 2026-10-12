@@ -44,6 +44,15 @@ test('lista legitimamente vazia continua sendo sucesso', async () => {
   e.controle.respostas.set('GET /produtos/categorias', { json: { dados: [] } });
   assert.deepEqual(await erp.listarCategorias(), []);
 });
+test('paginacao fora do intervalo seguro e normalizada antes de consultar ERP ou SQLite', async () => {
+  for (const pagina of ['9007199254740993', String(Number.MAX_SAFE_INTEGER), '9'.repeat(400)]) {
+    for (const rota of ['/catalogo', '/pedidos']) {
+      const r = await e.chamada(`${rota}?pagina=${pagina}&tamanho=100`, { cookie });
+      assert.equal(r.status, 200, `${rota} com pagina fora do limite`);
+      assert.equal(r.json.paginacao.pagina, 1);
+    }
+  }
+});
 for (const [nome, resposta, codigo] of [
   ['timeout', { atraso: 350, json: {} }, 'ERP_INDISPONIVEL'],
   ['HTTP 5xx', { status: 503, raw: 'invalido' }, 'ERP_INDISPONIVEL'],
