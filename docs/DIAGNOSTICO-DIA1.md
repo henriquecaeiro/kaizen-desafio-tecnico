@@ -8,7 +8,7 @@ Data: 09/10/2026 (Brasília). Escopo: preparação, execução e investigação.
 - Workspace recebido: `main`, limpo, origem `PecistaTecnologia/teste-tecnico-kaizen`, HEAD `81897d5` e seis commits da empresa.
 - Entrega já existia: `master`, raiz `69c48436698c63cc2bbfc5cdd3a3a3c7131e3f9e`, com README de duas linhas, licença MIT e `.gitignore`.
 - O histórico da entrega foi conservado. A importação parte dele, sem mesclar os ancestrais da empresa e sem force-push.
-- README da entrega preservado em `docs/README-repositorio-entrega-original.md`; licença e regras anteriores do `.gitignore` mantidas.
+- README inicial de apresentação preservado no Dia 1; a cópia de duas linhas foi removida por redundância na revisão final. O original permanece no histórico Git. Licença e regras anteriores do `.gitignore` mantidas.
 - A cópia de recuperação do Git original está **fora** do workspace, em `C:\DEV\kaizen-dia1-backup-20261009\original.git`. Contém a base original, inclusive suas credenciais históricas: não publicar esse backup.
 - O movimento inicial de `.git` encontrou atributo oculto no Windows e moveu parcialmente o conteúdo. O HEAD do backup foi verificado antes de copiar os metadados da entrega para o diretório vazio. Nenhum arquivo de aplicação foi descartado.
 - Credenciais fixas encontradas em `backend/src/config.js` foram removidas antes do primeiro commit de importação. O segredo JWT local foi gerado aleatoriamente; SIAC_TOKEN fica apenas no ambiente local/`.env` ignorado. Não há valor de credencial neste relatório.
@@ -211,26 +211,9 @@ Prioridades: P0 antes de publicar; P1 segurança/integridade ou fluxo essencial;
 
 Pontos conferidos que **não** foram classificados como bugs: queries de endereços/carrinhos/pedidos filtram usuário; pedido alheio é bloqueado antes da chamada ERP; sem senha_hash nas respostas; scrypt com salt; checkout revalida disponibilidade; conflito 409 remoto preserva carrinho; UNIQUE de cadastro tratado; express.json limita tamanho. CPF/CNPJ só por tamanho, sem pagamento/frete, sem recuperação de senha e N chamadas por página de pedidos são limites de escopo já declarados.
 
-## Plano para sábado, 10/10
-
-Não repetir investigação inicial: usar as fixtures, contraprovas e arquivos abaixo. Criar uma branch curta por chamado quando começar, integrar em main com commits coerentes. Não criar branches futuras antecipadamente.
-
-| Ordem | Alterar | Testes novos de comportamento esperado | Riscos a validar |
-|---|---|---|---|
-| 1. KZN-312 | backend/src/services/carrinhoService.js; corrigir dinheiro.js em commit próprio relacionado; Carrinho.jsx/Checkout.jsx somente se contrato de subtotal exigir | node:test para centavos/totais/elegibilidade, ERP mock 404/502/estoque parcial/inativo; checagem visual dos subtotais | Total elegível claro, nenhuma compra silenciosa de subconjunto, revalidação ERP, perda de centavos |
-| 2. KZN-318 | carrinhoService.js; preservar consumidores; tratar CarrinhoContext/AuthContext em commit separado para A03 | Contrato linhas=2/unidades=7; adicionar/alterar/remover/limpar; badge 99+; troca de sessão e respostas antigas | Não misturar quantidade de linhas com unidades; limpar estado de sessão sem vazar carrinho |
-| 3. KZN-325 | frontend/src/componentes/Cabecalho.jsx; paginas/Catalogo.jsx; componentes/ui.jsx para A08 | Busca e filtros após página 2; limpar; back/forward/F5; última página; resultados vazios reais; catálogo e Pedidos | Preservar filtros corretos; campo/URL coerentes; sem ciclos de navegação nem resultados antigos |
-| 4. KZN-331 | frontend/src/paginas/Checkout.jsx; backend só se surgir falha coberta por teste novo | Radio secundário e recém-criado → payload → snapshot → observação mock; posse; removido em outra aba; snapshot após edição | Não aceitar endereço alheio; não criar pedidos reais; prevenir dupla tentativa e tratar erro com carrinho intacto |
-
-O diagnóstico automatizado de hoje **afirma comportamentos defeituosos existentes** para provar a causa. Não utilizá-lo como selo de regressão resolvida: converter casos em expectativas corretas e criar testes estáveis separados durante a implementação. Mock precisa conservar contratos realistas e cobrir falhas; o mock atual não simula o estoque real do SIAC, logo não prova sua atomicidade.
-
-## Pendências até segunda-feira, 12/10, à noite
-
-1. Sábado: quatro correções e regressões; priorizar dinheiro, estado entre contas, paginação e segurança pendente. Definir proteção de checkout com limites reais do SIAC.
-2. Domingo: múltiplos carrinhos (decisões de produto, migração, isolamento, API, carrinho ativo e painel na vitrine/mobile); não implementado no Dia 1.
-3. Segunda: implantação com HTTPS e segredos de produção, persistência/backup SQLite, cookies e proxy; testes integrados, documentação final e publicação na main. Margem antes de 13/10 às 15h Brasília.
-4. Responsável pelo SIAC deve avaliar revogação/rotação do token historicamente exposto. A remoção da cópia de entrega não revoga credenciais no sistema externo.
-5. Validar respostas ambíguas do ERP e suporte a idempotência/reconciliação sem criar pedidos reais desnecessários. Não prometer transação distribuída ou atomicidade do estoque sem evidência.
+O diagnóstico automatizado afirma comportamentos defeituosos da base do Dia 1.
+Sua reprodução exige aquela versão do código; não certifica a versão corrigida.
+Os testes atuais estão descritos em VALIDACAO-FINAL.md.
 
 ## Evidências visuais
 

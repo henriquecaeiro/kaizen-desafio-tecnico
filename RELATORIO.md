@@ -1,7 +1,7 @@
 # Relatório de entrega
 
 **Candidato:** Henrique Caeiro
-**Data de entrega:** 11/10/2026 (publicação técnica; envio à empresa e implantação pública ainda pendentes).
+**Data de entrega:** em preparação; código revisado em 11/10/2026. Envio e implantação pública pendentes.
 **Tempo aproximado dedicado:** não cronometrado.
 
 Chamados, múltiplos carrinhos e auditoria final implementados/testados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); resultados anteriores preservados em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Resultados atuais em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md). **Entrega parcial somente pela implantação pública:** faltam host/acesso/domínio e credencial de produção autorizados; não há URL pública da solução.
@@ -10,11 +10,11 @@ Chamados, múltiplos carrinhos e auditoria final implementados/testados. Diagnó
 
 ## 1. Subindo o projeto
 
-Dia 1 executado em Windows/Node 24 LTS. Dias 2 e 3 e revisão final no workspace Linux, inicialmente Node 20.19.2 e Chromium instalado. Confirmei main/remoto e merges anteriores; não encontrei o workspace Windows montado. Validação final adicional com Node 24.21.0 de .nvmrc, em cópia isolada com npm ci nos dois projetos, sem substituir dependências do workspace. Execução no README; segredos somente no ambiente.
+Desenvolvimento e revisão em Linux/Node 20.19.2, com Chromium instalado. Também validei Node 24.21.0 de .nvmrc em cópia isolada, com dependências instaladas pelos lockfiles. Execução no README; segredos somente no ambiente.
 
 npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express serve frontend/dist na mesma origem e recusa iniciar sem build. Serviço systemd/Caddy, variáveis privadas, backup online/restauração e atualização estão em [IMPLANTACAO.md](docs/IMPLANTACAO.md). Configurações e produção local foram validadas; host público não foi disponibilizado. Não criei cobrança nem usei infraestrutura pessoal/corporativa.
 
-Push HTTPS falhou por falta de credencial no ambiente. Chave SSH existente autenticou na conta de Henrique e permitiu publicar as branches/main. Nenhum push foi dirigido ao repositório da empresa. package-lock.json não versionado na raiz já existia e foi preservado.
+O código foi publicado no repositório de Henrique. Não há aplicação pública implantada: falta infraestrutura autorizada com disco persistente, domínio e credencial SIAC. Os arquivos novos de serviço, proxy e backup estão em deploy/ e backend/scripts/; não substituem a validação no host real.
 
 ---
 
@@ -28,7 +28,7 @@ Push HTTPS falhou por falta de credencial no ambiente. Chave SSH existente auten
 | **Como reproduzi** | Dia 1: radiador sem estoque 684 + disponíveis 110 → total 794. |
 | **Correção** | valor_total soma somente linhas disponíveis; valor_itens mantém soma das linhas conhecidas. Linha mantém valor_total e recebe valor_elegivel. Sem remoção/redução automática. Checkout exige resolver todas as pendências. |
 | **Arquivos alterados** | carrinhoService.js, dinheiro.js, Carrinho.jsx/ItensCarrinho.jsx; backend/tests/carrinho.test.mjs e dinheiro.test.mjs. |
-| **Como validei** | Vazio, disponíveis, zero/parcial/inativo/404, falha ERP, quantidades e centavos; pendência bloqueia pedido. Conversão arredonda meio centavo para cima, somas usam preço em centavos × quantidade, sem reconverter subtotais. |
+| **Como validei a correção** | Vazio, disponíveis, zero/parcial/inativo/404, falha ERP, quantidades e centavos; pendência bloqueia pedido. Conversão arredonda meio centavo para cima, somas usam preço em centavos × quantidade, sem reconverter subtotais. |
 
 Falha de consulta é erro, não carrinho vazio; somente produto ausente vira pendência. Um item sem preço conhecido tem valor zero informado, sem permitir compra.
 
@@ -40,7 +40,7 @@ Falha de consulta é erro, não carrinho vazio; somente produto ausente vira pen
 | **Como reproduzi** | Dia 1: FIL=3 e SUS=4 → duas peças; logout/login B manteve estado visual de A. |
 | **Correção** | Serviço soma unidades, inclusive pendentes; quantidade_itens continua contando produtos distintos. Contexto limpa/recarrega por identidade e aceita somente requisição atual da mesma sessão. AuthContext descarta consulta inicial da sessão quando um login/cadastro/logout mais recente já terminou. |
 | **Arquivos alterados** | carrinhoService.js, CarrinhoContext.jsx e consumidores; testes de carrinho/sessão. |
-| **Como validei** | 3+4=7, inclusão repetida, alteração, remoção/limpeza, login/logout/troca, resposta antiga de sessão e leitura anterior a mutação. Erro de leitura tem estado e opção de repetir. |
+| **Como validei a correção** | 3+4=7, inclusão repetida, alteração, remoção/limpeza, login/logout/troca, resposta antiga de sessão e leitura anterior a mutação. Erro de leitura tem estado e opção de repetir. |
 
 Cabeçalho consome o contador do backend, sem cálculo duplicado. A auditoria final acrescentou revogação de sessões persistidas, além da consistência visual.
 
@@ -52,7 +52,7 @@ Cabeçalho consome o contador do backend, sem cálculo duplicado. A auditoria fi
 | **Como reproduzi** | Dia 1: /?pagina=2&busca=amortecedor tinha lista vazia, apesar de resultados na página 1. |
 | **Correção** | Mudar critérios remove pagina, preservando demais filtros; paginar conserva critérios. Campo acompanha termo da URL. Próxima desabilita na última página. |
 | **Arquivos alterados** | Cabecalho.jsx, Catalogo.jsx, ui.jsx; frontend/tests/catalogo.test.mjs. |
-| **Como validei** | Busca inicial/depois de paginar, categoria/disponibilidade/limpeza, combinações, URL, back/forward/refresh, 1/2/3 páginas, Pedidos até terceira página e resposta atrasada. |
+| **Como validei a correção** | Busca inicial/depois de paginar, categoria/disponibilidade/limpeza, combinações, URL, back/forward/refresh, 1/2/3 páginas, Pedidos até terceira página e resposta atrasada. |
 
 O catálogo já descartava respostas de efeitos encerrados. Esse comportamento foi preservado e testado; não acrescentei ciclos de atualização.
 
@@ -64,7 +64,7 @@ O catálogo já descartava respostas de efeitos encerrados. Esse comportamento f
 | **Como reproduzi** | Dia 1 com mock: Oficina selecionada; payload/snapshot recebiam Casa. Contraprova backend já respeitava ID. |
 | **Correção** | Frontend envia enderecoId; principal só define seleção inicial. |
 | **Arquivos alterados** | Checkout.jsx; testes backend/frontend de checkout. |
-| **Como validei** | Único, principal/secundário, recém-criado, excluído em outra aba, alheio, snapshot/observação, edição posterior e falha de estoque. |
+| **Como validei a correção** | Único, principal/secundário, recém-criado, excluído em outra aba, alheio, snapshot/observação, edição posterior e falha de estoque. |
 
 Backend não precisou mudar para corrigir endereço: autenticação, propriedade e snapshot foram preservados. Sua alteração posterior no Dia 3 trata carrinho e concorrência.
 
@@ -72,27 +72,97 @@ Backend não precisou mudar para corrigir endereço: autenticação, propriedade
 
 ## 3. Problemas que encontrei por conta própria
 
-Evidências originais e prioridades estão na auditoria do Dia 1.
+Achados históricos identificados por A01–A22 em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md). Os grupos abaixo registram causa, evidência, impacto e tratamento, incluindo os achados da última revisão.
 
-| Achados relacionados | Tratamento nos Dias 2 e 3 |
+### Problema 1 — Credenciais e verificação de arquivos (A01)
+
+| | |
 |---|---|
-| A02 dinheiro | Arredondamento central e inteiros; inválidos rejeitados. |
-| A03/A20 sessão e respostas | Contexto vinculado à identidade/requisição; erro separado de vazio. |
-| A04/A05 checkout duplicado/perda de itens | Reserva persistente por carrinho; mutações bloqueadas, limpeza somente do capturado. |
-| A06 resposta perdida depois de aceite | Itens/bloqueio preservados; tentativa incerta requer reconciliação. Não resolve transação distribuída. |
-| A08/A17 paginação/campo | Correções compartilhadas e sincronização com URL. |
-| A09 estoque parcial | Quantidade pode ser reduzida mesmo com pendência; backend revalida. |
-| A14/A15 entrada e saturação | Validação rejeita booleano/array e inteiro inseguro; somar acima de 99 dá conflito, sem sucesso parcial. |
-| A18 layout | Header/grid responsivos e painel testados em 360/390/768/1440 px. |
-| A16 contrato ERP | Criação valida número/total; auditoria final valida produto, catálogo/paginação, categorias, detalhe, health e imagens. |
+| **O que está errado** | A base continha credencial SIAC e fallback de segredo. O scanner posterior examinava somente arquivos rastreados, deixando passar um segredo em arquivo novo. |
+| **Como cheguei nele** | Inspeção inicial de configuração; na revisão, uma fixture com config.js não rastreado fez o scanner retornar sucesso. |
+| **Impacto** | Acesso indevido ao ERP e publicação acidental de segredos ou bancos. |
+| **Corrigi?** | Removidos valores/fallbacks; scanner cobre rastreados, novos não ignorados, backups parciais e histórico, sem imprimir valores. Rotação da credencial histórica depende do responsável pelo SIAC. |
+| **Arquivos alterados** | backend/src/config.js, backend/.env.example, .gitignore, backend/scripts/verificar-segredos.mjs e backend/tests/segredos.test.mjs. |
 
-A01 teve remoção de segredos no Dia 1; rotação externa não foi realizada. Na auditoria final foram corrigidos A07 (origens CORS exatas e proxies explícitos), A10 (telefone vazio/null versus omitido), A11 (principal em transação e índice único), A12 (senhas sem trim), A13 (JWT com sessão revogável), A16 (contratos de leitura), A19 (limites persistidos por conta/IP), A21 (retry e limpeza de erro em pedidos) e A22 (streams e logs sem query/corpo remoto).
+### Problema 2 — Sessões e consistência de senha (A12/A13)
 
-Migrações 003/004 criam sessoes e autenticacao_limites; 005 normaliza seleção de endereço sem alterar conteúdo/datas e cria índice parcial. Logout revoga apenas aquela sessão. Troca de senha revoga todas as anteriores e renova o cookie atual. JWT sem registro/jti é rejeitado. Login confere novamente o hash antes de abrir sessão; trocas concorrentes usam comparação do hash na atualização. Respostas 401 antigas não apagam cookie de login mais recente. Requisições já autorizadas em andamento não são canceladas.
+| | |
+|---|---|
+| **O que está errado** | Login removia espaços aceitos no cadastro; cookie antigo continuava válido após logout/troca de senha. |
+| **Como cheguei nele** | Login com a mesma senha cadastrada e replay HTTP do cookie; testes de login/troca concorrentes. |
+| **Impacto** | Senha correta rejeitada e sessão comprometida permanecendo utilizável. |
+| **Corrigi?** | Senhas preservam espaços/NFKC; jti exige sessão vigente no SQLite. Logout revoga uma sessão; senha revoga as anteriores. Revalidação de hash protege login/trocas concorrentes. 401 antigo não limpa cookie novo. |
+| **Arquivos alterados** | backend/src/lib/validacao.js, middleware/autenticacao.js, routes/auth.js, routes/perfil.js, services/sessaoService.js, services/usuarioService.js e db/migrations/003-sessions.sql. Caminhos relativos a backend/src. |
 
-Login: 30/IP e 10/conta em 15 minutos; cadastro: 5/IP por hora; senha: 10/IP e 5/conta em 15 minutos. Contadores incluem sucesso e payload inválido, expiram, usam chaves SHA-256 e sobrevivem a reinício. Podem restringir usuários atrás de NAT ou permitir bloqueio temporário dirigido a uma conta; não substituem proteção contra DDoS na borda. TRUST_PROXY é vazio por padrão, ignorando X-Forwarded-For.
+### Problema 3 — Estado visual de sessão e carrinho (A03/A20)
 
-Leituras ERP inválidas retornam 502. Histórico mantém dados locais com status explicitamente indisponível e opção de repetir. Imagens validam tipo/corpo e encerram o stream em falha. Scanner percorre arquivos e blobs históricos, sem exibir valores; é verificação heurística, não certificação de ausência de segredo. A credencial fictícia conhecida do diagnóstico não é credencial SIAC.
+| | |
+|---|---|
+| **O que está errado** | Estado de A podia permanecer em B; respostas antigas sobrescreviam dados atuais. Na última revisão, salvar perfil atrasado restaurou A após login de B, inclusões fora de ordem deixaram o badge em 1 com 2 peças, e logout com falha ocultou uma sessão ainda válida. |
+| **Como cheguei nele** | Navegador com duas contas e respostas retidas/liberadas em ordem controlada; logout HTTP 503 simulado. Os quatro novos casos de interface falharam antes das correções. |
+| **Impacto** | Identidade e quantidade exibidas incorretamente, sem mudar a autorização do backend; falsa indicação de logout. |
+| **Corrigi?** | Contextos descartam leituras antigas por identidade/requisição. Atualização de perfil exige a conta atual; mutação antiga que terminou depois provoca nova leitura. Logout só limpa estado após confirmação e exibe falha para repetir. |
+| **Arquivos alterados** | frontend/src/contextos/AuthContext.jsx, CarrinhoContext.jsx, componentes/Cabecalho.jsx, paginas/Perfil.jsx e frontend/tests/integridade-interface.test.mjs. Os caminhos abreviados são relativos a frontend/src. |
+
+### Problema 4 — Checkout concorrente e resultado incerto (A04/A05/A06)
+
+| | |
+|---|---|
+| **O que está errado** | Dois fechamentos criavam pedidos duplicados; itens adicionados durante HTTP podiam ser apagados. Timeout após aceite remoto permitia reenviar. |
+| **Como cheguei nele** | POSTs/duas conexões concorrentes, timeout após aceite, trigger de falha local e queda real do processo em VALIDANDO/ENVIANDO. |
+| **Impacto** | Duplicação de compra e perda de itens ou vínculo com pedido aceito. |
+| **Corrigi?** | Reserva persistida por carrinho, bloqueio de mutações e conclusão local transacional. Incerto/interrompido mantém itens e bloqueio. Idempotência/atomicidade do SIAC não foram demonstradas; conferência externa continua obrigatória. |
+| **Arquivos alterados** | backend/src/services/pedidoService.js, checkoutTentativaService.js, carrinhoService.js, carrinhosService.js e backend/src/db/migrations/002-checkout-attempts.sql. |
+
+### Problema 5 — Origens, proxy e limite de autenticação (A07/A19)
+
+| | |
+|---|---|
+| **O que está errado** | CORS refletia qualquer origem com credenciais; proxy era sempre confiável e autenticação não tinha limite. |
+| **Como cheguei nele** | Requisições de origens arbitrárias e tentativas por conta/IP com X-Forwarded-For variável e reinício. |
+| **Impacto** | Exposição a origens indevidas, evasão por headers e tentativas ilimitadas de senha. |
+| **Corrigi?** | Origens exatas, HTTPS em produção e proxies explícitos. Limites persistidos por IP/conta, com Retry-After; não substituem proteção de borda e podem afetar NAT ou conta alvo. |
+| **Arquivos alterados** | backend/src/app.js, config.js, middleware/limiteAutenticacao.js, routes/auth.js, routes/perfil.js e db/migrations/004-auth-limits.sql. Caminhos relativos a backend/src. |
+
+### Problema 6 — Perfil e endereço principal (A10/A11)
+
+| | |
+|---|---|
+| **O que está errado** | Limpar telefone conservava o antigo; desmarcar o principal podia deixar a conta sem padrão. |
+| **Como cheguei nele** | PATCH vazio/null/omitido; criação/edição/exclusão e migração de endereços sem principal ou com dois. |
+| **Impacto** | Perfil não refletia a edição e checkout perdia seleção inicial previsível. |
+| **Corrigi?** | Telefone distingue omitido de limpeza; principal é mantido/promovido em transação. Migração repara flags preservando conteúdo/datas; índice garante no máximo um. |
+| **Arquivos alterados** | backend/src/routes/perfil.js, routes/enderecos.js, services/usuarioService.js, services/enderecoService.js e db/migrations/005-primary-address.sql. |
+
+### Problema 7 — Entrada e limites numéricos (A02/A14/A15)
+
+| | |
+|---|---|
+| **O que está errado** | Quantidade aceitava booleano/array e soma saturava silenciosamente em 99. Páginas enormes produziam números inseguros para ERP/offset SQL. Arredondamento monetário está descrito no KZN-312. |
+| **Como cheguei nele** | Payloads true/[2], soma 98+5 e paginação acima de Number.MAX_SAFE_INTEGER ou convertida em Infinity. |
+| **Impacto** | Quantidade diferente da solicitada, perda de centavos e erro de integração/consulta por entrada inválida. |
+| **Corrigi?** | Tipos/inteiros seguros validados; excesso dá conflito sem alterar itens. Paginação fora do intervalo seguro normaliza para 1 antes de consultar ERP/SQLite. |
+| **Arquivos alterados** | backend/src/lib/validacao.js, dinheiro.js, services/carrinhoService.js e backend/tests/erp.test.mjs. |
+
+### Problema 8 — Contratos ERP, recuperação e logs (A16/A21/A22)
+
+| | |
+|---|---|
+| **O que está errado** | JSON inválido parecia catálogo vazio; erros de pedidos persistiam, streams não tratavam interrupção e acesso registrava query. Na revisão, catálogo ainda mostrava vazio/resultados antigos junto de 502. |
+| **Como cheguei nele** | Mock com corpos/tipos inválidos, timeout/5xx/401, stream interrompido, marcadores sensíveis em logs e falha/retry no catálogo renderizado. |
+| **Impacto** | Falha externa confundida com ausência de peças/pedidos e possível exposição em logs. |
+| **Corrigi?** | Contratos nos campos consumidos, 502 explícito, histórico local com status indisponível, retry nas telas, pipeline e logs sem query/cookie/corpo remoto. Catálogo com erro oculta resultados e permite repetir mantendo filtros. |
+| **Arquivos alterados** | backend/src/erp/cliente.js, contratos.js, routes/imagens.js, middleware/requisicao.js, middleware/erros.js, services/pedidoService.js; frontend/src/paginas/Catalogo.jsx, Pedidos.jsx, PedidoDetalhe.jsx e Produto.jsx. |
+
+### Problema 9 — Navegação, estoque parcial e layout (A08/A09/A17/A18)
+
+| | |
+|---|---|
+| **O que está errado** | Próxima parava cedo, busca não acompanhava URL, quantidade indisponível bloqueava redução e layout rígido prejudicava mobile. |
+| **Como cheguei nele** | Navegação/histórico, estoque 2 com quantidade 4, render em 360/390/768/1440 px e verificações de foco/contraste/labels. |
+| **Impacto** | Peças inacessíveis na última página e dificuldade para corrigir orçamento ou usar celular/teclado. |
+| **Corrigi?** | Paginação/campo sincronizados, redução permitida com validação no servidor, grid/painel responsivos, labels e foco. Não houve certificação WCAG completa. |
+| **Arquivos alterados** | frontend/src/componentes/Cabecalho.jsx, ui.jsx, ItensCarrinho.jsx, PainelCarrinho.jsx, frontend/src/paginas/Catalogo.jsx, Checkout.jsx, Perfil.jsx e Produto.jsx. |
 
 ---
 
@@ -152,15 +222,15 @@ Auditoria independente manteve o mecanismo e acrescentou testes de dois usuário
 
 Testes node:test com SQLite temporário e ERP HTTP mock; fetch limitado a loopback. Navegador usa aplicação modificada pelo Vite e backend temporário. Nenhum pedido real foi gerado.
 
-Histórico preservado: Dia 2 integrado 23 backend/12 navegador; Dias 2/3 finais **51 + 25 = 76 aprovados**. Reexecução inicial confirmou os 76. Auditoria final ampliou para **130 backend + 35 navegador = 165 testes**, sem falhas/skips na execução aprovada, incluindo Node 24.21.0 com instalação limpa. Build Vite (62 módulos) e smoke de produção/reinício aprovados. Saídas e comandos em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
+Histórico preservado: Dias 2/3 **51 backend + 25 navegador = 76 aprovados**; auditoria posterior **130 + 35 = 165**. A revisão definitiva passou com **131 backend + 39 navegador = 170 testes**, sem falhas/skips, em Node 20.19.2 e 24.21.0. A cópia Node 24 usa as dependências da instalação limpa anterior e o código atual conferido por hash. Build Vite (62 módulos) e smoke de produção/reinício aprovados nos dois runtimes. Saídas e comandos em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
 
 Cobertura: quatro chamados, migrações, autorização entre contas, múltiplos carrinhos, preço/estoque, checkout e concorrência; CORS, replay/expiração/concorrência de sessões, senhas com espaços/Unicode, rate limit/proxy, principal/telefone, ERP malformado/timeout/5xx/401, stream/logs e backup/restauração. Frontend modificado realmente executado em Chromium com mock isolado.
 
 Dez telas em 360/390/768/1440 px: overflow, nomes/labels, botões e contraste de textos renderizados (canvas, fundos/opacity, extremos do gradiente). Drawer cobre Tab/Shift+Tab/Escape/retorno de foco; atalho pula ao conteúdo. Corrigi área de clique, observação sem nome acessível e opacidade da ajuda do e-mail. Capturas finais fictícias de produto/painel, com inspeção visual por imagem; não houve teste manual humano em dispositivo real ou certificação WCAG.
 
-Comandos: backend npm test; frontend npm test/npm run build; node scripts/smoke-producao.mjs e verificar-segredos.mjs no backend; git diff --check; node --check; npm audit; systemd-analyze verify; caddy validate. Scanner verifica arquivos/blobs do histórico e segredos conhecidos do ambiente, sem imprimir valores. npm audit não apontou vulnerabilidades conhecidas na execução. Diagnóstico antigo não foi usado como aprovação. Health público do SIAC teve consulta somente leitura 200/ok; não validei catálogo autenticado real nesta etapa nem gerei pedido real.
+Comandos: backend npm test; frontend npm test/npm run build; node scripts/smoke-producao.mjs e verificar-segredos.mjs no backend; git diff --check; node --check; npm audit; systemd-analyze verify; caddy validate. Scanner verifica rastreados, novos não ignorados, blobs históricos e segredos conhecidos do ambiente, sem imprimir valores; não é garantia de ausência de todo segredo. npm audit não apontou vulnerabilidades conhecidas. Diagnóstico antigo não foi usado como aprovação. Health público do SIAC foi consultado na auditoria anterior; não validei catálogo autenticado real nesta revisão nem gerei pedido real.
 
-Falhas de desenvolvimento foram registradas: seletores iniciais incorretos, alvos pequenos/label/contraste corrigidos; teste de restauração esperava carrinho de usuário que ainda não havia acessado; fixture ajustada para exercitar esse acesso. Um mock excedeu timeout de 250ms com muitos arquivos concorrentes. Suítes passaram após serializar arquivos; concorrência de requisições/conexões/processos continua dentro dos casos. Essas execuções falhas/interrompidas não foram usadas como aprovação.
+Reproduções de bugs e falhas durante desenvolvimento estão registradas na validação. Só execuções completas aprovadas sustentam os números acima. Arquivos de teste rodam em sequência; casos de concorrência continuam exercitando requisições, conexões e processos simultâneos. A revisão retirou uma espera de 20 ms que não sincronizava de fato o teste e preservou sua barreira explícita.
 
 ---
 
@@ -183,8 +253,10 @@ Idempotência/reconciliação por chave no SIAC e interface administrativa de co
 
 ## 8. Outras observações
 
-[ENTREVISTA-DIAS2-3.md](docs/ENTREVISTA-DIAS2-3.md) é histórico. Decisões atuais em [ENTREVISTA-FINAL.md](docs/ENTREVISTA-FINAL.md); pendências reais em [PENDENCIAS-DIA4.md](docs/PENDENCIAS-DIA4.md); mensagem pronta para revisão em [EMAIL-ENTREGA.md](docs/EMAIL-ENTREGA.md). Nenhum e-mail enviado.
+Decisões para a devolutiva em [ENTREVISTA-FINAL.md](docs/ENTREVISTA-FINAL.md); implantação e pendências operacionais em [IMPLANTACAO.md](docs/IMPLANTACAO.md); mensagem para revisão em [EMAIL-ENTREGA.md](docs/EMAIL-ENTREGA.md). Nenhum e-mail enviado.
 
 Marcadores da base lidos: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho).
 
-Histórico inicial e commits anteriores preservados; branches separadas e merges no-ff. Auditoria em fix/security-and-integrity; preparação/documentação em chore/deployment-and-delivery; integração na main do repositório público de Henrique, sem force-push. package-lock.json não versionado preexistente na raiz não faz parte da entrega. Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantação é o requisito bloqueante restante: não declarar entrega 100% concluída sem URL real validada. Rotação SIAC e conferência de pedidos permanecem responsabilidades externas explicitadas.
+Revisão em chore/final-review, com histórico/autoria preservados. Foram retirados uma preparação de entrevista substituída, o checklist temporário do Dia 4 e o README inicial de duas linhas; suas informações úteis estão nos documentos acima. Não havia arquivos de agentes/Trellis no projeto. Removidos exports sem uso e compatibilidade v0 desnecessária da fixture; testes de migração v0 permanecem. Nenhuma dependência foi adicionada ou removida.
+
+Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantação é o requisito bloqueante restante. Rotação SIAC e conferência de pedidos continuam responsabilidades externas. O lockfile vazio preexistente da raiz foi preservado fora do workspace; os lockfiles funcionais de backend/frontend permanecem versionados.

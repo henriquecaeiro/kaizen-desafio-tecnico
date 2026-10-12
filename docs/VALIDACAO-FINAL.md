@@ -1,6 +1,46 @@
 # Validação final — 11/10/2026
 
-## Ambiente e resultado
+## Revisão definitiva — chore/final-review
+
+Partiu da main/remota 07f61f6, com todas as branches anteriores integradas.
+Foram lidos código, testes e documentos; comparação com a base importada eb0f240.
+Não havia arquivos de agentes/Trellis na árvore de entrega. Três documentos
+redundantes e planos antigos foram consolidados; diagnóstico, evidências e
+script de reprodução histórica foram preservados. Enunciado original conferido
+por comparação e oito seções do modelo de relatório mantidas.
+
+Seis achados reproduzidos e corrigidos: catálogo com falso vazio/resultados antigos
+em erro, resposta de perfil A aplicada após login B, logout falho sem feedback,
+badge incorreto após inclusões fora de ordem, paginação numericamente insegura e
+scanner sem cobertura de arquivos não rastreados. Os quatro casos novos de
+navegador e as duas verificações direcionadas de backend falharam antes da correção;
+essas execuções não foram contadas como aprovação. Scanner também cobre backup parcial.
+
+Suíte atual: **131 backend + 39 frontend = 170 testes**, **170 aprovados**, zero
+falhas/cancelamentos/skips nas execuções completas. Executada com Node 20.19.2
+no workspace e Node 24.21.0 em cópia isolada: 96 arquivos de código/configuração
+copiados e conferidos por SHA-256, usando as dependências da instalação limpa
+anterior para Node 24. Nenhuma dependência ou ferramenta de qualidade foi adicionada.
+
+| Verificação | Resultado da revisão |
+|---|---|
+| npm test (backend / frontend) | 131/131 e 39/39, Node 20 e 24 |
+| npm run build (frontend) | Aprovado, 62 módulos, Node 20 e 24 |
+| node scripts/smoke-producao.mjs (backend) | Produção local/reinício aprovados, Node 20 e 24 |
+| node scripts/verificar-segredos.mjs (backend) | Rastreados, novos não ignorados e histórico: sem achados |
+| npm audit --json (ambos) | Zero vulnerabilidades conhecidas reportadas |
+| node --check / git diff --check | Sintaxe e whitespace aprovados |
+| systemd-analyze verify / caddy validate | Configurações aprovadas |
+| Links locais / enunciado / modelo do relatório | Conferidos |
+
+Resumo das saídas: [revisao-final.txt](evidencias/revisao-final.txt).
+Navegador real Chromium em 360/390/768/1440 px, inclusive foco/labels/contraste
+nas dez telas e drawer; as capturas anteriores foram preservadas. Nenhum pedido
+real ou banco de cliente utilizado. Deploy/HTTPS público, catálogo SIAC autenticado,
+rotação de credencial, Safari/Firefox, carga e leitor de tela permanecem fora
+da validação realizada. Detalhes de cobertura e limites abaixo.
+
+## Auditoria anterior — ambiente e resultado
 
 Workspace: /home/henrique/DEV/kaizen-desafio-tecnico. A main inicial e origin/main
 coincidiam em e7052de; branches dos Dias 2/3 já integradas. Alteração não versionada
@@ -8,7 +48,7 @@ preexistente package-lock.json na raiz foi preservada e não incluída na entreg
 O workspace Windows citado não estava montado neste ambiente.
 
 Baseline reexecutado: **51 backend + 25 frontend = 76 aprovados**.
-Suíte atual: **130 backend + 35 frontend = 165 testes**, **165 aprovados, zero
+Suíte naquela auditoria: **130 backend + 35 frontend = 165 testes**, **165 aprovados, zero
 falhas/cancelamentos/skips na execução final aprovada**. Aumento de 89 casos
 em relação ao registro histórico, não soma de execuções repetidas.
 
