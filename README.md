@@ -336,16 +336,19 @@ Código publicado em [henriquecaeiro/kaizen-desafio-tecnico](https://github.com/
 branch `main`. Chamados, múltiplos carrinhos e auditoria estão em [RELATORIO.md](RELATORIO.md).
 Resultados atuais e limitações: [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
 
-**Implantação pública pendente:** frontend preparado para Netlify e backend para
-ngrok no Kali, com SQLite persistente separado. netlify.toml usa base frontend,
-build npm run build e publish dist. O proxy exige NGROK_URL HTTPS real no ambiente
-de build; sem ela, a publicação é bloqueada. React mantém API relativa /api e
-cookie HttpOnly/Secure/SameSite=Lax, sem credenciais ERP no frontend.
+Frontend existente: https://desafio-kaizen.netlify.app. Backend ativo:
+https://2154-2804-d59-a107-c600-b57-957-65d4-af7d.ngrok-free.app.
+Health local/ngrok retornam JSON/200; o site precisa receber o novo build para
+corrigir seu 404 da API. **A versão pública corrigida ainda depende do upload.**
 
-Ainda faltam autenticar ngrok, confirmar autorização/rotação SIAC, liberar a porta
-3001 ocupada pelo backend root e obter a URL real do site para CORS_ORIGEM.
-Não há URL pública validada. Passos exatos e checklist público estão em
-[IMPLANTACAO.md](IMPLANTACAO.md). deploy/ foi preservado como alternativa systemd/Caddy.
+Para publicação manual, executar npm ci e npm run build no frontend e arrastar
+frontend/dist completo à aba Deploys do projeto existente. O Vite copia
+public/_redirects e public/_headers para dist: proxy API antes do fallback SPA,
+CSP/nosniff/Referrer-Policy preservados, sem plugin ou variável remota.
+React mantém API /api, credentials: include e cookie HttpOnly/Secure/SameSite=Lax.
+Fetch envia somente o header não sensível de bypass ngrok; imagens usam o mesmo
+mecanismo. Nenhuma credencial ERP entra no build. Instruções e limites em
+[IMPLANTACAO.md](IMPLANTACAO.md); deploy/ permanece como alternativa systemd/Caddy.
 
 O backend serve `frontend/dist` em produção e recusa iniciar sem o build. Configurar
 `NODE_ENV=production`, origem HTTPS exata em `CORS_ORIGEM`, segredos privados e

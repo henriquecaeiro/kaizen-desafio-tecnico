@@ -333,9 +333,11 @@ Decisões de escopo assumidas pelo time, não esquecimentos:
 - **Sem confirmação de e-mail** no cadastro, pelo mesmo motivo.
 - **Testes com ERP simulado.** Backend usa `node:test`, frontend usa Chromium
   instalado e `playwright-core`. Não verificam a atomicidade interna do SIAC.
-- **Implantação pública depende de host autorizado.** Configuração de serviço,
-  proxy, backup e produção local foram validados; DNS/HTTPS e operação no host real
-  continuam pendentes. SQLite requer disco persistente e reserva compartilhada.
+- **Frontend separado por proxy de mesma origem.** Upload manual no Netlify usa
+  public/_redirects e _headers copiados para dist pelo Vite, sem plugin ou variável
+  remota. API continua /api com cookies HttpOnly/Secure/Lax e backend ngrok/SQLite
+  persistente no Kali. Validação do novo frontend no CDN depende de seu upload.
+  SQLite requer disco persistente e reserva compartilhada.
 - **Checkout não é transacional entre os dois sistemas.** Tentativa persistida
   evita fechamento simultâneo e repetição automática após resultado ambíguo. Se
   o SIAC aceitar e a gravação local falhar, itens e bloqueio são preservados; o

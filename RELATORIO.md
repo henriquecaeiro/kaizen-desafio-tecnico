@@ -4,7 +4,7 @@
 **Data de entrega:** em preparação; código revisado em 12/10/2026. Envio e implantação pública pendentes.
 **Tempo aproximado dedicado:** não cronometrado.
 
-Chamados, múltiplos carrinhos e ajustes manuais implementados/testados. Causas e reproduções históricas estão consolidadas neste relatório. Resultados atuais em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md). **Entrega parcial somente pela implantação pública:** faltam host/acesso/domínio e credencial de produção autorizados; não há URL pública da solução.
+Chamados, múltiplos carrinhos e ajustes manuais implementados/testados. Causas e reproduções históricas estão consolidadas neste relatório. Resultados atuais em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md). **Pendente somente publicar/validar o novo frontend:** o site Netlify e o backend ngrok existem; o dist corrigido deve ser enviado ao site existente. Não considerar o proxy público aprovado antes desse upload.
 
 ---
 
@@ -12,9 +12,9 @@ Chamados, múltiplos carrinhos e ajustes manuais implementados/testados. Causas 
 
 Desenvolvimento e revisão em Linux/Node 20.19.2, com Chromium instalado. Também validei Node 24.21.0 de .nvmrc em cópia isolada, com dependências instaladas pelos lockfiles. Execução no README; segredos somente no ambiente.
 
-npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express serve frontend/dist na mesma origem e recusa iniciar sem build. Serviço systemd/Caddy, variáveis privadas, backup online/restauração e atualização estão em [IMPLANTACAO.md](IMPLANTACAO.md). Configurações e produção local foram validadas; host público não foi disponibilizado. Não criei cobrança nem usei infraestrutura pessoal/corporativa.
+npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express conserva a exigência de frontend/dist local. O frontend será enviado manualmente ao Netlify, com API /api na mesma origem por proxy para ngrok. Serviço systemd/Caddy permanece como alternativa. Variáveis privadas, backup/restauração e publicação em [IMPLANTACAO.md](IMPLANTACAO.md). Nenhum recurso pago foi contratado.
 
-O código foi publicado no repositório de Henrique. Não há aplicação pública implantada: falta infraestrutura autorizada com disco persistente, domínio e credencial SIAC. Os arquivos novos de serviço, proxy e backup estão em deploy/ e backend/scripts/; não substituem a validação no host real.
+Código no repositório de Henrique. Frontend existente: https://desafio-kaizen.netlify.app. Backend ativo: https://2154-2804-d59-a107-c600-b57-957-65d4-af7d.ngrok-free.app. Health local/ngrok retornam JSON/200 com ERP ok; frontend antigo devolve 404 Netlify na API. A correção está no build estático, ainda não reenviado ao site. Nenhum pedido real foi utilizado na validação.
 
 ---
 
@@ -335,7 +335,10 @@ ao diretório original preservado em /home/henrique/DEV/kaizen-tree-permissions.
 assim seu banco/WAL continuam sendo os mesmos usados pelo processo. O .env foi
 comparado e permanece idêntico. Regressão e smoke não tocaram nesse banco privado.
 
-## 11. Preparação Netlify/ngrok
+## 11. Histórico da preparação inicial Netlify/ngrok
+
+Esta seção registra a preparação anterior. A configuração por plugin e as
+pendências daquele momento foram substituídas pela publicação manual da seção 12.
 
 Limpeza final: diretório auxiliar completamente removido em branch própria;
 resumos obrigatórios preservados na raiz, capturas opcionais redirecionadas para
@@ -388,3 +391,52 @@ parar o processo root identificado, autenticar ngrok, manter túnel em terminal
 gráfico, criar site Netlify, definir NGROK_URL e informar origem real para CORS.
 Somente depois validar proxy público, cookies/F5, carrinhos/isolamento, mobile,
 Network/Console e checkout sem envio real. Procedimento em [IMPLANTACAO.md](IMPLANTACAO.md).
+
+## 12. Correção do upload manual Netlify
+
+| Problema | Evidência/causa | Correção |
+|---|---|---|
+| API no Netlify retorna 404 HTML | Backend local/ngrok JSON/200; upload não executa o plugin que gerava regras no build remoto | Removidos frontend/netlify e referência ao plugin; public/_redirects copiado pelo Vite em todo build, com ngrok real e proxy 200! antes da SPA |
+| Segurança ausente no upload de dist | netlify.toml não acompanha upload manual somente da pasta estática | public/_headers conserva CSP, nosniff e Referrer-Policy; regras não duplicadas no TOML |
+| ngrok retorna aviso HTML/200 | User-Agent de navegador sem bypass reproduziu aviso; com header recebeu JSON/SVG | Fetch da API envia ngrok-skip-browser-warning: 1; JSON inválido em HTTP 200 lança RESPOSTA_INVALIDA, sem alterar erros HTTP/204 |
+| Imagens também recebem aviso | GET de imagem sem header retornou text/html, com bypass image/svg+xml | ImagemProduto compartilhado em catálogo/detalhe/carrinho busca com header e exibe data URL; CSP já permitia data:, HTML rejeitado e requisições antigas abortadas |
+| Origem real rejeitada por 403 | Configuração privada ainda apontava à origem anterior do mesmo projeto Netlify | Corrigida somente CORS_ORIGEM; um reinício anunciado e gracioso do Node após leitura confirmar zero checkouts ativos. Ngrok não reiniciado; SQLite/segredos preservados |
+
+Backend production como henrique em 127.0.0.1:3001, terminal gráfico permanente;
+health local/ngrok 200 JSON/ERP ok; preflight da origem real 204. TRUST_PROXY
+loopback, DB_PATH persistente separado e demais variáveis privadas preservadas.
+Não houve reset, migração adicional, gravação de conta de teste ou pedido no banco real.
+
+CLI Netlify 27.12.0 serviu o dist sem plugin: health/catálogo/categorias JSON/200,
+perfil sem sessão 401 JSON e rota inexistente 404 JSON. Sem Location/redirecionamento.
+Assets/headers/SPA e Chromium com catálogo/imagens reais, quatro larguras e refresh
+de entrar/cadastro/perfil/carrinho aprovados. A espera inicial de todas as imagens
+incluía lazy loading fora da tela; a verificação correta distingue as visíveis.
+
+Smoke opcional backend/scripts/smoke-netlify-proxy.mjs usa CLI oficial com cópia
+temporária de dist, SQLite descartável e ERP mock, sem alterar o build entregue.
+Validou GET/POST/PATCH/PUT/DELETE, query/JSON, X-Carrinho-Id, cookies
+Secure/HttpOnly/Lax sem Domain, sessão, perfil, endereços, carrinhos, isolamento e
+erros 401/404/409/502 com recuperação. Zero pedidos. A primeira execução corrigiu
+somente expectativas de status do próprio smoke (inclusão 201; ID inexistente
+404 versus carrinho próprio não ativo 409); não alterou o contrato da API.
+
+Suítes completas em Node 20: **140 backend + 76 frontend = 216 aprovados**, sem
+falhas/cancelamentos/skips. Casos do plugin foram adaptados à configuração estática,
+sem reduzir a suíte; três novos casos de resposta API e quatro de imagens.
+Build repetido mantém _redirects/_headers idênticos a public. Smoke de produção,
+scanner, auditorias sem vulnerabilidades conhecidas, sintaxe e whitespace aprovados.
+
+Repetidas as duas suítes completas em Node 24.21.0: **216/216 aprovados**, sem
+falhas/cancelamentos/skips, build e smoke também aprovados. A cópia isolada mantém
+código/configuração idênticos ao workspace e dependências nativas próprias.
+Build real verificado: cinco arquivos; nenhum segredo conhecido/.env/banco/mapa.
+
+CLI encontrou ENOSPC no disco; somente seu cache descartável criado nesta tarefa
+foi movido para /tmp, com symlink preservando o caminho, liberando 305 MB. Dados
+do usuário não foram apagados. Pouco espaço em disco continua sendo risco operacional.
+
+Pendente: usuário arrastar frontend/dist completo para Deploys do projeto existente
+desafio-kaizen e conferir API/cookies/F5 pelo HTTPS público. Não criar outro site,
+não cadastrar variável remota, não executar plugin. Código preparado não significa
+que a versão nova já esteja publicada. Instruções no guia da raiz.

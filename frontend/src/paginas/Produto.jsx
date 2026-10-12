@@ -4,6 +4,7 @@ import { api, dinheiro } from '../api/cliente.js';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
 import { Alerta, Botao, Carregando, EstadoVazio } from '../componentes/ui.jsx';
+import { ImagemProduto } from '../componentes/ImagemProduto.jsx';
 
 export function Produto() {
   const { codigo } = useParams();
@@ -91,7 +92,7 @@ export function Produto() {
 
       <div className="grid gap-8 rounded-xl border border-tinta-200 bg-white p-6 md:grid-cols-2 md:p-8">
         <div className="grid place-items-center rounded-xl bg-tinta-100 p-6">
-          <img
+          <ImagemProduto
             src={produto.imagem_url}
             alt={produto.descricao}
             width="320"
