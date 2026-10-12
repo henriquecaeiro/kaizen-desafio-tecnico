@@ -133,3 +133,34 @@ os 20 testes Chromium de auditoria e múltiplos carrinhos foram executados com
 capturas ativadas, todos aprovados. As oito imagens foram gravadas em
 /tmp/kaizen-capturas-remocao, sem recriar o diretório excluído. Scanner de
 segredos, links locais (zero quebrados) e git diff --check aprovados.
+
+## Nova regressão — preparação Netlify/ngrok
+
+Node 20.19.2: **140 backend + 69 frontend = 209 aprovados**, zero falhas,
+cancelamentos ou skips. Preservados os 203 testes anteriores e adicionados seis:
+um de cache privado na API e cinco de configuração/proxy/validação de URL.
+Frontend inclui 58 cenários Chromium e 11 unitários. Build Vite aprovado,
+63 módulos. Smoke de produção ampliado aprovado; scanner de segredos,
+auditorias backend/frontend (zero vulnerabilidades) e links locais aprovados.
+
+Node 24.21.0: repetidas ambas as suítes completas em cópia isolada, novamente
+**140 + 69 = 209 aprovados**, zero falhas/cancelamentos/skips. Build e smoke
+ampliado também aprovados. Dependências nativas do runtime 24 foram usadas
+separadamente, com os dois lockfiles idênticos aos do workspace.
+
+CLI Netlify 27.12.0 com @netlify/build 37.4.1/Node 24.21.0: configuração
+resolvida com base frontend e publish frontend/dist, hook carregado, proxy
+inserido antes do fallback e build aprovado em modo offline usando fixture.
+Sem NGROK_URL, o build falhou intencionalmente com a mensagem de configuração.
+A fixture não é um domínio real de entrega; não foi publicada.
+
+Diagnóstico real somente local/read-only, production como henrique em porta
+3002 temporária: /api/health 200/erp ok, /api/catalogo?tamanho=1 200,
+/api/catalogo/categorias 200; JSON válido e no-store. Processo encerrado por
+SIGTERM após a leitura. Banco novo persistente íntegro, sem tocar no banco antigo.
+
+**Não executados:** túnel HTTPS ativo e proxy Netlify real; cookies de sessão,
+GET/POST/PATCH/PUT/DELETE, F5, navegação/mobile/Console/Network pela origem pública.
+Dependem de autenticação ngrok, porta 3001 livre, autorização SIAC e site Netlify.
+Não foram contabilizados como aprovados. Terminal gráfico aberto apenas para
+autenticação. Nenhum pedido real foi criado.

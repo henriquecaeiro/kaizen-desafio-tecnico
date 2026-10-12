@@ -163,3 +163,4 @@ backend/data
 *.sqlite.parcial
 *.sqlite3.parcial
 .local/
+.netlify/

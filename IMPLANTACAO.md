@@ -2,17 +2,123 @@
 
 ## Estado em 12/10/2026
 
-**Não há URL pública da solução.** Não foi identificado servidor autorizado,
-domínio com acesso de publicação ou conexão de hospedagem disponível. O ambiente
-não fornece credencial SIAC de produção. As opções de hospedagem encontradas
-não estão conectadas; não foi contratado serviço, criado recurso pago ou usado
-servidor pessoal/corporativo. A chave SSH disponível foi utilizada apenas para
-publicar no GitHub de Henrique.
+**Publicação ainda pendente.** A topologia solicitada é Netlify (frontend HTTPS)
+e ngrok (backend Node/SQLite no Kali). A configuração está preparada, mas ainda
+faltam autenticar ngrok, confirmar autorização/rotação SIAC, liberar a porta
+3001 ocupada pelo processo root e obter a URL real do Netlify. Nenhum domínio
+público foi inventado. Nenhum recurso pago foi contratado.
 
-Preparação escolhida: Node em servidor Linux autorizado, Express servindo o build
-Vite, disco persistente local, systemd e Caddy. Não exige container, ORM, serviço
-de cache ou outra aplicação de frontend. Os comandos abaixo são procedimentos
-para esse servidor, **não registro de um deploy realizado**.
+Os exemplos systemd/Caddy em deploy/ permanecem como alternativa de hospedagem
+permanente, não como registro de um deploy realizado.
+
+## Netlify e ngrok no Kali
+
+Fluxo: navegador HTTPS → Netlify `/api/*` → ngrok HTTPS → Node em
+127.0.0.1:3001 → SQLite persistente/SIAC. O frontend mantém `/api` e
+credentials: include. SIAC_TOKEN/JWT_SEGREDO nunca entram no build ou no Netlify.
+
+### Preparação realizada
+
+- netlify.toml na raiz: base frontend, npm run build e publish dist (relativo à
+  base, portanto frontend/dist). Node 24.21.0; instalação automática via lockfile.
+- Hook local frontend/netlify, sem novas dependências: exige NGROK_URL HTTPS,
+  insere proxy `/api/*` antes da regra SPA, status 200/force e header
+  ngrok-skip-browser-warning: 1. A URL não é hardcoded no React. Sem ela, o deploy
+  falha antes do build. Domínios fictícios existem somente nas fixtures de teste.
+- Cookie original host-only (sem Domain), HttpOnly/Secure/SameSite=Lax/Path=/;
+  cache da API private, no-store, inclusive erros/autenticação. Imagens públicas
+  conservam sua política própria. CSP e nosniff também configurados no frontend.
+- ngrok oficial 3.39.11 em /home/henrique/.local/bin/ngrok. Autenticação pendente.
+  Janela xterm de autenticação aberta como henrique; isso **não é túnel ativo**.
+- Configuração privada backend/.local/netlify-ngrok.env criada, ignorada pelo Git,
+  modo 0600. .env original e seu banco/WAL não foram sobrescritos.
+- Banco novo /home/henrique/.local/share/kaizen-netlify/ecommerce.db, arquivo 0600
+  em diretório 0700, migração 5 e integrity_check ok. Não é banco descartável.
+  O bootstrap de produção ainda exige o build local frontend/dist, preservado.
+
+### Ações locais restantes
+
+1. Confirmar que a credencial SIAC é autorizada para exposição pública; se for a
+   histórica potencialmente comprometida, rotacioná-la no canal apropriado e
+   atualizar backend/.env localmente. Não publicar antes disso.
+2. Conferir o processo que ocupa 3001. Durante a preparação era root PID 8053,
+   node src/server.js. O responsável deve pará-lo no terminal original (Ctrl+C)
+   ou usar sudo kill -TERM somente após confirmar o PID. Não encerrar processo
+   desconhecido e não iniciar a nova loja como root.
+3. Autenticar o ngrok no terminal de entrada oculta aberto. Alternativa em zsh:
+
+   ```sh
+   read -rs 'kaizen_ngrok_token?Authtoken ngrok: '
+   print
+   /home/henrique/.local/bin/ngrok config add-authtoken "$kaizen_ngrok_token"
+   unset kaizen_ngrok_token
+   ```
+
+   O valor não vai para o histórico; é gravado na configuração privada do ngrok.
+   Não colar token em chat, script, Git, URL ou logs. Restringir o arquivo gerado
+   com chmod 600 /home/henrique/.config/ngrok/ngrok.yml.
+4. Com a credencial aprovada e porta livre, abrir terminal gráfico normal e manter
+   ngrok em primeiro plano (não usar nohup nem background):
+
+   ```sh
+   /home/henrique/.local/bin/ngrok http http://127.0.0.1:3001 --inspect=false
+   ```
+
+   --inspect=false evita que o inspector local armazene corpos/cookies/senhas de
+   autenticação. A interface do terminal continua mostrando estado/URL. A URL
+   HTTPS real pode ser consultada sem dados de sessão em localhost:4040/api/tunnels.
+   Sem backend iniciado, o túnel retorna erro de upstream; não é loja pronta.
+5. Criar o site no Netlify importando o repositório de Henrique, branch main.
+   Usar netlify.toml; não criar _redirects conflitante. Antes do deploy, definir
+   NGROK_URL (escopo Builds) com a origem HTTPS REAL exibida pelo ngrok, sem /api.
+   Essa URL é pública, não é segredo. Sem ela o build será bloqueado de propósito.
+   Não adicionar SIAC_TOKEN, JWT_SEGREDO ou token ngrok ao ambiente Netlify.
+6. Obter a origem HTTPS final do site e preencher CORS_ORIGEM no arquivo privado
+   backend/.local/netlify-ngrok.env. Não usar wildcard nem origem fictícia. O
+   arquivo mantém NODE_ENV=production, HOST=127.0.0.1, PORT=3001, TRUST_PROXY=loopback
+   e DB_PATH separado. Somente o agente local é confiável; não confiar em toda
+   internet/Netlify por quantidade de saltos, nem utilizar TRUST_PROXY=true.
+7. Em outro terminal normal, com frontend/dist atualizado:
+
+   ```sh
+   cd /home/henrique/DEV/kaizen-desafio-tecnico/backend
+   umask 077
+   node --env-file=.local/netlify-ngrok.env src/server.js
+   ```
+
+   Variáveis explícitas desse arquivo prevalecem; dotenv carrega os segredos do
+   .env original. Não copiar dependências nativas entre Node 20 e 24; usar npm ci
+   com o runtime escolhido se mudar o Node. Manter ambos terminais abertos e o
+   Kali ligado/conectado. Alterar CORS_ORIGEM exige reiniciar este backend.
+8. Conferir health/catalogo/categorias pelo HTTPS do ngrok usando o header
+   ngrok-skip-browser-warning: 1 e depois pela origem Netlify. Registrar URLs reais
+   e executar o checklist público abaixo antes de declarar publicação concluída.
+   Se a URL ngrok mudar, atualizar NGROK_URL e fazer novo deploy no Netlify.
+
+Build oficial local da CLI Netlify validou os caminhos e a inserção do proxy com
+fixture fictícia, em modo offline; também confirmou bloqueio sem NGROK_URL.
+Isso **não comprova** rede pública/cookies no CDN. Métodos, query strings, JSON,
+cookies e erros devem ser conferidos no destino real, sem pedidos de teste SIAC.
+
+### Checklist pelo domínio real do Netlify (pendente)
+
+Health, catálogo/categorias/produto e JSON (não HTML intermediário); cadastro/login,
+cookie Secure/HttpOnly/Lax, logout/relogin; perfil PATCH, endereços POST/PUT/DELETE;
+dois carrinhos, ativação PUT, quantidade PATCH, exclusão DELETE, F5 com sessão e
+itens persistidos, duas contas isoladas; refresh direto de perfil/carrinho/checkout,
+mobile/Console/Network. Conferir endereço no checkout sem finalizar pedido real.
+Verificar query strings, X-Carrinho-Id, corpos JSON e respostas 401/404/409/502.
+Não considerar localhost ou build offline equivalentes a essa validação.
+
+Referências oficiais: [proxy e headers](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/),
+[caminhos do monorepositório](https://docs.netlify.com/build/configure-builds/monorepos/),
+[hooks locais](https://docs.netlify.com/extend/develop-and-share/develop-build-plugins/) e
+[instalação ngrok](https://ngrok.com/download/linux?tab=download).
+
+## Alternativa permanente: systemd e Caddy
+
+Node em servidor Linux autorizado, Express servindo o build Vite, disco persistente
+local, systemd e Caddy. Os procedimentos seguintes são preservados como alternativa.
 
 ## Pré-requisitos do responsável pela infraestrutura
 
@@ -163,9 +269,9 @@ RELATORIO e e-mail. Essas verificações públicas continuam pendentes.
 
 ## Antes do envio
 
-A revisão do código não resolveu a dependência de infraestrutura: ainda faltam
-host/acesso autorizado, domínio/DNS/HTTPS, disco persistente e credencial SIAC
-de produção com rotação da chave histórica confirmada. A loja precisa acordar
+A revisão do código não resolve a dependência de autenticação/origens/autorização:
+para Netlify/ngrok, cumprir as ações pendentes acima; para systemd/Caddy, obter
+host/acesso, domínio/DNS/HTTPS e credencial SIAC autorizada. A loja precisa acordar
 a conferência de tentativas incertas/interrompidas e a rotina de backup externo.
 Nenhum recurso pago foi contratado ou servidor público configurado nesta revisão.
 

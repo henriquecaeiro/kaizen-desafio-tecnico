@@ -4,6 +4,17 @@ import { prepararAmbiente } from '../test-support/ambiente.mjs';
 const e = await prepararAmbiente();
 after(e.fechar);
 
+test('API impede cache compartilhado de sessao, dados, estoque e erros', async () => {
+  const cookie = await e.login();
+  for (const [rota, sessao] of [['/auth/eu', cookie], ['/perfil', cookie], ['/carrinho', cookie],
+    ['/catalogo', undefined], ['/auth/eu', undefined], ['/inexistente', undefined]]) {
+    const r = await e.chamada(rota, { cookie: sessao });
+    assert.equal(r.headers.get('cache-control'), 'private, no-store');
+  }
+  const proibido = await e.chamada('/auth/logout', { metodo: 'POST', headers: { Origin: 'https://outro.test' } });
+  assert.equal(proibido.headers.get('cache-control'), 'private, no-store');
+});
+
 test('origem permitida recebe CORS com credenciais e Vary', async () => {
   const r = await e.chamada('/catalogo', { headers: { Origin: 'http://localhost:5173' } });
   assert.equal(r.status, 200);

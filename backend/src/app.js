@@ -26,6 +26,11 @@ export function criarApp() {
 
   app.use(identificarRequisicao);
   app.use(registrarAcesso);
+  // Sessao, dados pessoais e estoque nao podem ser reutilizados por caches de proxy.
+  app.use('/api', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+    next();
+  });
   // Mesma origem e o caminho normal. A lista explicita tambem impede mutacoes
   // de origens nao autorizadas; CORS sozinho apenas controla leitura no browser.
   app.use(cors({
