@@ -51,13 +51,3 @@ export function autenticar(req, res, next) {
   req.usuario = usuario;
   next();
 }
-
-/** Nao bloqueia: so popula req.usuario quando houver sessao. */
-export function autenticarOpcional(req, _res, next) {
-  const token = req.cookies?.[config.jwt.nomeCookie];
-  if (!token) return next();
-
-  req.usuario = buscarSessao(token) ?? undefined;
-
-  next();
-}

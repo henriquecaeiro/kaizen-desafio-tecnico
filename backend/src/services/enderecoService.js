@@ -70,8 +70,7 @@ export function criarEndereco(usuarioId, dados, db = obterBanco()) {
         dados.complemento, dados.bairro, dados.cidade, dados.uf, principal, agora, agora,
       );
 
-    const id = Number(resultado.lastInsertRowid);
-    return id;
+    return Number(resultado.lastInsertRowid);
   });
 
   return serializarEndereco(buscarEndereco(usuarioId, transacao.immediate(), db));
