@@ -134,7 +134,10 @@ capturas ativadas, todos aprovados. As oito imagens foram gravadas em
 /tmp/kaizen-capturas-remocao, sem recriar o diretório excluído. Scanner de
 segredos, links locais (zero quebrados) e git diff --check aprovados.
 
-## Nova regressão — preparação Netlify/ngrok
+## Histórico da regressão — preparação inicial Netlify/ngrok
+
+O registro desta seção pertence à revisão anterior por plugin. A configuração e
+as pendências de infraestrutura descritas nela foram substituídas pela revisão abaixo.
 
 Node 20.19.2: **140 backend + 69 frontend = 209 aprovados**, zero falhas,
 cancelamentos ou skips. Preservados os 203 testes anteriores e adicionados seis:
@@ -164,3 +167,45 @@ GET/POST/PATCH/PUT/DELETE, F5, navegação/mobile/Console/Network pela origem p�
 Dependem de autenticação ngrok, porta 3001 livre, autorização SIAC e site Netlify.
 Não foram contabilizados como aprovados. Terminal gráfico aberto apenas para
 autenticação. Nenhum pedido real foi criado.
+
+## Upload manual Netlify — revisão atual
+
+Node 20.19.2: **140 backend + 76 frontend = 216 aprovados**, zero falhas,
+cancelamentos/skips. Frontend: 62 cenários Chromium e 14 unitários. O baseline
+de 209 não foi reduzido: testes de configuração adaptados à remoção do plugin,
+mais três de respostas HTTP/JSON e quatro de imagens. Build Vite (64 módulos),
+smoke production, scanner, auditorias (zero vulnerabilidades), sintaxe e diff check
+aprovados. npm ci e builds repetidos realizados; dist contém index/assets/regras/headers.
+
+Node 24.21.0: ambas as suítes completas repetidas em cópia isolada, novamente
+**140 + 76 = 216 aprovados**, sem falhas/cancelamentos/skips. Build de 64 módulos
+e smoke de produção também aprovados, com dependências nativas do runtime correto.
+Verificação do dist real: cinco arquivos, nenhum segredo conhecido/.env/banco/mapa;
+headers e redirects idênticos a public e assets referenciados pelo index existentes.
+
+HTTP real: local/ngrok health JSON/200, production/erp ok, catálogo JSON/200;
+Netlify antigo health/catalogo HTML/404. Aviso ngrok HTML/200 reproduzido com
+User-Agent de navegador sem header; bypass devolve JSON/SVG. Origem antiga no
+backend rejeitava a URL atual com 403. Corrigida somente linha CORS privada;
+reinício Node anunciado, com zero checkouts ativos; ngrok conservado no mesmo PID.
+Health com Origin atual 200 e preflight 204 com credenciais/origem exata.
+
+CLI oficial Netlify, dist sem plugins: health/catalogo/categorias JSON/200,
+erros 401/404 JSON sem fallback HTML ou Location, SPA/headers/assets 200.
+Chromium via CLI/ngrok real: imagens com header/data URL, sem erro JavaScript,
+360/390/768/1440 px sem overflow e refresh de entrar/cadastro/perfil/carrinho.
+Não foram realizadas escritas de teste no banco privado.
+
+Smoke CLI adicional em produção mock aprovou GET/POST/PATCH/PUT/DELETE,
+query/JSON, X-Carrinho-Id, Set-Cookie Secure/HttpOnly/Lax/host-only, Cookie,
+sessão, endereços, quantidades, isolamento e erros 401/404/409/502/recuperação.
+SQLite temporário, cópia de dist em /tmp e ERP mock; zero pedidos.
+
+Execuções intermediárias não contadas como aprovação: seletor que pressupunha
+primeiro produto Filtro, espera de imagens lazy fora da tela, expectativas 200/409
+incorretas no smoke novo e CLI inicialmente interrompida por ENOSPC. Cache próprio
+da CLI movido para /tmp sem apagar dados do usuário; disco ainda precisa de manutenção.
+
+**Pendente após upload:** testes pelo domínio Netlify definitivo com o novo build,
+login/logout, cookies HTTPS/F5, cadastro/endereço/carrinhos e mobile/Network/Console.
+Os testes locais/CLI não foram apresentados como aprovação no CDN público.

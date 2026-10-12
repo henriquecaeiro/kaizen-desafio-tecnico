@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { dinheiro } from '../api/cliente.js';
+import { ImagemProduto } from './ImagemProduto.jsx';
 
 function Quantidade({ item, ocupado, aoAlterar }) {
   const [valor, setValor] = useState(String(item.quantidade));
@@ -83,7 +84,7 @@ export function ItensCarrinho({ itens, ocupado, quantidadeBloqueada, aoAlterar, 
         <li key={item.codigo_produto} className="py-4">
           <div className="flex gap-3">
             {item.imagem_url && (
-              <img
+              <ImagemProduto
                 src={item.imagem_url}
                 alt=""
                 width="56"

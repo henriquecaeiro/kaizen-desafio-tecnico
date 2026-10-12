@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { dinheiro } from '../api/cliente.js';
+import { ImagemProduto } from './ImagemProduto.jsx';
 
 export function CardProduto({ produto, aoAdicionar, adicionando = false }) {
   const semEstoque = produto.estoque === 0;
@@ -10,7 +11,7 @@ export function CardProduto({ produto, aoAdicionar, adicionando = false }) {
         transition-shadow hover:shadow-md"
     >
       <Link to={`/produto/${produto.codigo}`} className="block bg-tinta-100">
-        <img
+        <ImagemProduto
           src={produto.imagem_url}
           alt={produto.descricao}
           loading="lazy"

@@ -1,4 +1,6 @@
 const BASE = '/api';
+// O proxy estatico repassa este header nao sensivel ao ngrok gratuito.
+export const CABECALHOS_API = { 'ngrok-skip-browser-warning': '1' };
 
 /**
  * Erro vindo da API, com o formato que o backend sempre devolve:
@@ -48,6 +50,7 @@ async function requisitar(caminho, { metodo = 'GET', corpo, parametros, carrinho
       method: metodo,
       credentials: 'include',
       headers: {
+        ...CABECALHOS_API,
         ...(corpo ? { 'Content-Type': 'application/json' } : {}),
         ...(carrinhoId ? { 'X-Carrinho-Id': String(carrinhoId) } : {}),
       },
@@ -69,6 +72,10 @@ async function requisitar(caminho, { metodo = 'GET', corpo, parametros, carrinho
       erro.mensagem ?? 'Algo deu errado. Tente novamente.',
       erro.detalhes,
     );
+  }
+
+  if (json === null || typeof json !== 'object') {
+    throw new ErroApi(502, 'RESPOSTA_INVALIDA', 'O servidor retornou uma resposta inválida. Tente novamente.');
   }
 
   return json;

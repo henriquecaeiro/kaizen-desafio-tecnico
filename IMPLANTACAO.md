@@ -1,119 +1,126 @@
 # Implantação e operação
 
-## Estado em 12/10/2026
+## Estado da publicação manual — 12/10/2026
 
-**Publicação ainda pendente.** A topologia solicitada é Netlify (frontend HTTPS)
-e ngrok (backend Node/SQLite no Kali). A configuração está preparada, mas ainda
-faltam autenticar ngrok, confirmar autorização/rotação SIAC, liberar a porta
-3001 ocupada pelo processo root e obter a URL real do Netlify. Nenhum domínio
-público foi inventado. Nenhum recurso pago foi contratado.
+Site existente: https://desafio-kaizen.netlify.app
+Backend ativo: https://2154-2804-d59-a107-c600-b57-957-65d4-af7d.ngrok-free.app
+Backend local: http://127.0.0.1:3001, production, usuário henrique.
 
-Os exemplos systemd/Caddy em deploy/ permanecem como alternativa de hospedagem
-permanente, não como registro de um deploy realizado.
+O site já contém um frontend, mas sua API devolvia 404 HTML do Netlify. O upload
+manual anterior não incluía as regras geradas pelo plugin de build remoto.
+A solução atual usa somente arquivos estáticos copiados pelo Vite para dist.
+**A validação pública da nova versão depende do upload; não foi considerada aprovada.**
 
-## Netlify e ngrok no Kali
+## Gerar e publicar no site existente
 
-Fluxo: navegador HTTPS → Netlify `/api/*` → ngrok HTTPS → Node em
-127.0.0.1:3001 → SQLite persistente/SIAC. O frontend mantém `/api` e
-credentials: include. SIAC_TOKEN/JWT_SEGREDO nunca entram no build ou no Netlify.
+```sh
+cd /home/henrique/DEV/kaizen-desafio-tecnico/frontend
+npm ci
+npm run build
+```
 
-### Preparação realizada
+O diretório pronto para upload é frontend/dist. Contém index.html, assets/,
+_redirects e _headers. Arrastar **a pasta dist completa** para a área de deploy
+manual da aba Deploys do projeto existente desafio-kaizen, no painel Netlify.
+Não usar a página de criação de outro site; não enviar somente index.html ou a
+pasta frontend inteira. O domínio deve continuar desafio-kaizen.netlify.app.
 
-- netlify.toml na raiz: base frontend, npm run build e publish dist (relativo à
-  base, portanto frontend/dist). Node 24.21.0; instalação automática via lockfile.
-- Hook local frontend/netlify, sem novas dependências: exige NGROK_URL HTTPS,
-  insere proxy `/api/*` antes da regra SPA, status 200/force e header
-  ngrok-skip-browser-warning: 1. A URL não é hardcoded no React. Sem ela, o deploy
-  falha antes do build. Domínios fictícios existem somente nas fixtures de teste.
-- Cookie original host-only (sem Domain), HttpOnly/Secure/SameSite=Lax/Path=/;
-  cache da API private, no-store, inclusive erros/autenticação. Imagens públicas
-  conservam sua política própria. CSP e nosniff também configurados no frontend.
-- ngrok oficial 3.39.11 em /home/henrique/.local/bin/ngrok. Autenticação pendente.
-  Janela xterm de autenticação aberta como henrique; isso **não é túnel ativo**.
-- Configuração privada backend/.local/netlify-ngrok.env criada, ignorada pelo Git,
-  modo 0600. .env original e seu banco/WAL não foram sobrescritos.
-- Banco novo /home/henrique/.local/share/kaizen-netlify/ecommerce.db, arquivo 0600
-  em diretório 0700, migração 5 e integrity_check ok. Não é banco descartável.
-  O bootstrap de produção ainda exige o build local frontend/dist, preservado.
+Nenhum plugin, variável NGROK_URL ou build remoto é necessário. netlify.toml
+mantém apenas base frontend, npm run build, publish dist e versão do Node para
+quem optar por build Git. As regras têm uma única fonte: frontend/public.
 
-### Ações locais restantes
+Conteúdo de public/_redirects (copiado sem alterações para dist):
 
-1. Confirmar que a credencial SIAC é autorizada para exposição pública; se for a
-   histórica potencialmente comprometida, rotacioná-la no canal apropriado e
-   atualizar backend/.env localmente. Não publicar antes disso.
-2. Conferir o processo que ocupa 3001. Durante a preparação era root PID 8053,
-   node src/server.js. O responsável deve pará-lo no terminal original (Ctrl+C)
-   ou usar sudo kill -TERM somente após confirmar o PID. Não encerrar processo
-   desconhecido e não iniciar a nova loja como root.
-3. Autenticar o ngrok no terminal de entrada oculta aberto. Alternativa em zsh:
+```text
+/api/* https://2154-2804-d59-a107-c600-b57-957-65d4-af7d.ngrok-free.app/api/:splat 200!
+/* /index.html 200
+```
 
-   ```sh
-   read -rs 'kaizen_ngrok_token?Authtoken ngrok: '
-   print
-   /home/henrique/.local/bin/ngrok config add-authtoken "$kaizen_ngrok_token"
-   unset kaizen_ngrok_token
-   ```
+200! força proxy, não redireciona o navegador; o fallback SPA vem por último.
+public/_headers conserva CSP, nosniff e Referrer-Policy para arquivos estáticos.
+_headers configura **respostas**, não cabeçalhos enviados ao ngrok.
 
-   O valor não vai para o histórico; é gravado na configuração privada do ngrok.
-   Não colar token em chat, script, Git, URL ou logs. Restringir o arquivo gerado
-   com chmod 600 /home/henrique/.config/ngrok/ngrok.yml.
-4. Com a credencial aprovada e porta livre, abrir terminal gráfico normal e manter
-   ngrok em primeiro plano (não usar nohup nem background):
+## Aviso ngrok e autenticação
 
-   ```sh
-   /home/henrique/.local/bin/ngrok http http://127.0.0.1:3001 --inspect=false
-   ```
+Fetch da API permanece relativo a /api, com credentials: include, e envia
+ngrok-skip-browser-warning: 1 (não sensível). A CLI oficial comprovou seu
+encaminhamento: com User-Agent de navegador, ngrok devolveu HTML sem esse header
+e JSON com ele. HTTP 200 com HTML/JSON inválido agora produz RESPOSTA_INVALIDA,
+sem transformar erro em sucesso. Erros HTTP conservam status e código.
 
-   --inspect=false evita que o inspector local armazene corpos/cookies/senhas de
-   autenticação. A interface do terminal continua mostrando estado/URL. A URL
-   HTTPS real pode ser consultada sem dados de sessão em localhost:4040/api/tunnels.
-   Sem backend iniciado, o túnel retorna erro de upstream; não é loja pronta.
-5. Criar o site no Netlify importando o repositório de Henrique, branch main.
-   Usar netlify.toml; não criar _redirects conflitante. Antes do deploy, definir
-   NGROK_URL (escopo Builds) com a origem HTTPS REAL exibida pelo ngrok, sem /api.
-   Essa URL é pública, não é segredo. Sem ela o build será bloqueado de propósito.
-   Não adicionar SIAC_TOKEN, JWT_SEGREDO ou token ngrok ao ambiente Netlify.
-6. Obter a origem HTTPS final do site e preencher CORS_ORIGEM no arquivo privado
-   backend/.local/netlify-ngrok.env. Não usar wildcard nem origem fictícia. O
-   arquivo mantém NODE_ENV=production, HOST=127.0.0.1, PORT=3001, TRUST_PROXY=loopback
-   e DB_PATH separado. Somente o agente local é confiável; não confiar em toda
-   internet/Netlify por quantidade de saltos, nem utilizar TRUST_PROXY=true.
-7. Em outro terminal normal, com frontend/dist atualizado:
+Imagens /api/imagens também recebem o aviso se usadas diretamente em img.
+ImagemProduto faz fetch com o mesmo header e mostra data URL; img-src data:
+já era permitido pela CSP. Catálogo, detalhe e carrinho usam o componente.
+Requisições pendentes são abortadas ao desmontar e HTML não é exibido como imagem.
+Não houve mudança de layout, cookie, regra financeira, checkout ou CORS permissivo.
 
-   ```sh
-   cd /home/henrique/DEV/kaizen-desafio-tecnico/backend
-   umask 077
-   node --env-file=.local/netlify-ngrok.env src/server.js
-   ```
+Cookies host-only HttpOnly/Secure/SameSite=Lax/Path=/ continuam sendo enviados
+pela mesma origem Netlify. Não há JWT em localStorage nem credencial no build.
+A API mantém private, no-store; imagens públicas conservam sua política própria.
+O encaminhamento público de sessão ainda deve ser conferido depois do upload.
 
-   Variáveis explícitas desse arquivo prevalecem; dotenv carrega os segredos do
-   .env original. Não copiar dependências nativas entre Node 20 e 24; usar npm ci
-   com o runtime escolhido se mudar o Node. Manter ambos terminais abertos e o
-   Kali ligado/conectado. Alterar CORS_ORIGEM exige reiniciar este backend.
-8. Conferir health/catalogo/categorias pelo HTTPS do ngrok usando o header
-   ngrok-skip-browser-warning: 1 e depois pela origem Netlify. Registrar URLs reais
-   e executar o checklist público abaixo antes de declarar publicação concluída.
-   Se a URL ngrok mudar, atualizar NGROK_URL e fazer novo deploy no Netlify.
+## Backend privado e serviços mantidos
 
-Build oficial local da CLI Netlify validou os caminhos e a inserção do proxy com
-fixture fictícia, em modo offline; também confirmou bloqueio sem NGROK_URL.
-Isso **não comprova** rede pública/cookies no CDN. Métodos, query strings, JSON,
-cookies e erros devem ser conferidos no destino real, sem pedidos de teste SIAC.
+backend/.local/netlify-ngrok.env continua ignorado pelo Git e restrito (0600).
+Somente CORS_ORIGEM foi corrigido para https://desafio-kaizen.netlify.app.
+NODE_ENV=production, HOST=127.0.0.1, PORT=3001, TRUST_PROXY=loopback e
+DB_PATH=/home/henrique/.local/share/kaizen-netlify/ecommerce.db preservados.
 
-### Checklist pelo domínio real do Netlify (pendente)
+A origem anterior foi rejeitada por 403 quando o navegador enviou a nova origem.
+Foi necessário um único reinício controlado do Node, previamente anunciado, após
+consulta somente de leitura confirmar zero checkouts em andamento. O Node foi
+iniciado como henrique em terminal gráfico permanente. O ngrok não foi reiniciado
+nem substituído. Segredos, banco existente, sessões e arquivos de infraestrutura
+não foram resetados. Nenhum pedido real foi enviado.
 
-Health, catálogo/categorias/produto e JSON (não HTML intermediário); cadastro/login,
-cookie Secure/HttpOnly/Lax, logout/relogin; perfil PATCH, endereços POST/PUT/DELETE;
-dois carrinhos, ativação PUT, quantidade PATCH, exclusão DELETE, F5 com sessão e
-itens persistidos, duas contas isoladas; refresh direto de perfil/carrinho/checkout,
-mobile/Console/Network. Conferir endereço no checkout sem finalizar pedido real.
-Verificar query strings, X-Carrinho-Id, corpos JSON e respostas 401/404/409/502.
-Não considerar localhost ou build offline equivalentes a essa validação.
+Health local e ngrok: JSON/200, production, ERP ok. Preflight da origem real: 204
+com credenciais/origem exata; health com Origin real: 200. Não há necessidade de
+novo reinício por causa do upload de dist. Manter Kali, Node e ngrok ativos.
+Se o domínio ngrok mudar, atualizar public/_redirects, gerar dist e reenviar.
 
-Referências oficiais: [proxy e headers](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/),
-[caminhos do monorepositório](https://docs.netlify.com/build/configure-builds/monorepos/),
-[hooks locais](https://docs.netlify.com/extend/develop-and-share/develop-build-plugins/) e
-[instalação ngrok](https://ngrok.com/download/linux?tab=download).
+## Validação realizada e comandos opcionais
+
+Suítes completas backend/frontend, build, smoke de produção e scanner são os
+comandos existentes em README/VALIDACAO-FINAL. A CLI Netlify foi usada apenas como
+ferramenta de verificação, instalada fora do repositório; não é dependência do build.
+
+Smoke opcional do proxy com banco descartável e ERP mock:
+
+```sh
+cd backend
+NETLIFY_CLI=/caminho/da/cli/netlify-cli/bin/run.js \
+NETLIFY_CLI_NODE=/caminho/do/node-compativel \
+node scripts/smoke-netlify-proxy.mjs
+```
+
+O script copia dist para /tmp e altera somente o alvo dessa cópia para o backend
+mock. Não altera dist real, SQLite privado ou serviços ativos. Exercita
+GET/POST/PATCH/PUT/DELETE, query/JSON, X-Carrinho-Id, cookies, sessão, perfil,
+endereços, carrinhos, isolamento e erros 401/404/409/502, com zero pedidos.
+
+Na CLI apontando para o ngrok real: health/catálogo/categorias JSON, erros 401/404
+JSON, assets e refresh de entrar/cadastro/perfil/carrinho HTTP 200; Chromium
+conferiu catálogo/imagens/JavaScript e 360/390/768/1440 px. Somente leituras reais.
+
+A primeira tentativa da CLI falhou por ENOSPC. O cache descartável da CLI criado
+nesta tarefa foi movido para /tmp, preservando seu caminho via symlink e liberando
+305 MB. Arquivos pessoais e banco não foram apagados. O disco continua com pouco
+espaço; providenciar manutenção antes de uso prolongado.
+
+## Conferência após seu upload (pendente)
+
+Abrir https://desafio-kaizen.netlify.app/api/health e conferir JSON/200 com o header
+de bypass; uma navegação direta de navegador sem header pode receber aviso ngrok.
+Na loja, verificar catálogo/imagens, login/cadastro, dois carrinhos, quantidades,
+F5 mantendo sessão/itens, perfil/endereço e logout/relogin. Usar Console/Network,
+mobile e checkout sem finalizar pedido real. API não pode devolver index.html,
+nem redirecionar o navegador ao ngrok. O antigo 404 somente desaparece no domínio
+público após publicar este novo dist.
+
+Referências oficiais: [proxy Netlify](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/),
+[headers estáticos](https://docs.netlify.com/manage/routing/headers/),
+[public do Vite](https://vite.dev/guide/assets.html#the-public-directory) e
+[bypass ngrok](https://ngrok.com/docs/pricing-limits/free-plan-limits#using-headers).
 
 ## Alternativa permanente: systemd e Caddy
 
@@ -273,7 +280,8 @@ A revisão do código não resolve a dependência de autenticação/origens/auto
 para Netlify/ngrok, cumprir as ações pendentes acima; para systemd/Caddy, obter
 host/acesso, domínio/DNS/HTTPS e credencial SIAC autorizada. A loja precisa acordar
 a conferência de tentativas incertas/interrompidas e a rotina de backup externo.
-Nenhum recurso pago foi contratado ou servidor público configurado nesta revisão.
+Nenhum recurso pago foi contratado. Backend existente recebeu a correção necessária
+de origem; frontend novo ainda deve ser enviado manualmente ao site existente.
 
 Após validar o destino, registrar a URL real no README e relatório antes do
 envio da entrega. Nenhum e-mail foi enviado. Prazo oficial: 13/10/2026 às 15h Brasília.
