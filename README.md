@@ -336,10 +336,16 @@ Código publicado em [henriquecaeiro/kaizen-desafio-tecnico](https://github.com/
 branch `main`. Chamados, múltiplos carrinhos e auditoria estão em [RELATORIO.md](RELATORIO.md).
 Resultados atuais e limitações: [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
 
-**Implantação pública pendente:** não há host/domínio/acesso autorizado ou credencial
-SIAC de produção identificados neste ambiente. Não há URL pública da solução.
-Publicar código no GitHub não substitui esse requisito. Preparação e bloqueio estão
-em [IMPLANTACAO.md](IMPLANTACAO.md); exemplos em `deploy/` não foram implantados.
+**Implantação pública pendente:** frontend preparado para Netlify e backend para
+ngrok no Kali, com SQLite persistente separado. netlify.toml usa base frontend,
+build npm run build e publish dist. O proxy exige NGROK_URL HTTPS real no ambiente
+de build; sem ela, a publicação é bloqueada. React mantém API relativa /api e
+cookie HttpOnly/Secure/SameSite=Lax, sem credenciais ERP no frontend.
+
+Ainda faltam autenticar ngrok, confirmar autorização/rotação SIAC, liberar a porta
+3001 ocupada pelo backend root e obter a URL real do site para CORS_ORIGEM.
+Não há URL pública validada. Passos exatos e checklist público estão em
+[IMPLANTACAO.md](IMPLANTACAO.md). deploy/ foi preservado como alternativa systemd/Caddy.
 
 O backend serve `frontend/dist` em produção e recusa iniciar sem o build. Configurar
 `NODE_ENV=production`, origem HTTPS exata em `CORS_ORIGEM`, segredos privados e

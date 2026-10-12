@@ -334,3 +334,57 @@ executa como root e não foi reiniciado. backend/data, ignorado pelo Git, aponta
 ao diretório original preservado em /home/henrique/DEV/kaizen-tree-permissions.eyJrXl/backend-original/data;
 assim seu banco/WAL continuam sendo os mesmos usados pelo processo. O .env foi
 comparado e permanece idêntico. Regressão e smoke não tocaram nesse banco privado.
+
+## 11. Preparação Netlify/ngrok
+
+Limpeza final: diretório auxiliar completamente removido em branch própria;
+resumos obrigatórios preservados na raiz, capturas opcionais redirecionadas para
+pasta temporária e nenhum teste removido. README/arquitetura/relatório/validação,
+deploy/, fontes, migrações e scripts operacionais permanecem.
+
+netlify.toml na raiz configura base frontend, npm run build e publish dist relativo
+à base. Hook local sem dependências insere proxy /api/* com HTTPS de NGROK_URL,
+status 200/force e ngrok-skip-browser-warning, antes do fallback SPA. O build do
+Netlify é bloqueado se faltar URL válida, sem publicar domínio fictício. React
+continua usando /api; CSP/nosniff seguem a política existente. Respostas da API
+recebem private, no-store para evitar cache de dados pessoais/sessões/estoque.
+Cookie host-only HttpOnly/Secure/SameSite=Lax não foi enfraquecido.
+
+ngrok 3.39.11 instalado pelo download oficial em diretório do usuário. Terminal
+gráfico xterm confirmado em X11, PID 37924, usuário henrique, para entrada oculta
+do authtoken. **Não é túnel ativo**: autenticação pendente. Não existe URL HTTPS
+real de ngrok/Netlify registrada ou validada. Não há integração Netlify conectada
+identificada. Nenhum recurso pago foi contratado.
+
+Configuração privada separada criada em backend/.local/netlify-ngrok.env (0600),
+sem versionamento ou alteração do .env original. CORS_ORIGEM está vazio até obter
+origem HTTPS real; bootstrap de produção recusa isso, como deve. NODE_ENV production,
+HOST 127.0.0.1, PORT 3001, TRUST_PROXY loopback. SQLite persistente novo em
+/home/henrique/.local/share/kaizen-netlify/ecommerce.db (0600, diretório 0700),
+migração 5, integrity_check ok. Banco antigo/testes não foram sobrescritos.
+
+A porta 3001 continua ocupada pelo backend root PID 8053. Sudo requer senha, não
+disponível ao agente. O processo não foi encerrado nem exposto por túnel. Diagnóstico
+temporário em 3002/loopback iniciou o código atual como henrique em production,
+usando o banco novo: health 200/erp ok (253 ms), catálogo tamanho=1 200 (41 ms),
+categorias 200/nove registros (33 ms), JSON válido e private, no-store. Encerrado
+com SIGTERM após essas leituras. Nenhuma operação de pedido foi enviada ao SIAC.
+Leituras funcionando não comprovam autorização/rotação da credencial histórica.
+
+Smoke ampliado exercita cadastro, GET/POST/PATCH/PUT/DELETE, queries, endereços,
+cookie sem Domain, dois usuários/isolamento, logout e persistência após reinício,
+sempre com SQLite descartável e ERP mock. O helper agora respeita DELETE 204
+sem tentar ler JSON ausente. CLI Netlify 27.12.0/@netlify/build 37.4.1 em Node 24
+aprovou build offline e configuração resolvida com fixture; também confirmou
+falha intencional sem NGROK_URL. Não é evidência de tráfego/cookies no CDN público.
+
+Regressão desta preparação: **140 backend + 69 frontend = 209 aprovados** em
+Node 20.19.2 e Node 24.21.0, sem falhas/cancelamentos/skips. Build, smoke ampliado,
+scanner, auditorias sem vulnerabilidades conhecidas, sintaxe, links e whitespace
+aprovados. Todos os 203 casos anteriores foram preservados, com seis novos.
+
+Pendências que exigem intervenção: confirmar/rotacionar SIAC antes da exposição,
+parar o processo root identificado, autenticar ngrok, manter túnel em terminal
+gráfico, criar site Netlify, definir NGROK_URL e informar origem real para CORS.
+Somente depois validar proxy público, cookies/F5, carrinhos/isolamento, mobile,
+Network/Console e checkout sem envio real. Procedimento em [IMPLANTACAO.md](IMPLANTACAO.md).
