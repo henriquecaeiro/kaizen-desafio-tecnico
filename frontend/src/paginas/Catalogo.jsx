@@ -79,6 +79,9 @@ export function Catalogo() {
       else proximos.set(chave, String(valor));
       if (chave !== 'pagina') proximos.delete('pagina');
 
+      if (proximos.toString() === parametros.toString()) return;
+      // Impede paginar os resultados anteriores enquanto o novo filtro entra na URL.
+      setCarregando(true);
       setParametros(proximos);
     },
     [parametros, setParametros],

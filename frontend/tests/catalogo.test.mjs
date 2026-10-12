@@ -66,6 +66,13 @@ test('paginacao compartilhada permite ultima pagina em listas com uma, duas e tr
     assert.equal(await e.page.getByRole('button', { name: 'Próxima' }).isDisabled(), true);
   }
 });
+test('selecionar novamente o filtro atual não prende o catálogo em loading', async () => {
+  await e.page.goto(`${e.base}/?categoria=FREIOS`);
+  await e.page.getByText('Página 1 de 2', { exact: false }).waitFor();
+  await e.page.getByRole('button', { name: 'freios', exact: true }).click();
+  assert.equal(await e.page.locator('article').count(), 24);
+  assert.equal(await e.page.getByRole('button', { name: 'Próxima', exact: true }).isEnabled(), true);
+});
 test('resposta antiga do catalogo nao substitui pesquisa mais recente', async () => {
   let liberar, recebeu, terminou;
   const barreira = new Promise(r => { liberar = r; });

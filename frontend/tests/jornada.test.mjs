@@ -93,3 +93,15 @@ test('jornada completa: catálogo, conta, dois carrinhos, dois endereços, check
   }
   assert.deepEqual(e.erros, []);
 });
+
+test('KZN-312/318: contador soma unidades e radiador sem estoque fica fora do total', async () => {
+  e.semear([['FIL', 3], ['SUS', 4]]); await e.entrar();
+  await e.page.goto(e.base + '/carrinho');
+  await e.page.getByLabel('7 itens no carrinho', { exact: true }).waitFor();
+  await e.page.getByText('R$ 110,00', { exact: true }).waitFor();
+  e.semear([['RAD', 1], ['FIL', 3], ['SUS', 4]]); await e.page.reload();
+  await e.page.getByLabel('8 itens no carrinho', { exact: true }).waitFor();
+  assert.equal(await e.page.getByText('R$ 110,00', { exact: true }).count(), 1);
+  assert.equal(await e.page.getByText('Fora do total', { exact: true }).count(), 1);
+  assert.equal(await e.page.getByRole('button', { name: 'Fechar pedido', exact: true }).isDisabled(), true);
+});
