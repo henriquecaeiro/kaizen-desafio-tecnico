@@ -48,6 +48,11 @@ export function ProvedorCarrinho({ children }) {
           carregando: false,
           erro: null,
         });
+      else if (propagarErro && sessao.current === atual) {
+        // Uma mutacao antiga pode ter gravado depois da resposta mais recente.
+        // Reconsulta o servidor; descartar somente seu JSON deixaria o badge errado.
+        await executar(() => api.carrinho.ler(), false);
+      }
       return resposta;
     } catch (erro) {
       if (vigente())

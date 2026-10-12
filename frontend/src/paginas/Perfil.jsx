@@ -8,7 +8,7 @@ const CAMPOS_DADOS = ['nome', 'documento', 'telefone'];
 const CAMPOS_SENHA = ['senha_atual', 'nova_senha'];
 
 function DadosPessoais() {
-  const { usuario, setUsuario } = useAuth();
+  const { usuario, atualizarUsuario } = useAuth();
 
   const [formulario, setFormulario] = useState({
     nome: usuario.nome,
@@ -33,7 +33,7 @@ function DadosPessoais() {
 
     try {
       const resposta = await api.perfil.salvar(formulario);
-      setUsuario(resposta.dados);
+      atualizarUsuario(resposta.dados);
       setSalvo(true);
     } catch (falha) {
       setErro(falha);

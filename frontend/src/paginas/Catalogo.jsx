@@ -23,6 +23,7 @@ export function Catalogo() {
   const [categorias, setCategorias] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const [tentativa, setTentativa] = useState(0);
   const [adicionandoCodigo, setAdicionandoCodigo] = useState(null);
   const [recado, setRecado] = useState(null);
   const [painelAberto, setPainelAberto] = useState(false);
@@ -68,7 +69,7 @@ export function Catalogo() {
     return () => {
       ativo = false;
     };
-  }, [busca, categoria, pagina, somenteDisponiveis]);
+  }, [busca, categoria, pagina, somenteDisponiveis, tentativa]);
 
   const trocarParametro = useCallback(
     (chave, valor) => {
@@ -199,13 +200,16 @@ export function Catalogo() {
         {recado && <Alerta tipo={recado.tipo}>{recado.texto}</Alerta>}
         {erro && (
           <Alerta tipo="erro" titulo="Não foi possível carregar o catálogo">
-            {erro.message}
+            <p>{erro.message}</p>
+            <Botao variante="contorno" className="mt-3" onClick={() => setTentativa(atual => atual + 1)}>
+              Tentar novamente
+            </Botao>
           </Alerta>
         )}
 
         {carregando ? (
           <Carregando texto="Buscando peças..." />
-        ) : produtos.length === 0 ? (
+        ) : erro ? null : produtos.length === 0 ? (
           <EstadoVazio
             titulo="Nenhuma peça encontrada"
             descricao="Tente outro termo de busca ou remova os filtros."

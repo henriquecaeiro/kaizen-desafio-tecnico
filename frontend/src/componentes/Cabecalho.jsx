@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
+import { Alerta } from './ui.jsx';
 
 function ItemMenu({ para, children }) {
   return (
@@ -31,6 +32,8 @@ export function Cabecalho() {
   const [parametros] = useSearchParams();
   const [busca, setBusca] = useState(parametros.get('busca') ?? '');
   const buscaUrl = parametros.get('busca') ?? '';
+  const [saindo, setSaindo] = useState(false);
+  const [erroSaida, setErroSaida] = useState(null);
   useEffect(() => { setBusca(buscaUrl); }, [buscaUrl]);
 
   function pesquisar(evento) {
@@ -47,8 +50,16 @@ export function Cabecalho() {
   }
 
   async function encerrarSessao() {
-    await sair();
-    navegar('/');
+    setSaindo(true);
+    setErroSaida(null);
+    try {
+      await sair();
+      navegar('/');
+    } catch (falha) {
+      setErroSaida(falha);
+    } finally {
+      setSaindo(false);
+    }
   }
 
   return (
@@ -107,6 +118,7 @@ export function Cabecalho() {
               <button
                 type="button"
                 onClick={encerrarSessao}
+                disabled={saindo}
                 className="ml-1 rounded-lg px-3 py-2 text-sm font-medium text-tinta-500 hover:bg-tinta-100"
                 title={usuario?.email}
               >
@@ -125,6 +137,7 @@ export function Cabecalho() {
             </>
           )}
         </nav>
+        {erroSaida && autenticado && <Alerta className="w-full">{erroSaida.message} Tente sair novamente.</Alerta>}
       </div>
     </header>
   );
