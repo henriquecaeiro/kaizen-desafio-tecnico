@@ -1,7 +1,18 @@
 import { chromium } from 'playwright-core';
 import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { mkdir, mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { prepararAmbiente } from '../../backend/test-support/ambiente.mjs';
+
+let diretorioCapturas;
+export async function caminhoCaptura(nome) {
+  diretorioCapturas ??= process.env.EVIDENCIAS_DIR
+    ? mkdir(path.resolve(process.env.EVIDENCIAS_DIR), { recursive: true }).then(() => path.resolve(process.env.EVIDENCIAS_DIR))
+    : mkdtemp(path.join(tmpdir(), 'kaizen-capturas-'));
+  return path.join(await diretorioCapturas, nome);
+}
 
 export async function abrirNavegador() {
   const e = await prepararAmbiente();
