@@ -222,7 +222,7 @@ Auditoria independente manteve o mecanismo e acrescentou testes de dois usuário
 
 Testes node:test com SQLite temporário e ERP HTTP mock; fetch limitado a loopback. Navegador usa aplicação modificada pelo Vite e backend temporário. Nenhum pedido real foi gerado.
 
-Validações anteriores: **51 backend + 25 navegador = 76**, **130 + 35 = 165** e **131 + 39 = 170 aprovados**. O baseline de 170 foi executado na revisão anterior; suas saídas brutas estão preservadas em docs/evidencias/final-backend-workspace.txt e final-frontend-workspace.txt. A regressão consolidada passou com **139 backend + 64 frontend = 203 testes**, sem falhas/cancelamentos/skips, em Node 24.21.0 com npm ci e 103 arquivos conferidos byte a byte. São seis unitários de máscaras e 58 testes de navegador, além do backend. Node 20.19.2 também aprovou 139+62 antes dos dois últimos casos adicionais de catálogo/chamados. Build (63 módulos), smoke/reinício, scanner, auditorias npm, sintaxe, whitespace e links foram aprovados. Saídas completas em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
+Validações anteriores: **51 backend + 25 navegador = 76**, **130 + 35 = 165** e **131 + 39 = 170 aprovados**. Saídas brutas históricas permanecem recuperáveis pelo Git, não na árvore atual. A regressão consolidada passou com **139 backend + 64 frontend = 203 testes**, sem falhas/cancelamentos/skips, em Node 24.21.0 com npm ci e 103 arquivos conferidos byte a byte. São seis unitários de máscaras e 58 testes de navegador, além do backend. Node 20.19.2 também aprovou 139+62 antes dos dois últimos casos adicionais de catálogo/chamados; a regressão posterior aprovou os 203. Build (63 módulos), smoke/reinício, scanner, auditorias npm, sintaxe, whitespace e links foram aprovados. Resultados e comandos em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
 
 Cobertura: quatro chamados, migrações, autorização entre contas, múltiplos carrinhos, preço/estoque, checkout e concorrência; CORS, replay/expiração/concorrência de sessões, senhas com espaços/Unicode, rate limit/proxy, principal/telefone, ERP malformado/timeout/5xx/401, stream/logs e backup/restauração. Frontend modificado realmente executado em Chromium com mock isolado.
 
@@ -304,22 +304,22 @@ originais continuam nas suítes completas. Resultados atuais estão na seção 5
 
 | Inventário | Destino |
 |---|---|
-| backend/scripts/diagnostico-dia1.mjs | Removido: afirmava bugs da versão antiga; nenhuma suíte/execução/deploy atual dependia dele. Causas e reproduções relevantes permanecem nas seções 2/3 e nas três imagens originais |
-| docs/DIAGNOSTICO-DIA1.md e VALIDACAO-DIAS2-3.md | Consolidados neste relatório e em VALIDACAO-FINAL.md; referências/comandos antigos removidos |
-| docs/ENTREVISTA-FINAL.md e EMAIL-ENTREGA.md | Removidos por organização pessoal; decisões técnicas já constavam no relatório. Nenhuma mensagem foi enviada |
-| docs/IMPLANTACAO.md | Realocado como IMPLANTACAO.md na raiz, com procedimentos de host, configuração, backup/restauração e conferência de pedidos preservados |
-| docs/VALIDACAO-FINAL.md | Substituído pelo documento atualizado na raiz, com baseline, comandos, cobertura e limites |
-| Evidências intermediárias | Removidos nove TXT redundantes (dia3-backend/build/frontend/producao, final-backend/ frontend-node24, final-build-node24, final-smoke e revisao-final) e quatro imagens dia3-carrinho. Resultados históricos consolidados; logs brutos do baseline de 170 e imagens originais mantidos |
-| docs/ | Estrutura mínima de evidências: três imagens diagnósticas, oito capturas de painel/produto, dois logs do baseline e novas saídas da regressão. Caminhos de captura nos testes continuam funcionando |
+| Diagnóstico executável antigo | Removido: afirmava bugs da versão antiga; nenhuma suíte/execução/deploy atual dependia dele. Causas e reproduções relevantes permanecem nas seções 2/3 |
+| Diagnóstico e validações intermediárias | Consolidados neste relatório e em VALIDACAO-FINAL.md; referências/comandos antigos removidos |
+| Preparação pessoal e rascunho de e-mail | Removidos; decisões técnicas já constavam no relatório. Nenhuma mensagem foi enviada |
+| Guia de implantação | IMPLANTACAO.md na raiz preserva host, configuração, backup/restauração e conferência de pedidos |
+| Validação da entrega | VALIDACAO-FINAL.md na raiz preserva baseline, comandos, cobertura e limites |
+| Evidências históricas | Removidos todos os 17 arquivos restantes: 11 PNG e seis TXT. Causas/resultados estão consolidados nos documentos da raiz e arquivos continuam recuperáveis pelo Git |
+| Diretório auxiliar | Completamente excluído por solicitação final. Capturas opcionais dos testes usam pasta temporária ou EVIDENCIAS_DIR, sem recriar a estrutura antiga |
 | deploy/ | Três arquivos úteis preservados: kaizen.service, kaizen.env.example e Caddyfile. Não há configuração obsoleta/duplicada demonstrada |
 | Artefatos de agentes | Busca recursiva fora de Git/dependências não encontrou AGENTS.md, CLAUDE.md, .trellis, .codex, .cursor, prompts ou checkpoints do projeto |
 
 README original, licença, arquitetura, relatório obrigatório, lockfiles, testes,
 migrações e scripts de inicialização/backup/smoke/segredos foram preservados.
 Referências de organização por dias foram retiradas; histórico Git, autoria e
-origem dos requisitos não foram reescritos. Os 18 arquivos obsoletos removidos
-são recuperáveis no histórico. docs/ foi mantido somente para evidências técnicas;
-apagá-lo exigiria mover os mesmos artefatos úteis para outra pasta sem reduzir a entrega.
+origem dos requisitos não foram reescritos. Arquivos removidos são recuperáveis
+no histórico. A análise dos 17 artefatos finais não identificou informação técnica
+indispensável ausente dos documentos da raiz. Nenhum teste foi removido.
 
 Regressão após os merges na main: **139 backend + 64 frontend = 203 aprovados**
 também em Node 20.19.2, sem falhas/cancelamentos/skips. Build Vite de 63 módulos,

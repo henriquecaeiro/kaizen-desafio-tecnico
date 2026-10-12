@@ -1,7 +1,6 @@
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fileURLToPath } from 'node:url';
-import { abrirNavegador, esperar } from './navegador.mjs';
+import { abrirNavegador, esperar, caminhoCaptura } from './navegador.mjs';
 import { problemasDeContraste } from './contraste.mjs';
 const e = await abrirNavegador();
 after(e.fechar);
@@ -110,6 +109,6 @@ for (const largura of [360, 390, 768, 1440]) test(`telas principais em ${largura
   await e.page.goto(`${e.base}/produto/FIL`);
   await e.page.getByRole('heading', { name: 'Filtro', exact: true }).waitFor();
   if (process.env.CAPTURAR_EVIDENCIAS === 'true')
-    await e.page.screenshot({ path: fileURLToPath(new URL(`../../docs/evidencias/final-produto-${largura}.png`, import.meta.url)), fullPage: true });
+    await e.page.screenshot({ path: await caminhoCaptura(`final-produto-${largura}.png`), fullPage: true });
   assert.deepEqual(e.erros, []);
 });

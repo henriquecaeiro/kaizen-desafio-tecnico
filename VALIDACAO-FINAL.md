@@ -5,10 +5,10 @@ loopback. Os testes bloqueiam acesso externo. Nenhum pedido real foi enviado.
 
 ## Resultado e ambiente
 
-Baseline histórico: 131 backend + 39 frontend = 170 aprovados. Saídas preservadas:
-[backend](docs/evidencias/final-backend-workspace.txt) e
-[frontend](docs/evidencias/final-frontend-workspace.txt). As validações anteriores
-de 76 e 165 casos estão consolidadas no RELATORIO e no histórico Git.
+Baseline histórico: 131 backend + 39 frontend = 170 aprovados. As validações
+anteriores de 76 e 165 casos estão consolidadas no RELATORIO e no histórico Git.
+Logs e capturas históricos foram retirados da árvore atual; continuam recuperáveis
+no histórico, sem alteração de autoria ou evidências de execução.
 
 A regressão consolidada aprovou **139 backend + 64 frontend = 203 testes** em
 Node 24.21.0, com **203 aprovados, zero falhas, cancelamentos e skips**. Isso
@@ -35,10 +35,8 @@ cópia foram comparados byte a byte com o workspace, sem divergências.
 | Documentação | Links locais válidos e enunciado original preservado |
 | Serviço | systemd-analyze verify aprovado; Caddyfile preservado, sem nova validação do Caddy nesta revisão |
 
-Saídas completas: [backend](docs/evidencias/manual-backend-node24.txt),
-[frontend](docs/evidencias/manual-frontend-node24.txt),
-[build](docs/evidencias/manual-build-node24.txt) e
-[smoke](docs/evidencias/manual-smoke-node24.txt).
+Os resultados acima resumem as execuções anteriores. Saídas brutas continuam
+recuperáveis no histórico Git; os comandos abaixo permitem repetir a validação.
 
 ## Cobertura e navegação realmente executada
 
@@ -62,9 +60,9 @@ abas/falhas em confiabilidade.test.mjs. Demais suítes continuam sendo executada
 integralmente. Sessões/carrinhos/catálogo também têm barreiras para respostas
 retidas, liberadas e invertidas, sem depender de sleeps arbitrários.
 
-Capturas fictícias de painel e produto nas quatro larguras permanecem em
-docs/evidencias/. As três capturas da reprodução original dos chamados foram
-preservadas; as imagens não representam pedidos reais.
+As capturas fictícias de painel/produto nas quatro larguras e as três reproduções
+originais foram removidas da árvore atual. Causas, correções e cobertura permanecem
+neste documento e no RELATORIO; as imagens históricas não representam pedidos reais.
 
 ## Comandos reproduzíveis
 
@@ -88,7 +86,9 @@ git diff --check
 Smoke inicia src/server.js em production com banco temporário e ERP mock;
 verifica HTML/assets, fallback SPA, health/catálogo, CSP/nosniff, 404, cookies
 Secure/HttpOnly/Lax, CORS, login/logout, carrinhos e persistência após reinício.
-Não cria pedidos. Capturas opcionais: CAPTURAR_EVIDENCIAS=true npm test no frontend.
+Não cria pedidos. Capturas opcionais no frontend:
+`CAPTURAR_EVIDENCIAS=true EVIDENCIAS_DIR=/tmp/kaizen-capturas npm test`.
+Sem destino explícito, as capturas usam uma pasta temporária do sistema.
 
 ## Diagnóstico externo e limitações
 
@@ -120,6 +120,16 @@ loading impede usar a página anterior. Reexecuções finais devem passar integr
 Removidos diagnóstico executável obsoleto, organização por dias, preparação de
 entrevista, rascunho de e-mail e saídas/capturas intermediárias redundantes.
 README/ARQUITETURA/RELATORIO consolidam causas e decisões; IMPLANTACAO.md fica
-na raiz. docs/ contém somente evidências úteis. deploy/, migrações, scripts de
+na raiz. O diretório de documentação auxiliar foi completamente removido;
+capturas opcionais não o recriam. deploy/, migrações, scripts de
 execução/backup/smoke/segredos, testes, lockfiles e enunciado original permanecem.
 Tudo removido continua recuperável pelo histórico Git; nenhuma autoria foi alterada.
+
+## Exclusão final da documentação auxiliar
+
+Os 17 artefatos restantes foram removidos após inventário: 11 PNG e seis TXT.
+Resumo técnico preservado neste documento e no RELATORIO. Nenhum teste removido;
+os 20 testes Chromium de auditoria e múltiplos carrinhos foram executados com
+capturas ativadas, todos aprovados. As oito imagens foram gravadas em
+/tmp/kaizen-capturas-remocao, sem recriar o diretório excluído. Scanner de
+segredos, links locais (zero quebrados) e git diff --check aprovados.

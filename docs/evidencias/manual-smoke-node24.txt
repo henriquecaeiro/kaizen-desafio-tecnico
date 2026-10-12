@@ -1,1 +1,0 @@
-Smoke de producao aprovado: HTML/assets/SPA, health/catalogo mock, headers, cookies Secure/HttpOnly/Lax, CORS, login/logout, carrinhos e persistencia apos reinicio. Zero pedidos enviados.

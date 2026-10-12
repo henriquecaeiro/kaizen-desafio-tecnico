@@ -328,7 +328,7 @@ Tentativas de checkout com resultado incerto preservam o carrinho e bloqueiam
 nova compra até conferência pela loja. Não remova o bloqueio sem reconciliar o
 pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes atuais em
 [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md). As causas e reproduções da base estão
-consolidadas no relatório, com evidências relevantes em `docs/evidencias/`.
+consolidadas no relatório; capturas e logs históricos são recuperáveis pelo Git.
 
 ## Entrega e produção
 
@@ -357,5 +357,6 @@ npm run db:backup -- /caminho/real/ecommerce.db /diretorio/restrito/backup-novo.
 
 Nunca copiar só o arquivo principal enquanto SQLite/WAL estiver em uso. Procedimento
 de restauração e conferência de checkouts está no guia de implantação.
-Capturas atuais do painel podem ser geradas com `CAPTURAR_EVIDENCIAS=true npm test`
-no frontend. Evidências dos chamados e do baseline permanecem em `docs/evidencias/`.
+Capturas opcionais podem ser geradas no frontend com
+`CAPTURAR_EVIDENCIAS=true EVIDENCIAS_DIR=/tmp/kaizen-capturas npm test`.
+Sem `EVIDENCIAS_DIR`, os testes criam uma pasta temporária fora do repositório.
