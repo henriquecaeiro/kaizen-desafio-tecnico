@@ -106,10 +106,8 @@ export async function prepararAmbiente() {
   const enderecoB = enderecos.criarEndereco(b.id, endereco('B'));
   function semear(itens, usuarioId = a.id) {
     carrinho.limparCarrinho(usuarioId, db);
-    const multiplos = db.prepare('PRAGMA table_info(carrinho_itens)').all().some(c => c.name === 'carrinho_id');
-    const coluna = multiplos ? 'carrinho_id' : 'usuario_id';
-    const id = multiplos ? db.prepare('SELECT id FROM carrinhos WHERE usuario_id=? AND ativo=1').get(usuarioId).id : usuarioId;
-    for (const [codigo, quantidade] of itens) db.prepare(`INSERT INTO carrinho_itens(${coluna},codigo_produto,quantidade,adicionado_em) VALUES(?,?,?,?)`)
+    const id = db.prepare('SELECT id FROM carrinhos WHERE usuario_id=? AND ativo=1').get(usuarioId).id;
+    for (const [codigo, quantidade] of itens) db.prepare('INSERT INTO carrinho_itens(carrinho_id,codigo_produto,quantidade,adicionado_em) VALUES(?,?,?,?)')
       .run(id, codigo, quantidade, new Date().toISOString());
   }
   const { criarApp } = await import('../src/app.js');

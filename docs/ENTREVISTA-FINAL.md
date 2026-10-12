@@ -59,6 +59,14 @@ Regra de carrinho no backend; dados locais mínimos sem cópia do catálogo;
 migração transacional sem ORM/reset; sessões e reservas persistidas no SQLite;
 tratamento conservador de resultado incerto, sem falsa promessa entre sistemas.
 
+Para revisar pessoalmente antes da conversa:
+
+1. `backend/src/services/carrinhoService.js` e `lib/dinheiro.js`: linhas, unidades, centavos e total elegível.
+2. `backend/src/db/index.js` e migrações: preservação de dados, índices, rollback e versões.
+3. `backend/src/services/pedidoService.js` e `checkoutTentativaService.js`: reserva, aceite remoto e resultado incerto.
+4. `backend/src/services/sessaoService.js` e `middleware/limiteAutenticacao.js`: revogação, corridas de senha e limites.
+5. Contextos de `frontend/src/contextos/` e `paginas/Catalogo.jsx`: identidade, respostas fora de ordem, retry e filtros na URL.
+
 ## Três riscos principais
 
 Implantação pública ainda bloqueada; credencial histórica depende de rotação

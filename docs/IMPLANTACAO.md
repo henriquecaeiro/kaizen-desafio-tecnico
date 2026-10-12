@@ -160,3 +160,15 @@ deve levar o supervisor a reiniciar o processo indefinidamente. Monitorar també
 erp, erros 5xx, espaço em disco e tentativas bloqueadas. Não concluir pedidos
 reais de teste sem autorização específica. Só então registrar URL no README,
 RELATORIO e e-mail. Essas verificações públicas continuam pendentes.
+
+## Antes do envio
+
+A revisão do código não resolveu a dependência de infraestrutura: ainda faltam
+host/acesso autorizado, domínio/DNS/HTTPS, disco persistente e credencial SIAC
+de produção com rotação da chave histórica confirmada. A loja precisa acordar
+a conferência de tentativas incertas/interrompidas e a rotina de backup externo.
+Nenhum recurso pago foi contratado ou servidor público configurado nesta revisão.
+
+Após validar o destino, registrar a URL real no README, relatório e
+[e-mail de entrega](EMAIL-ENTREGA.md). Envio manual após revisão; nenhum e-mail
+foi enviado. Meta interna: 12/10/2026 à noite. Prazo oficial: 13/10/2026 às 15h Brasília.

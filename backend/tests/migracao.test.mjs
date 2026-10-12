@@ -54,7 +54,7 @@ test('indice impede dois carrinhos ativos para a mesma conta', () => {
   inserir.run(1, 'A', 1, 'hoje', 'hoje');
   assert.throws(() => inserir.run(1, 'B', 1, 'hoje', 'hoje'), /UNIQUE/); db.close();
 });
-test('banco na versao 1 recebe apenas a migracao de tentativas', () => {
+test('banco na versao 1 recebe migracoes pendentes sem recriar carrinhos', () => {
   const db = novoBanco(); db.exec(base); usuario(db);
   db.exec(fs.readFileSync(new URL('../src/db/migrations/001-multiple-carts.sql', import.meta.url), 'utf8'));
   db.pragma('user_version = 1');

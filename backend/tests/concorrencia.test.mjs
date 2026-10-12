@@ -56,8 +56,6 @@ test('adicao iniciada antes da reserva e revalidada ao retornar do ERP', async (
   e.semear([['FIL', 1]]);
   let liberarProduto; e.controle.produtoBarreira = new Promise(r => { liberarProduto = r; });
   const adicionando = e.carrinho.adicionarItem(e.a.id, 'SUS', 1);
-  // Espera o evento de requisicao GET chegar ao mock, antes de reservar.
-  await new Promise(r => setTimeout(r, 20));
   const total = e.pedidos.length; const liberarPedido = bloquear();
   const fechando = e.pedido.finalizarPedido(e.a, e.casa.id, '');
   liberarProduto(); e.controle.produtoBarreira = null;

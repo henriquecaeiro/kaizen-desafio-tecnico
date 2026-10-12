@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 const raiz = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-const arquivos = execFileSync('git', ['ls-files', '-z'], { cwd: raiz, encoding: 'utf8' }).split('\0').filter(Boolean);
+const arquivos = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], { cwd: raiz, encoding: 'utf8' }).split('\0').filter(Boolean);
 const segredos = [process.env.SIAC_TOKEN, process.env.ERP_TOKEN, process.env.JWT_SEGREDO]
   .filter(v => v && v.length >= 16 && !v.includes('troque-'));
 for (const diretorio of [raiz, path.join(raiz, 'backend')]) {
@@ -21,7 +21,7 @@ function suspeito(arquivo, conteudo) {
     segredos.some(segredo => conteudo.includes(segredo)) ||
     literais.some(m => !ficticias.has(m[1])) ||
     /(^|\/)\.env(?:\.[^/]+)?$/.test(arquivo) && !arquivo.endsWith('.env.example') ||
-    /\.(?:db|sqlite|sqlite3)(?:-wal|-shm|\.bak)?$/.test(arquivo);
+    /\.(?:db|sqlite|sqlite3)(?:-wal|-shm|\.bak|\.parcial)?$/.test(arquivo);
 }
 const suspeitos = new Set();
 for (const arquivo of arquivos) {

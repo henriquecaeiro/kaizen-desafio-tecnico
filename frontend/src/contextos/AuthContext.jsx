@@ -54,19 +54,20 @@ export function ProvedorAuth({ children }) {
   }, []);
 
   const sair = useCallback(async () => {
-    try {
-      await api.auth.sair();
-    } finally {
-      // Mesmo se a chamada falhar, o estado local tem que sair do ar logado.
-      versaoSessao.current++;
-      setUsuario(null);
-      setCarregando(false);
-    }
+    await api.auth.sair();
+    versaoSessao.current++;
+    setUsuario(null);
+    setCarregando(false);
+  }, []);
+
+  const atualizarUsuario = useCallback((dados) => {
+    // Uma resposta de perfil antiga nao pode restaurar uma conta que ja saiu.
+    setUsuario(atual => atual?.id === dados.id ? dados : atual);
   }, []);
 
   const valor = useMemo(
-    () => ({ usuario, carregando, autenticado: usuario !== null, entrar, cadastrar, sair, setUsuario }),
-    [usuario, carregando, entrar, cadastrar, sair],
+    () => ({ usuario, carregando, autenticado: usuario !== null, entrar, cadastrar, sair, atualizarUsuario }),
+    [usuario, carregando, entrar, cadastrar, sair, atualizarUsuario],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

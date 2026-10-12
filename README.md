@@ -238,7 +238,10 @@ Boa sorte.
 
 Use Node 24 LTS conforme `.nvmrc`. A validação final também foi executada nessa versão,
 com instalação limpa em uma cópia isolada do código.
-No backend, configure `backend/.env` a partir de `.env.example`, sem publicar segredos.
+Na primeira execução, copie [backend/.env.example](backend/.env.example) para
+`backend/.env`. Gere `JWT_SEGREDO` com `npm run segredo:gerar` no backend e preencha
+`SIAC_TOKEN` com uma credencial autorizada. Não publique esses valores. O proxy do
+Vite usa a porta 3001; ajuste `frontend/vite.config.js` se mudar a porta do backend.
 
 ```sh
 cd backend
@@ -269,8 +272,9 @@ node scripts/smoke-producao.mjs
 ```
 
 Os testes de backend usam SQLite temporário e ERP HTTP em loopback. Não enviam
-pedidos reais. `scripts/diagnostico-dia1.mjs` mantém expectativas históricas dos
-bugs e não deve ser usado para aprovar regressão da versão corrigida.
+pedidos reais e configuram suas próprias credenciais fictícias, sem exigir `.env`.
+`scripts/diagnostico-dia1.mjs` preserva a reprodução da base do Dia 1: depende
+daquela versão do código e não aprova regressão da versão corrigida.
 
 Os testes de frontend abrem a aplicação modificada com Vite, backend temporário
 e ERP mock. Usam `playwright-core` com Chromium já instalado (não baixam outro

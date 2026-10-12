@@ -11,8 +11,7 @@ const PARAMETROS = { N: 16384, r: 8, p: 1 };
 
 /**
  * Usa scrypt do proprio Node em vez de bcrypt.
- * Motivos: zero dependencia nativa para compilar na EC2, e scrypt e resistente
- * a ataque com hardware dedicado (memory-hard), coisa que bcrypt nao e.
+ * Evita uma dependencia adicional para senhas; o custo fica nos parametros abaixo.
  *
  * Formato guardado: scrypt$N$r$p$sal_base64$chave_base64
  * Os parametros viajam junto com o hash para que senhas antigas continuem

@@ -186,12 +186,14 @@ export function telefone(valor, campo, erros) {
 }
 
 export function lerPaginacao(query) {
-  const pagina = Math.max(1, Number.parseInt(query.pagina ?? '1', 10) || 1);
+  const paginaBruta = Number.parseInt(query.pagina ?? '1', 10);
   const bruto = Number.parseInt(query.tamanho ?? String(config.paginacao.tamanhoPadrao), 10);
   const tamanho = Math.min(
     config.paginacao.tamanhoMaximo,
     Math.max(1, Number.isNaN(bruto) ? config.paginacao.tamanhoPadrao : bruto),
   );
+  const pagina = Number.isSafeInteger(paginaBruta) && paginaBruta >= 1 &&
+    Number.isSafeInteger((paginaBruta - 1) * tamanho) ? paginaBruta : 1;
   return { pagina, tamanho };
 }
 

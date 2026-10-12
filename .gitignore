@@ -153,4 +153,12 @@ vite.config.ts.timestamp-*
 *.db-*
 *.sqlite
 *.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.db.bak
+*.sqlite.bak
+*.sqlite3.bak
+*.db.parcial
+*.sqlite.parcial
+*.sqlite3.parcial
 .local/

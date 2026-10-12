@@ -6,8 +6,9 @@ Loja de autopeças (React + Node) que **consome a API do SIAC**, o ERP interno d
 Kaizen.
 
 O SIAC é dono do catálogo, do estoque e dos pedidos, e roda fora deste projeto.
-Catálogo e pedidos **não existem aqui** — vêm do ERP por HTTP. Este repositório
-guarda apenas o que é da loja: contas, endereços e carrinho.
+Catálogo, estoque e itens dos pedidos vêm do ERP por HTTP. A loja guarda contas,
+endereços, carrinhos, sessões, limites de autenticação e tentativas de checkout,
+além do vínculo com o pedido e do snapshot de entrega.
 
 ---
 
@@ -62,8 +63,7 @@ porta do backend.
 ## Autenticação
 
 - Senha com **scrypt** (`node:crypto`), salt por usuário e parâmetros gravados
-  junto do hash. Sem dependência nativa para compilar na EC2, e scrypt é
-  *memory-hard* — resiste a ataque com hardware dedicado, coisa que bcrypt não faz.
+  junto do hash. Usa a implementação do Node, sem dependência adicional para senhas.
 - Sessão em **JWT dentro de cookie `httpOnly`**, não em `localStorage`. Script
   injetado na página não lê o token. `SameSite=Lax` barra POST de outro site, e
   `secure` liga sozinho em produção.
@@ -82,8 +82,9 @@ porta do backend.
 - Login não diz se o e-mail existe: e-mail desconhecido e senha errada devolvem
   a mesma mensagem, e o caso sem usuário ainda gasta o tempo de um hash para não
   responder visivelmente mais rápido.
-- O front **não guarda** quem está logado: pergunta ao servidor (`GET /api/auth/eu`)
-  no boot. Só o servidor sabe.
+- O front mantém o usuário em memória e consulta `GET /api/auth/eu` no boot;
+  não persiste token no JavaScript. Atualização de perfil não pode restaurar
+  uma conta que já saiu. Logout com falha mostra erro e permite repetir a revogação.
 
 ---
 
@@ -115,9 +116,19 @@ Tudo sob `/api`. Erros seguem o mesmo formato do ERP:
 | PATCH  | `/carrinho/itens/:codigo`   |   ✓    | Muda a quantidade                |
 | DELETE | `/carrinho/itens/:codigo`   |   ✓    | Remove item                      |
 | DELETE | `/carrinho`                 |   ✓    | Esvazia                          |
+| GET    | `/carrinhos`                |   ✓    | Lista carrinhos da conta         |
+| POST   | `/carrinhos`                |   ✓    | Cria carrinho vazio              |
+| PATCH  | `/carrinhos/:id`            |   ✓    | Renomeia                         |
+| PUT    | `/carrinhos/:id/ativar`      |   ✓    | Persiste seleção                 |
+| DELETE | `/carrinhos/:id`            |   ✓    | Exclui e garante ativo válido    |
 | POST   | `/pedidos`                  |   ✓    | **Checkout**                     |
 | GET    | `/pedidos`                  |   ✓    | Meus pedidos                     |
 | GET    | `/pedidos/:numero`          |   ✓    | Detalhe do pedido                |
+
+`X-Carrinho-Id` opcional nas ações de itens exige o ativo exibido: alheio recebe
+404; seleção antiga, 409. Checkout aceita `endereco_id`, `observacao` e os opcionais
+`carrinho_id`/`tentativa_id` (UUID). Paginação inválida ou com offset inseguro é
+normalizada antes da consulta. Detalhes de modelagem e idempotência local no relatório.
 
 ### Como as falhas do ERP chegam ao cliente
 
@@ -203,7 +214,7 @@ texto pequeno** nem texto sobre fundo branco.
 
 A regra que o projeto segue:
 
-> **Superfície** (logo, hero, bordas, anel de foco, estado ativo) usa
+> **Superfície** (logo, bordas, estado ativo) usa
 > `marca-500`, o `#00a5ac` exato.
 > **Qualquer coisa que carregue texto** usa `marca-700` ou mais escuro.
 
@@ -273,7 +284,7 @@ backend/
     server.js            bootstrap, graceful shutdown
     app.js               montagem do Express
     config.js            env + validação fail-fast
-    db/                  schema e conexão SQLite
+    db/                  conexão, schema v0 e migrações 001–005
     erp/cliente.js       ÚNICO ponto que fala com o ERP
     middleware/          sessão JWT, request-id, erros
     routes/              HTTP: lê, chama o serviço, devolve JSON
@@ -289,6 +300,13 @@ frontend/
 
 Todo acesso ao ERP passa por `erp/cliente.js`. Trocar a URL, o modo de
 autenticação ou pôr um cache atinge um arquivo só.
+
+No banco final, `carrinho_itens.carrinho_id` referencia `carrinhos`; índice
+parcial limita o ativo por conta. `checkout_tentativas` reserva o carrinho nos
+estados VALIDANDO/ENVIANDO/INCERTO. `sessoes` registra jti/expiração,
+`autenticacao_limites` persiste contadores e `enderecos` tem índice de principal.
+Bootstrap aplica migrações em transação IMMEDIATE, com user_version e checagem
+de FKs; não reseta dados. WAL/FKs/busy_timeout são configurados na conexão.
 
 ---
 

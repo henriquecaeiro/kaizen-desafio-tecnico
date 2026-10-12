@@ -25,10 +25,6 @@ export class ErroApi extends Error {
       return acumulado;
     }, {});
   }
-
-  get ehSessaoExpirada() {
-    return this.status === 401;
-  }
 }
 
 function montarQuery(parametros) {
@@ -50,7 +46,6 @@ async function requisitar(caminho, { metodo = 'GET', corpo, parametros, carrinho
   try {
     resposta = await fetch(`${BASE}${caminho}${montarQuery(parametros)}`, {
       method: metodo,
-      // Sem isto o cookie de sessao nao e enviado.
       credentials: 'include',
       headers: {
         ...(corpo ? { 'Content-Type': 'application/json' } : {}),
