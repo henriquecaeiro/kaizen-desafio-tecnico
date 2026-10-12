@@ -149,6 +149,7 @@ vite.config.ts.timestamp-*
 .turbo
 
 # SQLite local e ferramentas de desenvolvimento
+backend/data
 *.db
 *.db-*
 *.sqlite

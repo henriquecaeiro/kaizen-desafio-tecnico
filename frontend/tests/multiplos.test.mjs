@@ -36,6 +36,7 @@ test('painel cria, renomeia e troca carrinhos sem perder busca e pagina', async 
   assert.equal(await e.page.getByLabel('7 itens no carrinho').count(), 1);
   assert.equal(e.page.url(), url);
   await e.page.getByLabel('Quantidade de Filtro', { exact: true }).fill('2');
+  await e.page.getByLabel('Quantidade de Filtro', { exact: true }).press('Enter');
   await esperar(async () => assert.equal(await e.page.getByLabel('6 itens no carrinho').count(), 1));
   assert.equal(e.page.url(), url);
 });
@@ -74,6 +75,7 @@ test('estoque parcial permite reduzir quantidade e retirar pendencia', async () 
   await e.page.getByText('Restam apenas 2 em estoque.', { exact: true }).waitFor();
   assert.equal(await e.page.getByRole('button', { name: 'Fechar pedido' }).isDisabled(), true);
   await e.page.getByLabel('Quantidade de Filtro', { exact: true }).fill('2');
+  await e.page.getByLabel('Quantidade de Filtro', { exact: true }).press('Enter');
   await esperar(async () => assert.equal(await e.page.getByRole('button', { name: 'Fechar pedido' }).isEnabled(), true));
   e.produtos.get('FIL').estoque = 200;
 });

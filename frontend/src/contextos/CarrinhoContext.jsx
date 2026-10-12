@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { api } from '../api/cliente.js';
+import { api, ErroApi } from '../api/cliente.js';
 import { useAuth } from './AuthContext.jsx';
 
 const CarrinhoContext = createContext(null);
@@ -38,8 +38,22 @@ export function ProvedorCarrinho({ children }) {
     const vigente = () => sessao.current === atual && atual.requisicao === requisicao;
     setEstado((e) => ({ ...e, usuarioId: atual.usuarioId, carregando: true, erro: null }));
     try {
-      const resposta = await acao();
-      const lista = await api.carrinhos.listar();
+      let resposta = await acao();
+      let lista = await api.carrinhos.listar();
+      function conferirIdentidade() {
+        if ((resposta.dados.usuario_id !== undefined && resposta.dados.usuario_id !== atual.usuarioId) ||
+            lista.dados.some(c => c.usuario_id !== atual.usuarioId))
+          throw new ErroApi(401, 'SESSAO_ALTERADA', 'A sessão mudou em outra aba. Recarregue a página para continuar.');
+      }
+      conferirIdentidade();
+      if (lista.dados.find(c => c.ativo)?.id !== resposta.dados.id) {
+        // Outra aba pode ter trocado o ativo durante a consulta ao estoque.
+        resposta = await api.carrinho.ler();
+        lista = await api.carrinhos.listar();
+        conferirIdentidade();
+        if (lista.dados.find(c => c.ativo)?.id !== resposta.dados.id)
+          throw new ErroApi(409, 'CARRINHO_ALTERADO', 'O carrinho ativo mudou. Tente atualizar novamente.');
+      }
       if (vigente())
         setEstado({
           usuarioId: atual.usuarioId,
@@ -61,8 +75,10 @@ export function ProvedorCarrinho({ children }) {
           carrinho: erro.status === 401 ? VAZIO : e.carrinho,
           carrinhos: erro.status === 401 ? [] : e.carrinhos,
           carregando: false,
-          erro: propagarErro ? null : erro,
+          erro: !propagarErro || erro.status === 401 ? erro : null,
         }));
+      if (propagarErro && erro.codigo === 'CARRINHO_ALTERADO' && sessao.current === atual)
+        await executar(() => api.carrinho.ler(), false);
       if (propagarErro) throw erro;
     }
   }, []);
