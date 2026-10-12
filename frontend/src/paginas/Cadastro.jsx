@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { Botao, Campo, ErroGeral } from '../componentes/ui.jsx';
+import { ErroApi } from '../api/cliente.js';
+import { digitos } from '../lib/mascaras.js';
 
-const CAMPOS = ['nome', 'email', 'senha', 'documento', 'telefone'];
+const CAMPOS = ['nome', 'email', 'senha', 'confirmarSenha', 'documento', 'telefone'];
 
-const INICIAL = { nome: '', email: '', senha: '', documento: '', telefone: '' };
+const INICIAL = { nome: '', email: '', senha: '', confirmarSenha: '', documento: '', telefone: '' };
 
 export function Cadastro() {
   const { cadastrar } = useAuth();
@@ -23,10 +25,17 @@ export function Cadastro() {
   async function enviar(evento) {
     evento.preventDefault();
     setErro(null);
+    if (!formulario.confirmarSenha || formulario.senha !== formulario.confirmarSenha) {
+      setErro(new ErroApi(422, 'VALIDACAO', 'Confira a confirmação da senha.', [
+        { campo: 'confirmarSenha', mensagem: 'As senhas precisam coincidir.' },
+      ]));
+      return;
+    }
     setEnviando(true);
 
     try {
-      await cadastrar(formulario);
+      const { confirmarSenha, ...dados } = formulario;
+      await cadastrar({ ...dados, documento: digitos(dados.documento), telefone: digitos(dados.telefone) });
       navegar('/', { replace: true });
     } catch (falha) {
       setErro(falha);
@@ -72,6 +81,8 @@ export function Cadastro() {
           <Campo
             rotulo="CPF ou CNPJ"
             name="documento"
+            mascara="documento"
+            autoComplete="off"
             value={formulario.documento}
             onChange={mudar}
             erro={porCampo.documento}
@@ -81,6 +92,7 @@ export function Cadastro() {
           <Campo
             rotulo="Telefone (opcional)"
             name="telefone"
+            mascara="telefone"
             type="tel"
             autoComplete="tel"
             value={formulario.telefone}
@@ -100,6 +112,10 @@ export function Cadastro() {
             dica="Mínimo 8 caracteres, com ao menos uma letra e um número."
             placeholder="••••••••"
           />
+
+          <Campo rotulo="Confirmar senha" name="confirmarSenha" type="password"
+            autoComplete="new-password" value={formulario.confirmarSenha} onChange={mudar}
+            erro={porCampo.confirmarSenha} />
 
           <Botao type="submit" tamanho="grande" className="w-full" carregando={enviando}>
             Criar conta

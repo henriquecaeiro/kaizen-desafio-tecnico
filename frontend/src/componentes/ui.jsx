@@ -1,3 +1,6 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+import { digitos, formatarMascara, posicaoPorDigitos } from '../lib/mascaras.js';
+
 /**
  * Primitivos de interface da loja.
  * Ficam juntos de proposito: sao pequenos, usados em toda tela, e manter o
@@ -56,7 +59,37 @@ export function Botao({
   );
 }
 
-export function Campo({ rotulo, erro, dica, id, className = '', children, ...props }) {
+export function Campo({ rotulo, erro, dica, id, className = '', children, mascara, ...props }) {
+  const [visivel, setVisivel] = useState(false);
+  const input = useRef(null);
+  const cursor = useRef(null);
+  const senha = props.type === 'password';
+  const valor = mascara ? formatarMascara(props.value, mascara) : props.value;
+  useLayoutEffect(() => {
+    if (cursor.current !== null && input.current === document.activeElement) {
+      input.current.setSelectionRange(cursor.current, cursor.current);
+      cursor.current = null;
+    }
+  });
+  function mudar(evento) {
+    if (!mascara) return props.onChange?.(evento);
+    const original = evento.target.value;
+    const posicao = evento.target.selectionStart ?? original.length;
+    let numeros = digitos(original);
+    let antes = digitos(original.slice(0, posicao)).length;
+    // Apagar só um separador também apaga o dígito vizinho, sem prender o cursor.
+    if (numeros === digitos(valor) && evento.nativeEvent.inputType?.startsWith('delete')) {
+      const indice = evento.nativeEvent.inputType === 'deleteContentBackward' ? antes - 1 : antes;
+      if (indice >= 0) {
+        numeros = numeros.slice(0, indice) + numeros.slice(indice + 1);
+        antes = indice;
+      }
+    }
+    const formatado = formatarMascara(numeros, mascara);
+    cursor.current = posicao === original.length ? formatado.length : posicaoPorDigitos(formatado, antes);
+    evento.target.value = formatado;
+    props.onChange?.(evento);
+  }
   const idCampo = id ?? props.name;
   const idErro = erro ? `${idCampo}-erro` : undefined;
   const idDica = !erro && dica ? `${idCampo}-dica` : undefined;
@@ -68,17 +101,29 @@ export function Campo({ rotulo, erro, dica, id, className = '', children, ...pro
       </label>
 
       {children ?? (
+        <div className="relative">
         <input
           {...props}
+          ref={input}
+          type={senha && visivel ? 'text' : props.type}
+          value={valor}
+          onChange={mudar}
+          inputMode={mascara ? 'numeric' : props.inputMode}
           id={idCampo}
           aria-invalid={erro ? 'true' : undefined}
           aria-describedby={idErro ?? idDica}
-          className={`w-full rounded-lg border px-3 py-2.5 text-sm text-tinta-900
+          className={`w-full rounded-lg border px-3 py-2.5 text-sm text-tinta-900 ${senha ? 'pr-24' : ''}
             placeholder:text-tinta-400 focus:outline-none focus:ring-2
             ${erro
               ? 'border-red-400 bg-red-50 focus:ring-red-200'
               : 'border-tinta-300 bg-white focus:border-marca-500 focus:ring-marca-100'}`}
         />
+        {senha && <button type="button" aria-label={`${visivel ? 'Ocultar' : 'Mostrar'} ${rotulo.toLowerCase()}`}
+          aria-pressed={visivel} onClick={() => setVisivel(atual => !atual)}
+          className="absolute inset-y-0 right-1 min-w-20 rounded px-2 text-sm font-medium text-marca-700 hover:bg-marca-50">
+          {visivel ? 'Ocultar' : 'Mostrar'}
+        </button>}
+        </div>
       )}
 
       {erro && (

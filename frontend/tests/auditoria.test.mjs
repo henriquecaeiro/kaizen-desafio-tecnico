@@ -59,6 +59,7 @@ test('perfil limpa telefone e troca senha mantendo novo cookie e revogando o ant
   const antigo = (await e.context.cookies()).find(c => c.name === 'kaizen_sessao').value;
   await e.page.getByLabel('Senha atual', { exact: true }).fill('TesteLocal123');
   await e.page.getByLabel('Nova senha', { exact: true }).fill('  SenhaNovaＡ123  ');
+  await e.page.getByLabel('Confirmar nova senha', { exact: true }).fill('  SenhaNovaＡ123  ');
   await e.page.getByRole('button', { name: 'Trocar senha', exact: true }).click();
   await e.page.getByText('Senha alterada.', { exact: true }).waitFor();
   assert.equal((await e.chamada('/auth/eu', { cookie: `kaizen_sessao=${antigo}` })).status, 401);
@@ -72,7 +73,7 @@ test('erro de formulario tem label, aria-invalid e descricao vinculada', async (
   await esperar(async () => assert.equal(await e.page.getByLabel('Nome completo').getAttribute('aria-invalid'), 'true'));
   assert.equal(await e.page.getByLabel('Nome completo').getAttribute('aria-describedby'), 'nome-erro');
   assert.equal(await e.page.locator('#nome-erro').innerText(), 'Campo obrigatorio.');
-  assert.equal(await e.page.getByLabel('Nova senha').getAttribute('aria-describedby'), 'nova_senha-dica');
+  assert.equal(await e.page.getByLabel('Nova senha', { exact: true }).getAttribute('aria-describedby'), 'nova_senha-dica');
 });
 
 test('atalho de teclado pula para o conteudo e foco permanece visivel', async () => {
