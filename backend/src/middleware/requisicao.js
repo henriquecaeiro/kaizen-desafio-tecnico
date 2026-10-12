@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { config } from '../config.js';
+import { contextoRequisicao } from '../lib/contextoRequisicao.js';
 
 /**
  * Carimba cada requisicao com um id, devolvido no header X-Request-Id e no
@@ -10,7 +11,7 @@ export function identificarRequisicao(req, res, next) {
   const recebido = req.get('x-request-id');
   req.id = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(recebido ?? '') ? recebido : crypto.randomUUID();
   res.setHeader('X-Request-Id', req.id);
-  next();
+  contextoRequisicao.run({ id: req.id }, next);
 }
 
 export function registrarAcesso(req, res, next) {
