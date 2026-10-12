@@ -1,6 +1,6 @@
 # Implantação e operação
 
-## Estado em 11/10/2026
+## Estado em 12/10/2026
 
 **Não há URL pública da solução.** Não foi identificado servidor autorizado,
 domínio com acesso de publicação ou conexão de hospedagem disponível. O ambiente
@@ -169,6 +169,5 @@ de produção com rotação da chave histórica confirmada. A loja precisa acord
 a conferência de tentativas incertas/interrompidas e a rotina de backup externo.
 Nenhum recurso pago foi contratado ou servidor público configurado nesta revisão.
 
-Após validar o destino, registrar a URL real no README, relatório e
-[e-mail de entrega](EMAIL-ENTREGA.md). Envio manual após revisão; nenhum e-mail
-foi enviado. Meta interna: 12/10/2026 à noite. Prazo oficial: 13/10/2026 às 15h Brasília.
+Após validar o destino, registrar a URL real no README e relatório antes do
+envio da entrega. Nenhum e-mail foi enviado. Prazo oficial: 13/10/2026 às 15h Brasília.

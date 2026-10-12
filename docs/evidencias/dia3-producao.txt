@@ -1,6 +1,0 @@
-Comando: cd backend; node scripts/smoke-producao.mjs
-Exit code: 0
-Smoke de producao aprovado: HTML/assets, fallback SPA, health com mock, autenticacao e 404 da API.
-
-Processo real: src/server.js com NODE_ENV=production, build modificado,
-SQLite temporario e SIAC mock. Nenhuma escrita no ERP real.

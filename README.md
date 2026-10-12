@@ -303,8 +303,6 @@ node scripts/smoke-producao.mjs
 
 Os testes de backend usam SQLite temporário e ERP HTTP em loopback. Não enviam
 pedidos reais e configuram suas próprias credenciais fictícias, sem exigir `.env`.
-`scripts/diagnostico-dia1.mjs` preserva a reprodução da base do Dia 1: depende
-daquela versão do código e não aprova regressão da versão corrigida.
 
 Os testes de frontend abrem a aplicação modificada com Vite, backend temporário
 e ERP mock. Usam `playwright-core` com Chromium já instalado (não baixam outro
@@ -329,19 +327,19 @@ Recuperação de senha depende de canal de verificação por e-mail ainda não d
 Tentativas de checkout com resultado incerto preservam o carrinho e bloqueiam
 nova compra até conferência pela loja. Não remova o bloqueio sem reconciliar o
 pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes atuais em
-[VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md) e histórico em
-[VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md).
+[VALIDACAO-FINAL.md](VALIDACAO-FINAL.md). As causas e reproduções da base estão
+consolidadas no relatório, com evidências relevantes em `docs/evidencias/`.
 
 ## Entrega e produção
 
 Código publicado em [henriquecaeiro/kaizen-desafio-tecnico](https://github.com/henriquecaeiro/kaizen-desafio-tecnico),
 branch `main`. Chamados, múltiplos carrinhos e auditoria estão em [RELATORIO.md](RELATORIO.md).
-Resultados atuais e limitações: [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
+Resultados atuais e limitações: [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
 
 **Implantação pública pendente:** não há host/domínio/acesso autorizado ou credencial
 SIAC de produção identificados neste ambiente. Não há URL pública da solução.
 Publicar código no GitHub não substitui esse requisito. Preparação e bloqueio estão
-em [IMPLANTACAO.md](docs/IMPLANTACAO.md); exemplos em `deploy/` não foram implantados.
+em [IMPLANTACAO.md](IMPLANTACAO.md); exemplos em `deploy/` não foram implantados.
 
 O backend serve `frontend/dist` em produção e recusa iniciar sem o build. Configurar
 `NODE_ENV=production`, origem HTTPS exata em `CORS_ORIGEM`, segredos privados e
@@ -360,4 +358,4 @@ npm run db:backup -- /caminho/real/ecommerce.db /diretorio/restrito/backup-novo.
 Nunca copiar só o arquivo principal enquanto SQLite/WAL estiver em uso. Procedimento
 de restauração e conferência de checkouts está no guia de implantação.
 Capturas atuais do painel podem ser geradas com `CAPTURAR_EVIDENCIAS=true npm test`
-no frontend. As evidências históricas do Dia 3 são preservadas.
+no frontend. Evidências dos chamados e do baseline permanecem em `docs/evidencias/`.

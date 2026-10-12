@@ -1,10 +1,10 @@
 # Relatório de entrega
 
 **Candidato:** Henrique Caeiro
-**Data de entrega:** em preparação; código revisado em 11/10/2026. Envio e implantação pública pendentes.
+**Data de entrega:** em preparação; código revisado em 12/10/2026. Envio e implantação pública pendentes.
 **Tempo aproximado dedicado:** não cronometrado.
 
-Chamados, múltiplos carrinhos e auditoria final implementados/testados. Diagnóstico histórico em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md); resultados anteriores preservados em [VALIDACAO-DIAS2-3.md](docs/VALIDACAO-DIAS2-3.md). Resultados atuais em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md). **Entrega parcial somente pela implantação pública:** faltam host/acesso/domínio e credencial de produção autorizados; não há URL pública da solução.
+Chamados, múltiplos carrinhos e ajustes manuais implementados/testados. Causas e reproduções históricas estão consolidadas neste relatório. Resultados atuais em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md). **Entrega parcial somente pela implantação pública:** faltam host/acesso/domínio e credencial de produção autorizados; não há URL pública da solução.
 
 ---
 
@@ -12,7 +12,7 @@ Chamados, múltiplos carrinhos e auditoria final implementados/testados. Diagnó
 
 Desenvolvimento e revisão em Linux/Node 20.19.2, com Chromium instalado. Também validei Node 24.21.0 de .nvmrc em cópia isolada, com dependências instaladas pelos lockfiles. Execução no README; segredos somente no ambiente.
 
-npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express serve frontend/dist na mesma origem e recusa iniciar sem build. Serviço systemd/Caddy, variáveis privadas, backup online/restauração e atualização estão em [IMPLANTACAO.md](docs/IMPLANTACAO.md). Configurações e produção local foram validadas; host público não foi disponibilizado. Não criei cobrança nem usei infraestrutura pessoal/corporativa.
+npm run db:init ou bootstrap aplica migrações 001–005, sem db:reset. Fixtures usam SQLite temporário; nenhum banco real foi resetado ou publicado. Em produção, Express serve frontend/dist na mesma origem e recusa iniciar sem build. Serviço systemd/Caddy, variáveis privadas, backup online/restauração e atualização estão em [IMPLANTACAO.md](IMPLANTACAO.md). Configurações e produção local foram validadas; host público não foi disponibilizado. Não criei cobrança nem usei infraestrutura pessoal/corporativa.
 
 O código foi publicado no repositório de Henrique. Não há aplicação pública implantada: falta infraestrutura autorizada com disco persistente, domínio e credencial SIAC. Os arquivos novos de serviço, proxy e backup estão em deploy/ e backend/scripts/; não substituem a validação no host real.
 
@@ -25,7 +25,7 @@ O código foi publicado no repositório de Henrique. Não há aplicação públi
 | | |
 |---|---|
 | **Causa** | O serviço somava subtotais de todas as linhas, inclusive pendentes. Math.floor na conversão monetária perdia centavos (1.15 → 114). |
-| **Como reproduzi** | Dia 1: radiador sem estoque 684 + disponíveis 110 → total 794. |
+| **Como reproduzi** | Reprodução na base: radiador sem estoque 684 + disponíveis 110 → total 794. |
 | **Correção** | valor_total soma somente linhas disponíveis; valor_itens mantém soma das linhas conhecidas. Linha mantém valor_total e recebe valor_elegivel. Sem remoção/redução automática. Checkout exige resolver todas as pendências. |
 | **Arquivos alterados** | carrinhoService.js, dinheiro.js, Carrinho.jsx/ItensCarrinho.jsx; backend/tests/carrinho.test.mjs e dinheiro.test.mjs. |
 | **Como validei a correção** | Vazio, disponíveis, zero/parcial/inativo/404, falha ERP, quantidades e centavos; pendência bloqueia pedido. Conversão arredonda meio centavo para cima, somas usam preço em centavos × quantidade, sem reconverter subtotais. |
@@ -37,7 +37,7 @@ Falha de consulta é erro, não carrinho vazio; somente produto ausente vira pen
 | | |
 |---|---|
 | **Causa** | quantidade_pecas usava itens.length; contexto também ignorava mudanças da sessão. |
-| **Como reproduzi** | Dia 1: FIL=3 e SUS=4 → duas peças; logout/login B manteve estado visual de A. |
+| **Como reproduzi** | Reprodução na base: FIL=3 e SUS=4 → duas peças; logout/login B manteve estado visual de A. |
 | **Correção** | Serviço soma unidades, inclusive pendentes; quantidade_itens continua contando produtos distintos. Contexto limpa/recarrega por identidade e aceita somente requisição atual da mesma sessão. AuthContext descarta consulta inicial da sessão quando um login/cadastro/logout mais recente já terminou. |
 | **Arquivos alterados** | carrinhoService.js, CarrinhoContext.jsx e consumidores; testes de carrinho/sessão. |
 | **Como validei a correção** | 3+4=7, inclusão repetida, alteração, remoção/limpeza, login/logout/troca, resposta antiga de sessão e leitura anterior a mutação. Erro de leitura tem estado e opção de repetir. |
@@ -49,7 +49,7 @@ Cabeçalho consome o contador do backend, sem cálculo duplicado. A auditoria fi
 | | |
 |---|---|
 | **Causa** | Busca/filtros preservavam pagina anterior. Próxima comparava pagina com total_paginas - 1. Campo não acompanhava URL. |
-| **Como reproduzi** | Dia 1: /?pagina=2&busca=amortecedor tinha lista vazia, apesar de resultados na página 1. |
+| **Como reproduzi** | Reprodução na base: /?pagina=2&busca=amortecedor tinha lista vazia, apesar de resultados na página 1. |
 | **Correção** | Mudar critérios remove pagina, preservando demais filtros; paginar conserva critérios. Campo acompanha termo da URL. Próxima desabilita na última página. |
 | **Arquivos alterados** | Cabecalho.jsx, Catalogo.jsx, ui.jsx; frontend/tests/catalogo.test.mjs. |
 | **Como validei a correção** | Busca inicial/depois de paginar, categoria/disponibilidade/limpeza, combinações, URL, back/forward/refresh, 1/2/3 páginas, Pedidos até terceira página e resposta atrasada. |
@@ -61,18 +61,18 @@ O catálogo já descartava respostas de efeitos encerrados. Esse comportamento f
 | | |
 |---|---|
 | **Causa** | Radio alterava enderecoId, mas finalizar buscava novamente o principal. |
-| **Como reproduzi** | Dia 1 com mock: Oficina selecionada; payload/snapshot recebiam Casa. Contraprova backend já respeitava ID. |
+| **Como reproduzi** | Reprodução na base com mock: Oficina selecionada; payload/snapshot recebiam Casa. Contraprova backend já respeitava ID. |
 | **Correção** | Frontend envia enderecoId; principal só define seleção inicial. |
 | **Arquivos alterados** | Checkout.jsx; testes backend/frontend de checkout. |
 | **Como validei a correção** | Único, principal/secundário, recém-criado, excluído em outra aba, alheio, snapshot/observação, edição posterior e falha de estoque. |
 
-Backend não precisou mudar para corrigir endereço: autenticação, propriedade e snapshot foram preservados. Sua alteração posterior no Dia 3 trata carrinho e concorrência.
+Backend não precisou mudar para corrigir endereço: autenticação, propriedade e snapshot foram preservados. As alterações posteriores tratam múltiplos carrinhos e concorrência.
 
 ---
 
 ## 3. Problemas que encontrei por conta própria
 
-Achados históricos identificados por A01–A22 em [DIAGNOSTICO-DIA1.md](docs/DIAGNOSTICO-DIA1.md). Os grupos abaixo registram causa, evidência, impacto e tratamento, incluindo os achados da última revisão.
+Achados históricos identificados por A01–A22, consolidados abaixo. Os grupos abaixo registram causa, evidência, impacto e tratamento, incluindo os achados da última revisão.
 
 ### Problema 1 — Credenciais e verificação de arquivos (A01)
 
@@ -222,7 +222,7 @@ Auditoria independente manteve o mecanismo e acrescentou testes de dois usuário
 
 Testes node:test com SQLite temporário e ERP HTTP mock; fetch limitado a loopback. Navegador usa aplicação modificada pelo Vite e backend temporário. Nenhum pedido real foi gerado.
 
-Histórico preservado: Dias 2/3 **51 backend + 25 navegador = 76 aprovados**; auditoria posterior **130 + 35 = 165**. A revisão definitiva passou com **131 backend + 39 navegador = 170 testes**, sem falhas/skips, em Node 20.19.2 e 24.21.0. A cópia Node 24 usa as dependências da instalação limpa anterior e o código atual conferido por hash. Build Vite (62 módulos) e smoke de produção/reinício aprovados nos dois runtimes. Saídas e comandos em [VALIDACAO-FINAL.md](docs/VALIDACAO-FINAL.md).
+Validações anteriores: **51 backend + 25 navegador = 76**, **130 + 35 = 165** e **131 + 39 = 170 aprovados**. O baseline de 170 foi executado na revisão anterior; suas saídas brutas estão preservadas em docs/evidencias/final-backend-workspace.txt e final-frontend-workspace.txt. A regressão consolidada passou com **139 backend + 64 frontend = 203 testes**, sem falhas/cancelamentos/skips, em Node 24.21.0 com npm ci e 103 arquivos conferidos byte a byte. São seis unitários de máscaras e 58 testes de navegador, além do backend. Node 20.19.2 também aprovou 139+62 antes dos dois últimos casos adicionais de catálogo/chamados. Build (63 módulos), smoke/reinício, scanner, auditorias npm, sintaxe, whitespace e links foram aprovados. Saídas completas em [VALIDACAO-FINAL.md](VALIDACAO-FINAL.md).
 
 Cobertura: quatro chamados, migrações, autorização entre contas, múltiplos carrinhos, preço/estoque, checkout e concorrência; CORS, replay/expiração/concorrência de sessões, senhas com espaços/Unicode, rate limit/proxy, principal/telefone, ERP malformado/timeout/5xx/401, stream/logs e backup/restauração. Frontend modificado realmente executado em Chromium com mock isolado.
 
@@ -253,13 +253,11 @@ Idempotência/reconciliação por chave no SIAC e interface administrativa de co
 
 ## 8. Outras observações
 
-Decisões para a devolutiva em [ENTREVISTA-FINAL.md](docs/ENTREVISTA-FINAL.md); implantação e pendências operacionais em [IMPLANTACAO.md](docs/IMPLANTACAO.md); mensagem para revisão em [EMAIL-ENTREGA.md](docs/EMAIL-ENTREGA.md). Nenhum e-mail enviado.
+Implantação e pendências operacionais em [IMPLANTACAO.md](IMPLANTACAO.md). Nenhum e-mail enviado.
 
 Marcadores da base lidos: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D1E (cabeçalho).
 
-Revisão em chore/final-review, com histórico/autoria preservados. Foram retirados uma preparação de entrevista substituída, o checklist temporário do Dia 4 e o README inicial de duas linhas; suas informações úteis estão nos documentos acima. Não havia arquivos de agentes/Trellis no projeto. Removidos exports sem uso e compatibilidade v0 desnecessária da fixture; testes de migração v0 permanecem. Nenhuma dependência foi adicionada ou removida.
-
-Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantação é o requisito bloqueante restante. Rotação SIAC e conferência de pedidos continuam responsabilidades externas. O lockfile vazio preexistente da raiz foi preservado fora do workspace; os lockfiles funcionais de backend/frontend permanecem versionados.
+Histórico, autoria e datas do Git foram preservados. Documentos de organização interna foram consolidados; decisões técnicas e evidências relevantes permanecem nesta entrega. Não foram encontrados arquivos AGENTS.md/CLAUDE.md, Trellis, Codex ou Cursor na árvore do projeto. Nenhuma dependência foi adicionada. Implantação pública, rotação externa de credencial e conferência de pedidos continuam pendentes.
 
 ## 9. Ajustes após testes manuais — 12/10/2026
 
@@ -271,6 +269,7 @@ Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantaçã
 | Falha ao consultar estoque | Cada leitura consultava produtos em paralelo sem limite; chamadas simultâneas repetidas do mesmo código | Até seis consultas por lote no carrinho e compartilhamento somente de GETs em andamento do mesmo produto; sem cache de preço/estoque e sem retry de escrita | backend/src/services/carrinhoService.js, erp/cliente.js | 15 produtos, dez consultas simultâneas do mesmo produto, erro/recuperação, lentidão, timeout, 401/429/502/503/504 e JSON inválido |
 | Campos brasileiros sem máscara | Inputs de texto sem formatação | Utilitários de CPF/CNPJ adaptativo, telefone 10/11 dígitos e CEP; edição por posição de dígitos, inputMode/autoComplete; envio somente de dígitos, validação backend preservada | frontend/src/lib/mascaras.js, componentes/ui.jsx, FormularioEndereco.jsx, paginas/Cadastro.jsx e Perfil.jsx | Unitários, digitação, Backspace/Delete em separadores, clipboard real, seleção/substituição, valores antigos e criação/edição de endereço |
 | Cadastro/troca sem confirmação ou visibilidade | Formulários tinham somente uma entrada de senha nova | Confirmação local próxima ao campo, sem enviar confirmarSenha. Controle compartilhado inicialmente oculto, type=button, nome acessível e teclado; espaços e política existentes preservados | frontend/src/componentes/ui.jsx, paginas/Cadastro.jsx e Perfil.jsx | Iguais/diferentes/vazias, espaços/especiais, falha de API, sucesso, login posterior e revogação de cookie anterior |
+| Paginação rápida após filtro | A URL já estava na primeira página, mas Próxima ainda usava a paginação anterior antes do efeito de loading | Ativa loading na própria mudança de critério; clicar novamente no filtro atual não inicia carregamento sem requisição | frontend/src/paginas/Catalogo.jsx | Regressão completa em Node 24 identificou página 3 em vez de 2; cenário de filtros e filtro repetido validado após correção |
 
 Recuperação de senha **não implementada**. A conta é identificada por id e e-mail único;
 documento não possui restrição UNIQUE. Não há transporte de e-mail, segredo de envio
@@ -299,5 +298,33 @@ Jornada Chromium usa conta criada pela interface, busca após paginação/filtro
 dois orçamentos com produtos distintos, digitação/setas/persistência, renomeação,
 exclusão, dois endereços criados no perfil, endereço secundário no checkout mock,
 preservação de outro carrinho, logout/outra conta e quatro larguras. Chamados
-originais continuam nas suítes completas. Resultados atuais são registrados após
-a regressão; execuções intermediárias com falha não são contadas como aprovação.
+originais continuam nas suítes completas. Resultados atuais estão na seção 5; execuções intermediárias com falha não são contadas como aprovação.
+
+## 10. Limpeza da entrega
+
+| Inventário | Destino |
+|---|---|
+| backend/scripts/diagnostico-dia1.mjs | Removido: afirmava bugs da versão antiga; nenhuma suíte/execução/deploy atual dependia dele. Causas e reproduções relevantes permanecem nas seções 2/3 e nas três imagens originais |
+| docs/DIAGNOSTICO-DIA1.md e VALIDACAO-DIAS2-3.md | Consolidados neste relatório e em VALIDACAO-FINAL.md; referências/comandos antigos removidos |
+| docs/ENTREVISTA-FINAL.md e EMAIL-ENTREGA.md | Removidos por organização pessoal; decisões técnicas já constavam no relatório. Nenhuma mensagem foi enviada |
+| docs/IMPLANTACAO.md | Realocado como IMPLANTACAO.md na raiz, com procedimentos de host, configuração, backup/restauração e conferência de pedidos preservados |
+| docs/VALIDACAO-FINAL.md | Substituído pelo documento atualizado na raiz, com baseline, comandos, cobertura e limites |
+| Evidências intermediárias | Removidos nove TXT redundantes (dia3-backend/build/frontend/producao, final-backend/ frontend-node24, final-build-node24, final-smoke e revisao-final) e quatro imagens dia3-carrinho. Resultados históricos consolidados; logs brutos do baseline de 170 e imagens originais mantidos |
+| docs/ | Estrutura mínima de evidências: três imagens diagnósticas, oito capturas de painel/produto, dois logs do baseline e novas saídas da regressão. Caminhos de captura nos testes continuam funcionando |
+| deploy/ | Três arquivos úteis preservados: kaizen.service, kaizen.env.example e Caddyfile. Não há configuração obsoleta/duplicada demonstrada |
+| Artefatos de agentes | Busca recursiva fora de Git/dependências não encontrou AGENTS.md, CLAUDE.md, .trellis, .codex, .cursor, prompts ou checkpoints do projeto |
+
+README original, licença, arquitetura, relatório obrigatório, lockfiles, testes,
+migrações e scripts de inicialização/backup/smoke/segredos foram preservados.
+Referências de organização por dias foram retiradas; histórico Git, autoria e
+origem dos requisitos não foram reescritos. Os 18 arquivos obsoletos removidos
+são recuperáveis no histórico. docs/ foi mantido somente para evidências técnicas;
+apagá-lo exigiria mover os mesmos artefatos úteis para outra pasta sem reduzir a entrega.
+
+O workspace inicial estava limpo, mas arquivos/diretórios criados por root
+bloqueavam Git/edição. Cópias preservadas fora do repositório permitiram reparar
+a escrita sem perder histórico/configuração. O backend local já aberto também
+executa como root e não foi reiniciado. backend/data, ignorado pelo Git, aponta
+ao diretório original preservado em /home/henrique/DEV/kaizen-tree-permissions.eyJrXl/backend-original/data;
+assim seu banco/WAL continuam sendo os mesmos usados pelo processo. O .env foi
+comparado e permanece idêntico. Regressão e smoke não tocaram nesse banco privado.
