@@ -240,7 +240,7 @@ Use Node 24 LTS conforme `.nvmrc`. A validação final também foi executada nes
 com instalação limpa em uma cópia isolada do código.
 Na primeira execução, copie [backend/.env.example](backend/.env.example) para
 `backend/.env`. Gere `JWT_SEGREDO` com `npm run segredo:gerar` no backend e preencha
-`SIAC_TOKEN` com uma credencial autorizada. Não publique esses valores. O proxy do
+`SIAC_TOKEN` com a credencial recebida da Kaizen. Não publique esses valores. O proxy do
 Vite usa a porta 3001; ajuste `frontend/vite.config.js` se mudar a porta do backend.
 
 ```sh
@@ -249,6 +249,36 @@ npm ci
 npm run db:init
 npm start
 ```
+
+### Backend no Windows (PowerShell)
+
+Na pasta do projeto, localize o template versionado e copie-o somente se ainda
+não houver um `.env` local:
+
+```powershell
+Set-Location C:\DEV\teste-tecnico-kaizen\backend
+Get-ChildItem -Force .env.example
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+npm ci
+npm run segredo:gerar
+notepad .env
+```
+
+No `.env`, substitua `JWT_SEGREDO` pelo segredo gerado e preencha `SIAC_TOKEN`
+com a credencial recebida da Kaizen. O token vazio e o segredo de exemplo
+impedem a inicialização até serem configurados. `.env` é ignorado pelo Git;
+`.env.example` permanece versionado. Inicie a partir da pasta `backend`, onde
+o `dotenv` procura o `.env`:
+
+```powershell
+npm run db:init
+npm start
+```
+
+Em outro PowerShell, execute `Invoke-RestMethod http://localhost:3001/api/health`
+(ajuste a porta se alterar `PORT`). Espere `status: ok` e `erp: ok`; o campo
+`erp` indica falhas de acesso ao SIAC mesmo quando o backend responde HTTP 200.
+A inicialização e esse endpoint consultam o health do ERP, sem criar pedidos.
 
 Em outro terminal:
 
