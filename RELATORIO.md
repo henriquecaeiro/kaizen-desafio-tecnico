@@ -321,6 +321,12 @@ origem dos requisitos não foram reescritos. Os 18 arquivos obsoletos removidos
 são recuperáveis no histórico. docs/ foi mantido somente para evidências técnicas;
 apagá-lo exigiria mover os mesmos artefatos úteis para outra pasta sem reduzir a entrega.
 
+Regressão após os merges na main: **139 backend + 64 frontend = 203 aprovados**
+também em Node 20.19.2, sem falhas/cancelamentos/skips. Build Vite de 63 módulos,
+smoke/reinício, scanner (arquivos/histórico), auditorias npm sem vulnerabilidades
+conhecidas, links e git diff --check aprovados. Código funcional não mudou
+durante o registro final desses resultados.
+
 O workspace inicial estava limpo, mas arquivos/diretórios criados por root
 bloqueavam Git/edição. Cópias preservadas fora do repositório permitiram reparar
 a escrita sem perder histórico/configuração. O backend local já aberto também

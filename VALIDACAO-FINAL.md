@@ -13,8 +13,10 @@ de 76 e 165 casos estão consolidadas no RELATORIO e no histórico Git.
 A regressão consolidada aprovou **139 backend + 64 frontend = 203 testes** em
 Node 24.21.0, com **203 aprovados, zero falhas, cancelamentos e skips**. Isso
 representa 33 casos adicionais ao baseline. Frontend inclui seis unitários de
-máscaras e 58 cenários executados em Chromium. A suíte também foi validada no
-Node 20 do workspace antes dos dois últimos casos de catálogo/chamados (139+62).
+máscaras e 58 cenários executados em Chromium. Após os merges na main, a suíte
+completa foi executada novamente em Node 20.19.2: **139+64=203 aprovados**, zero
+falhas/cancelamentos/skips. Build, smoke, scanner e auditorias também passaram
+nessa execução; registrar esses resultados não alterou código ou testes.
 
 Node 24.21.0 corresponde à .nvmrc. Runtime obtido da distribuição oficial com
 SHA-256 conferido, npm ci dos dois lockfiles em cópia isolada, sem alterar o
@@ -23,8 +25,8 @@ cópia foram comparados byte a byte com o workspace, sem divergências.
 
 | Verificação final | Resultado |
 |---|---|
-| Backend completo | 139/139, Node 24.21.0 |
-| Frontend completo | 64/64, Chromium com aplicação real e ERP mock |
+| Backend completo | 139/139, Node 20.19.2 e 24.21.0 |
+| Frontend completo | 64/64 nos dois runtimes, Chromium com aplicação real e ERP mock |
 | Build | Aprovado, Vite 7.3.7, 63 módulos |
 | Smoke production | Aprovado; inclui persistência após reinício, zero pedidos |
 | Auditorias npm | Zero vulnerabilidades conhecidas, backend e frontend |
