@@ -320,6 +320,12 @@ O usuário pode manter até 10 carrinhos. Carrinho ativo e itens ficam no servid
 Na vitrine, “Ver carrinho” abre um painel no desktop ou drawer no celular, sem
 alterar busca, filtros ou página. Criar pela interface também ativa o novo carrinho.
 
+Quantidade pode ficar temporariamente vazia enquanto você edita. Enter ou saída
+do campo confirma um inteiro entre 1 e 99; totais mostram o valor confirmado.
+CPF/CNPJ, telefone e CEP têm máscaras brasileiras nos formulários compartilhados.
+Cadastro e troca de senha pedem confirmação; mostrar/ocultar mantém o valor.
+Recuperação de senha depende de canal de verificação por e-mail ainda não disponível.
+
 Tentativas de checkout com resultado incerto preservam o carrinho e bloqueiam
 nova compra até conferência pela loja. Não remova o bloqueio sem reconciliar o
 pedido no SIAC. Decisões e limites em [RELATORIO.md](RELATORIO.md), testes atuais em

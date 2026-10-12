@@ -260,3 +260,44 @@ Marcadores da base lidos: KZN-2B9C (configuração), KZN-7F3A (carrinho), KZN-5D
 Revisão em chore/final-review, com histórico/autoria preservados. Foram retirados uma preparação de entrevista substituída, o checklist temporário do Dia 4 e o README inicial de duas linhas; suas informações úteis estão nos documentos acima. Não havia arquivos de agentes/Trellis no projeto. Removidos exports sem uso e compatibilidade v0 desnecessária da fixture; testes de migração v0 permanecem. Nenhuma dependência foi adicionada ou removida.
 
 Meta interna 12/10 à noite; prazo oficial 13/10 às 15h Brasília. Implantação é o requisito bloqueante restante. Rotação SIAC e conferência de pedidos continuam responsabilidades externas. O lockfile vazio preexistente da raiz foi preservado fora do workspace; os lockfiles funcionais de backend/frontend permanecem versionados.
+
+## 9. Ajustes após testes manuais — 12/10/2026
+
+| Relato | Causa | Correção | Arquivos principais | Validação |
+|---|---|---|---|---|
+| Não consigo apagar quantidade; setas interrompem interação | Valor controlado pelo servidor e escrita/desabilitação a cada onChange | Rascunho local admite vazio; confirma por Enter/blur, valida 1–99 e serializa confirmações do mesmo campo. Mantém foco, restaura valor confirmado em erro e encerra fila ao desmontar/trocar carrinho | frontend/src/componentes/ItensCarrinho.jsx, ConteudoCarrinho.jsx | Digitação, vazio, inválidos, Tab, Enter, setas de teclado e cliques nativos na página/painel, resposta lenta e refresh |
+| Falha intermitente de carrinho | Leituras de carrinho/lista podiam representar ativos diferentes; erro ocultava itens já carregados; retry mantinha alerta local | Confere identidade e seleção, relê uma vez se ativo divergir, recupera conflito sem repetir escrita, mantém itens/valores anteriores identificados e bloqueia checkout após falha de leitura | frontend/src/contextos/CarrinhoContext.jsx, componentes/ConteudoCarrinho.jsx | Leituras invertidas, seleção em duas abas, erro 502, indisponibilidade de backend, recuperação e sessão expirada |
+| Troca de conta em outra aba | Cookie compartilhado, identidade React não compartilhada | BroadcastChannel notifica mudança após login/cadastro/logout; cada aba reconsulta identidade no servidor, remove estado antigo e informa falha de revalidação | frontend/src/contextos/AuthContext.jsx | Duas páginas Chromium com cookie compartilhado; login B e logout atualizam A sem apresentar itens da identidade anterior |
+| Falha ao consultar estoque | Cada leitura consultava produtos em paralelo sem limite; chamadas simultâneas repetidas do mesmo código | Até seis consultas por lote no carrinho e compartilhamento somente de GETs em andamento do mesmo produto; sem cache de preço/estoque e sem retry de escrita | backend/src/services/carrinhoService.js, erp/cliente.js | 15 produtos, dez consultas simultâneas do mesmo produto, erro/recuperação, lentidão, timeout, 401/429/502/503/504 e JSON inválido |
+| Campos brasileiros sem máscara | Inputs de texto sem formatação | Utilitários de CPF/CNPJ adaptativo, telefone 10/11 dígitos e CEP; edição por posição de dígitos, inputMode/autoComplete; envio somente de dígitos, validação backend preservada | frontend/src/lib/mascaras.js, componentes/ui.jsx, FormularioEndereco.jsx, paginas/Cadastro.jsx e Perfil.jsx | Unitários, digitação, Backspace/Delete em separadores, clipboard real, seleção/substituição, valores antigos e criação/edição de endereço |
+| Cadastro/troca sem confirmação ou visibilidade | Formulários tinham somente uma entrada de senha nova | Confirmação local próxima ao campo, sem enviar confirmarSenha. Controle compartilhado inicialmente oculto, type=button, nome acessível e teclado; espaços e política existentes preservados | frontend/src/componentes/ui.jsx, paginas/Cadastro.jsx e Perfil.jsx | Iguais/diferentes/vazias, espaços/especiais, falha de API, sucesso, login posterior e revogação de cookie anterior |
+
+Recuperação de senha **não implementada**. A conta é identificada por id e e-mail único;
+documento não possui restrição UNIQUE. Não há transporte de e-mail, segredo de envio
+ou canal de verificação configurado. CPF/CNPJ não prova identidade. Não foi criado
+endpoint de troca por documento nem link que promete recuperação. A troca autenticada
+continua exigindo senha atual e revogando sessões anteriores. Um fluxo futuro requer
+canal de entrega autorizado, resposta genérica, token aleatório armazenado como hash,
+expiração curta, uso único, limitação de tentativas e revogação transacional de sessões.
+
+Diagnóstico real do SIAC em 12/10: base configurada teste-tecnico.kaizenautopecas.com.br,
+timeout de 8000 ms preservado, credencial local presente. Apenas GETs autorizados:
+/health HTTP 200/status ok em 561 ms; /produtos com tamanho=1 HTTP 200 em 886 ms;
+/produtos/categorias HTTP 200 com nove categorias em 99 ms. Nenhum pedido real foi
+enviado. Não reproduzi falha externa nesse pequeno conjunto; ele não demonstra
+ausência de instabilidade, limite de tráfego ou atomicidade do SIAC.
+
+No mock, 401 vira 502/ERP_NAO_AUTORIZADO; 429 e 5xx viram 502/ERP_INDISPONIVEL;
+timeout/rede são falhas de integração; JSON inválido mantém 502/ERP_RESPOSTA_INVALIDA.
+Logs de falha ERP incluem request-id da requisição iniciadora, template de rota,
+método, categoria, status remoto e duração, sem código de produto, query, token,
+cookie ou corpo. GETs simultâneos compartilhados têm um log remoto do iniciador;
+logs HTTP da loja identificam cada resposta local. Não aumentei timeout nem
+introduzi retry automático de pedido ou de mutação de carrinho.
+
+Jornada Chromium usa conta criada pela interface, busca após paginação/filtros,
+dois orçamentos com produtos distintos, digitação/setas/persistência, renomeação,
+exclusão, dois endereços criados no perfil, endereço secundário no checkout mock,
+preservação de outro carrinho, logout/outra conta e quatro larguras. Chamados
+originais continuam nas suítes completas. Resultados atuais são registrados após
+a regressão; execuções intermediárias com falha não são contadas como aprovação.
