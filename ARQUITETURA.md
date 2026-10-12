@@ -170,7 +170,7 @@ headers permissivos. Requisições sem Origin continuam permitidas. Cookies Lax 
 checagem de Origin complementam a proteção; CORS não é autenticação.
 `TRUST_PROXY` vazio ignora headers encaminhados; em produção configurar apenas
 os proxies reais. Exemplos Node/systemd/Caddy, disco persistente e backup online
-estão em [IMPLANTACAO.md](docs/IMPLANTACAO.md). Não há deploy público concluído.
+estão em [IMPLANTACAO.md](IMPLANTACAO.md). Não há deploy público concluído.
 
 ---
 
