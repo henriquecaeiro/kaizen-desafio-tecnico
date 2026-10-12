@@ -16,15 +16,18 @@ export async function abrirNavegador() {
   const erros = [];
   page.on('pageerror', erro => erros.push(erro.message));
   // Navegador tambem nao pode escrever em servicos externos.
-  await context.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
+  await context.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.fallback() : route.abort());
   async function entrar(nome = 'a') {
-    await page.goto(`${base}/entrar`);
+    // URL distinta evita reutilizar history.state do redirecionamento de uma rota protegida.
+    await page.goto(`${base}/entrar?teste-login`);
     await page.getByLabel('E-mail').fill(`${nome}@example.test`);
     await page.getByLabel('Senha', { exact: true }).fill('TesteLocal123');
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
     await page.waitForURL(base + '/');
   }
   async function fechar() {
+    await Promise.all(context.pages().map(pagina => pagina.unrouteAll({ behavior: 'wait' })));
+    await context.unrouteAll({ behavior: 'wait' });
     await browser.close(); await vite.close(); await e.fechar();
   }
   return { ...e, page, context, browser, base, entrar, erros, fechar };

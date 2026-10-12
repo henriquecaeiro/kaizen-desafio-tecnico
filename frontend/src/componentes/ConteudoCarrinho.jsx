@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dinheiro } from '../api/cliente.js';
 import { useCarrinho } from '../contextos/CarrinhoContext.jsx';
@@ -20,6 +20,8 @@ export function ConteudoCarrinho({ compacto = false }) {
   const [erro, setErro] = useState(null);
   const [confirmarLimpeza, setConfirmarLimpeza] = useState(false);
   const navegar = useNavigate();
+  const ativo = useRef(carrinho.id);
+  ativo.current = carrinho.id;
   useEffect(() => {
     setErro(null);
     setConfirmarLimpeza(false);
@@ -28,13 +30,14 @@ export function ConteudoCarrinho({ compacto = false }) {
   const bloqueado = ocupado || Boolean(carrinho.checkout_estado);
 
   async function executar(acao) {
+    const id = carrinho.id;
     setEnviando(true);
     setErro(null);
     try {
       await acao();
       return true;
     } catch (falha) {
-      setErro(falha);
+      if (ativo.current === id) setErro(falha);
       return false;
     } finally {
       setEnviando(false);
@@ -45,8 +48,10 @@ export function ConteudoCarrinho({ compacto = false }) {
       <GerenciadorCarrinhos executar={executar} ocupado={ocupado} />
       {(erro || erroCarga) && (
         <Alerta titulo={erroCarga ? 'Não foi possível carregar o carrinho' : undefined}>
-          {(erro || erroCarga).message}{' '}
-          <Botao variante="contorno" tamanho="pequeno" onClick={recarregar} disabled={ocupado}>
+          {(erroCarga || erro).message}{' '}
+          {erroCarga && carrinho.itens.length > 0 &&
+            <p className="mt-1">Itens preservados. Preços e estoque aguardam atualização.</p>}
+          <Botao variante="contorno" tamanho="pequeno" onClick={() => { setErro(null); recarregar(); }} disabled={ocupado}>
             Tentar novamente
           </Botao>
         </Alerta>
@@ -62,12 +67,15 @@ export function ConteudoCarrinho({ compacto = false }) {
       {!erroCarga && !carregando && carrinho.itens.length === 0 && (
         <p className="py-6 text-center text-sm text-tinta-600">Seu carrinho está vazio</p>
       )}
-      {!erroCarga && carrinho.itens.length > 0 && (
+      {carrinho.itens.length > 0 && (
         <div className={compacto ? 'space-y-4' : 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'}>
           <div className="min-w-0 rounded-lg border border-tinta-200 bg-white px-4">
+            <p className="pt-3 text-xs text-tinta-600">Confirme a quantidade com Enter ou ao sair do campo.</p>
             <ItensCarrinho
+              key={carrinho.id}
               itens={carrinho.itens}
               ocupado={bloqueado}
+              quantidadeBloqueada={Boolean(carrinho.checkout_estado)}
               aoAlterar={(codigo, quantidade) => executar(() => alterar(codigo, quantidade))}
               aoRemover={(codigo) => executar(() => remover(codigo))}
             />
@@ -88,7 +96,7 @@ export function ConteudoCarrinho({ compacto = false }) {
             )}
             <Botao
               className="w-full"
-              disabled={bloqueado || !carrinho.pronto_para_checkout}
+              disabled={bloqueado || Boolean(erroCarga) || !carrinho.pronto_para_checkout}
               onClick={() => navegar('/checkout')}
             >
               Fechar pedido

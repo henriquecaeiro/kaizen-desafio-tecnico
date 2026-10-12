@@ -85,6 +85,9 @@ porta do backend.
 - O front mantém o usuário em memória e consulta `GET /api/auth/eu` no boot;
   não persiste token no JavaScript. Atualização de perfil não pode restaurar
   uma conta que já saiu. Logout com falha mostra erro e permite repetir a revogação.
+- Mudanças confirmadas de login/cadastro/logout notificam outras abas via
+  BroadcastChannel, sem transportar credenciais. Cada aba reconsulta a sessão,
+  removendo estado anterior durante a confirmação e mostrando erro de conexão.
 
 ---
 
@@ -148,6 +151,16 @@ loja, sem fechar enums nem proibir campos adicionais. Histórico pode continuar
 com dados locais e status indisponível explícito; não inventa lista vazia.
 Imagens validam tipo/corpo, usam pipeline e encerram a conexão se falharem após
 enviar bytes. Health valida JSON/status do ERP, não somente HTTP 200.
+
+Carrinho enriquece até seis produtos por lote. GETs do mesmo código simultâneos
+compartilham a consulta em andamento; não existe cache depois da conclusão ou
+falha. Timeout continua configurável (8000 ms padrão). Não há retry automático
+de pedidos ou mutações. Logs ERP usam contexto assíncrono de request-id, rota sem
+identificadores, categoria, status remoto e duração; não incluem corpo/segredos.
+Frontend preserva itens em falha temporária, indica dados da última consulta e
+bloqueia checkout até nova leitura. Respostas conferem identidade e ativo antes
+de atualizar o conjunto carrinho/lista. Rascunho de quantidade fica no componente
+do item, delimitado pelo id do carrinho; Enter/blur confirma sem interromper setas.
 
 ### Origens, proxy e produção
 

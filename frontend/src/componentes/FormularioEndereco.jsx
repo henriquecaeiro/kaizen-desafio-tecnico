@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api/cliente.js';
+import { digitos } from '../lib/mascaras.js';
 import { Botao, Campo, ErroGeral } from './ui.jsx';
 
 const CAMPOS = [
@@ -33,9 +34,10 @@ export function FormularioEndereco({ endereco, aoSalvar, aoCancelar }) {
     setEnviando(true);
 
     try {
+      const dados = { ...formulario, cep: digitos(formulario.cep) };
       const resposta = endereco
-        ? await api.enderecos.salvar(endereco.id, formulario)
-        : await api.enderecos.criar(formulario);
+        ? await api.enderecos.salvar(endereco.id, dados)
+        : await api.enderecos.criar(dados);
 
       aoSalvar(resposta.dados);
     } catch (falha) {
@@ -64,6 +66,8 @@ export function FormularioEndereco({ endereco, aoSalvar, aoCancelar }) {
         <Campo
           rotulo="CEP"
           name="cep"
+          mascara="cep"
+          autoComplete="postal-code"
           value={formulario.cep}
           onChange={mudar}
           erro={porCampo.cep}

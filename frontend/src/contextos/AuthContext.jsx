@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api/cliente.js';
+import { Alerta, Botao } from '../componentes/ui.jsx';
 
 const AuthContext = createContext(null);
 
@@ -11,7 +12,32 @@ const AuthContext = createContext(null);
 export function ProvedorAuth({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [erroSessao, setErroSessao] = useState(null);
   const versaoSessao = useRef(0);
+  const canal = useRef(null);
+
+  useEffect(() => {
+    if (!window.BroadcastChannel) return;
+    const comunicacao = new BroadcastChannel('kaizen-sessao');
+    canal.current = comunicacao;
+    comunicacao.onmessage = async () => {
+      // Cookies são compartilhados pelas abas; a identidade é relida no servidor.
+      const versao = ++versaoSessao.current;
+      setUsuario(null);
+      setCarregando(true);
+      setErroSessao(null);
+      try {
+        const resposta = await api.auth.eu();
+        if (versaoSessao.current === versao) setUsuario(resposta.dados);
+      } catch (falha) {
+        // Sem confirmação da sessão nova, não reapresenta dados da conta antiga.
+        if (versaoSessao.current === versao && falha.status !== 401) setErroSessao(falha);
+      } finally {
+        if (versaoSessao.current === versao) setCarregando(false);
+      }
+    };
+    return () => { versaoSessao.current++; comunicacao.close(); canal.current = null; };
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -42,6 +68,8 @@ export function ProvedorAuth({ children }) {
     versaoSessao.current++;
     setUsuario(resposta.dados);
     setCarregando(false);
+    setErroSessao(null);
+    canal.current?.postMessage('sessao-alterada');
     return resposta.dados;
   }, []);
 
@@ -50,6 +78,8 @@ export function ProvedorAuth({ children }) {
     versaoSessao.current++;
     setUsuario(resposta.dados);
     setCarregando(false);
+    setErroSessao(null);
+    canal.current?.postMessage('sessao-alterada');
     return resposta.dados;
   }, []);
 
@@ -58,6 +88,8 @@ export function ProvedorAuth({ children }) {
     versaoSessao.current++;
     setUsuario(null);
     setCarregando(false);
+    setErroSessao(null);
+    canal.current?.postMessage('sessao-alterada');
   }, []);
 
   const atualizarUsuario = useCallback((dados) => {
@@ -70,7 +102,13 @@ export function ProvedorAuth({ children }) {
     [usuario, carregando, entrar, cadastrar, sair, atualizarUsuario],
   );
 
-  return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={valor}>
+    {erroSessao && <Alerta titulo="Não foi possível atualizar a sessão" className="m-4">
+      {erroSessao.message}{' '}
+      <Botao variante="contorno" tamanho="pequeno" onClick={() => window.location.reload()}>Recarregar página</Botao>
+    </Alerta>}
+    {children}
+  </AuthContext.Provider>;
 }
 
 export function useAuth() {

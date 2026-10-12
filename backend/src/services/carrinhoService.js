@@ -17,8 +17,10 @@ const MAXIMO_POR_ITEM = 99;
  * raramente passa de uma duzia de linhas.
  */
 async function enriquecerItens(linhas) {
-  return Promise.all(
-    linhas.map(async (linha) => {
+  const itens = [];
+  // Limita a seis consultas por lote, preservando a ordem e falhas explícitas.
+  for (let inicio = 0; inicio < linhas.length; inicio += 6) {
+    itens.push(...await Promise.all(linhas.slice(inicio, inicio + 6).map(async (linha) => {
       let produto = null;
 
       try {
@@ -66,8 +68,9 @@ async function enriquecerItens(linhas) {
         valor_total: paraReais(totalCentavos),
         valor_elegivel: problema === null ? paraReais(totalCentavos) : 0,
       };
-    }),
-  );
+    })));
+  }
+  return itens;
 }
 
 /*
@@ -91,6 +94,7 @@ export async function lerCarrinho(usuarioId, db = obterBanco(), carrinhoId) {
 
   return {
     id: carrinho.id,
+    usuario_id: usuarioId,
     nome: carrinho.nome,
     checkout_estado: db.prepare(`SELECT estado FROM checkout_tentativas WHERE carrinho_id=?
       AND estado IN ('VALIDANDO','ENVIANDO','INCERTO')`).get(carrinho.id)?.estado ?? null,

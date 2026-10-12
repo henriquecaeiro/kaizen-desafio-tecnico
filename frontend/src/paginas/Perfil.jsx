@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api/cliente.js';
+import { api, ErroApi } from '../api/cliente.js';
+import { digitos } from '../lib/mascaras.js';
 import { useAuth } from '../contextos/AuthContext.jsx';
 import { FormularioEndereco } from '../componentes/FormularioEndereco.jsx';
 import { Alerta, Botao, Campo, Carregando, ErroGeral } from '../componentes/ui.jsx';
 
 const CAMPOS_DADOS = ['nome', 'documento', 'telefone'];
-const CAMPOS_SENHA = ['senha_atual', 'nova_senha'];
+const CAMPOS_SENHA = ['senha_atual', 'nova_senha', 'confirmarSenha'];
 
 function DadosPessoais() {
   const { usuario, atualizarUsuario } = useAuth();
@@ -32,7 +33,8 @@ function DadosPessoais() {
     setEnviando(true);
 
     try {
-      const resposta = await api.perfil.salvar(formulario);
+      const resposta = await api.perfil.salvar({ ...formulario,
+        documento: digitos(formulario.documento), telefone: digitos(formulario.telefone) });
       atualizarUsuario(resposta.dados);
       setSalvo(true);
     } catch (falha) {
@@ -73,6 +75,8 @@ function DadosPessoais() {
           <Campo
             rotulo="CPF ou CNPJ"
             name="documento"
+            mascara="documento"
+            autoComplete="off"
             value={formulario.documento}
             onChange={mudar}
             erro={porCampo.documento}
@@ -81,6 +85,8 @@ function DadosPessoais() {
           <Campo
             rotulo="Telefone"
             name="telefone"
+            mascara="telefone"
+            autoComplete="tel"
             type="tel"
             value={formulario.telefone}
             onChange={mudar}
@@ -96,7 +102,7 @@ function DadosPessoais() {
 }
 
 function TrocarSenha() {
-  const [formulario, setFormulario] = useState({ senha_atual: '', nova_senha: '' });
+  const [formulario, setFormulario] = useState({ senha_atual: '', nova_senha: '', confirmarSenha: '' });
   const [erro, setErro] = useState(null);
   const [salvo, setSalvo] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -114,8 +120,13 @@ function TrocarSenha() {
     setEnviando(true);
 
     try {
-      await api.perfil.trocarSenha(formulario);
-      setFormulario({ senha_atual: '', nova_senha: '' });
+      if (!formulario.confirmarSenha || formulario.nova_senha !== formulario.confirmarSenha)
+        throw new ErroApi(422, 'VALIDACAO', 'Confira a confirmação da senha.', [
+          { campo: 'confirmarSenha', mensagem: 'As senhas precisam coincidir.' },
+        ]);
+      const { confirmarSenha, ...dados } = formulario;
+      await api.perfil.trocarSenha(dados);
+      setFormulario({ senha_atual: '', nova_senha: '', confirmarSenha: '' });
       setSalvo(true);
     } catch (falha) {
       setErro(falha);
@@ -154,6 +165,10 @@ function TrocarSenha() {
           erro={porCampo.nova_senha}
           dica="Mínimo 8 caracteres, com ao menos uma letra e um número."
         />
+
+        <Campo rotulo="Confirmar nova senha" name="confirmarSenha" type="password"
+          autoComplete="new-password" value={formulario.confirmarSenha} onChange={mudar}
+          erro={porCampo.confirmarSenha} />
 
         <Botao type="submit" carregando={enviando}>Trocar senha</Botao>
       </form>

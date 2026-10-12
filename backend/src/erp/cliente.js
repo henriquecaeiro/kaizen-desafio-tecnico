@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { config } from '../config.js';
 import { ApiError } from '../lib/ApiError.js';
+import { contextoRequisicao } from '../lib/contextoRequisicao.js';
 import { exigirResposta, objeto, produtoValido, paginacaoValida, pedidoCriadoValido, pedidoValido } from './contratos.js';
 
 /**
@@ -33,6 +34,13 @@ function montarUrl(caminho, parametros) {
 async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
   const url = montarUrl(caminho, parametros);
   let resposta;
+  const inicio = performance.now();
+  const rota = caminho.startsWith('/produtos/') && caminho !== '/produtos/categorias'
+    ? '/produtos/:codigo' : caminho.startsWith('/pedidos/') ? '/pedidos/:numero' : caminho;
+  function registrar(categoria, status = 0) {
+    console.error(JSON.stringify({ origem: 'erp', request_id: contextoRequisicao.getStore()?.id ?? null,
+      metodo, rota, categoria, status, duracao_ms: Math.round(performance.now() - inicio) }));
+  }
 
   try {
     resposta = await fetch(url, {
@@ -46,7 +54,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
       signal: AbortSignal.timeout(config.erp.timeoutMs),
     });
   } catch (erro) {
-    console.error(`[erp] falha de rede em ${metodo}; tipo=${erro?.name === 'TimeoutError' ? 'timeout' : 'rede'}`);
+    registrar(erro?.name === 'TimeoutError' ? 'timeout' : 'rede');
 
     throw new ApiError(
       502,
@@ -60,6 +68,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
     json = await resposta.json();
   } catch (erro) {
     if (resposta.ok) {
+      registrar(erro?.name === 'SyntaxError' ? 'json_invalido' : 'leitura_interrompida', resposta.status);
       if (erro?.name !== 'SyntaxError') throw new ApiError(502, 'ERP_INDISPONIVEL', 'Nao foi possivel ler a resposta do sistema de estoque.');
       exigirResposta(false);
     }
@@ -73,7 +82,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
   const erroErp = json?.erro ?? {};
 
   if (resposta.status === 401) {
-    console.error('[erp] token recusado pelo ERP - confira ERP_TOKEN no .env');
+    registrar('credencial_recusada', resposta.status);
     throw new ApiError(
       502,
       'ERP_NAO_AUTORIZADO',
@@ -91,7 +100,7 @@ async function requisitar(caminho, { parametros, metodo = 'GET', corpo } = {}) {
     );
   }
 
-  console.error(`[erp] status ${resposta.status} em ${metodo}`);
+  registrar(resposta.status === 429 ? 'limite_erp' : 'http_inesperado', resposta.status);
 
   throw new ApiError(
     502,
@@ -108,10 +117,20 @@ export async function listarProdutos(filtros) {
   return json;
 }
 
+const produtosEmConsulta = new Map();
+
 export async function buscarProduto(codigo) {
-  const json = await requisitar(`/produtos/${encodeURIComponent(codigo)}`);
-  exigirResposta(produtoValido(json.dados) && json.dados.codigo.toUpperCase() === String(codigo).toUpperCase());
-  return json.dados;
+  const chave = String(codigo).toUpperCase();
+  if (produtosEmConsulta.has(chave)) return produtosEmConsulta.get(chave);
+  // Compartilha apenas consultas simultâneas; preço/estoque não ficam em cache.
+  const consulta = (async () => {
+    const json = await requisitar(`/produtos/${encodeURIComponent(codigo)}`);
+    exigirResposta(produtoValido(json.dados) && json.dados.codigo.toUpperCase() === chave);
+    return json.dados;
+  })();
+  produtosEmConsulta.set(chave, consulta);
+  try { return await consulta; }
+  finally { produtosEmConsulta.delete(chave); }
 }
 
 export async function listarCategorias() {
